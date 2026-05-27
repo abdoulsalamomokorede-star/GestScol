@@ -1,0 +1,178 @@
+'use client'
+
+import { useSchoolStore } from '@/store/useSchoolStore'
+import { GraduationCap, FileText, CreditCard, CalendarOff } from 'lucide-react'
+import KpiCard from '@/components/dashboard/KpiCard'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { getInitiales, formatDate, formatCFA, cn } from '@/lib/utils'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useRouter } from 'next/navigation'
+
+export default function ParentDashboardPage() {
+  const router = useRouter()
+  const { eleves, classes, notes, paiements, absences, currentUser, getMoyenneEleve } = useSchoolStore()
+  
+  if (!currentUser || currentUser.role !== 'parent') {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Accès réservé aux parents.
+      </div>
+    )
+  }
+
+  const parentFullName = `${currentUser.nom} ${currentUser.prenom}`
+  const mesEnfants = eleves.filter(e => e.parentUserId === currentUser.id)
+
+  const mesPaiements = paiements.filter(p => mesEnfants.some(e => e.id === p.eleveId))
+  const mesAbsences = absences.filter(a => mesEnfants.some(e => e.id === a.eleveId))
+
+  const paiementsEnRetard = mesPaiements.filter(p => p.statut === 'retard').length
+  const absencesNonJustifiees = mesAbsences.filter(a => !a.justifiee).length
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-text">Espace Parent</h2>
+          <p className="text-sm text-muted-foreground">Bienvenue, {currentUser.prenom} {currentUser.nom}.</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <KpiCard 
+          title="Mes Enfants" 
+          value={mesEnfants.length} 
+          icon={GraduationCap} 
+          subtitle="Enfants inscrits"
+        />
+        <KpiCard 
+          title="Paiements en Retard" 
+          value={paiementsEnRetard} 
+          icon={CreditCard} 
+          subtitle="Scolarité"
+          trend={paiementsEnRetard > 0 ? { value: 'À régler', isPositive: false } : undefined}
+        />
+        <KpiCard 
+          title="Absences (Non justifiées)" 
+          value={absencesNonJustifiees} 
+          icon={CalendarOff} 
+          subtitle="Depuis la rentrée"
+        />
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="shadow-sm border-border/50 md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg font-display">Dossiers de mes enfants</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {mesEnfants.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun enfant trouvé pour ce compte.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {mesEnfants.map(enfant => {
+                  const classe = classes.find(c => c.id === enfant.classeId)
+                  const moyenneT1 = getMoyenneEleve(enfant.id, 1)
+
+                  return (
+                    <div key={enfant.id} onClick={() => router.push(`/eleves/${enfant.id}`)} className="flex items-center justify-between border border-border/50 p-4 rounded-lg hover:border-primary/50 cursor-pointer transition-colors bg-muted/5">
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="h-12 w-12 border border-primary/20">
+                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                            {getInitiales(enfant.nom, enfant.prenom)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold text-text">{enfant.prenom} {enfant.nom}</p>
+                          <p className="text-sm text-muted-foreground">Classe: <span className="font-medium text-text">{classe?.nom}</span></p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="outline" className="bg-background">
+                          Moy. T1: <strong className="ml-1 text-primary">{moyenneT1 > 0 ? `${moyenneT1}/20` : '-'}</strong>
+                        </Badge>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-border/50">
+          <CardHeader>
+            <CardTitle className="text-lg font-display">Derniers Paiements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mesPaiements.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucun paiement enregistré.</p>
+            ) : (
+              <div className="space-y-4">
+                {mesPaiements.slice(0, 5).map(paiement => {
+                  const enfant = mesEnfants.find(e => e.id === paiement.eleveId)
+                  return (
+                    <div key={paiement.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                      <div>
+                        <p className="font-medium text-text text-sm">{paiement.type.replace('_', ' ').toUpperCase()} - {enfant?.prenom}</p>
+                        <p className="text-xs text-muted-foreground">Échéance: {formatDate(paiement.dateLimite)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={cn("font-bold text-sm", paiement.statut === 'paye' ? 'text-success' : paiement.statut === 'retard' ? 'text-danger' : 'text-warning')}>
+                          {paiement.statut === 'paye' 
+                            ? formatCFA(paiement.montantPaye || paiement.montant) 
+                            : formatCFA(Math.max(0, paiement.montant - (paiement.montantPaye || 0)))}
+                        </p>
+                        <Badge variant="outline" className={
+                          paiement.statut === 'paye' ? 'bg-success/10 text-success border-success/20 mt-1' : 
+                          paiement.statut === 'retard' ? 'bg-danger/10 text-danger border-danger/20 mt-1' : 
+                          'bg-warning/10 text-warning border-warning/20 mt-1'
+                        }>
+                          {paiement.statut === 'paye' ? 'Payé' : paiement.statut === 'retard' ? 'En retard' : 'En attente'}
+                        </Badge>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-border/50">
+          <CardHeader>
+            <CardTitle className="text-lg font-display">Absences Récentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mesAbsences.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground flex flex-col items-center">
+                <div className="bg-success/10 p-3 rounded-full text-success mb-3">
+                  <CalendarOff className="h-6 w-6" />
+                </div>
+                <p>Aucune absence enregistrée.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {mesAbsences.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5).map(absence => {
+                  const enfant = mesEnfants.find(e => e.id === absence.eleveId)
+                  return (
+                    <div key={absence.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                      <div>
+                        <p className="font-medium text-text text-sm">{enfant?.prenom} {enfant?.nom}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(absence.date)} ({absence.seance})</p>
+                      </div>
+                      <Badge variant={absence.justifiee ? "default" : "destructive"} className={absence.justifiee ? "bg-success hover:bg-success" : ""}>
+                        {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
+                      </Badge>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
