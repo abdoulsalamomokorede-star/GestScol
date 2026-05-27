@@ -350,18 +350,6 @@ export default function ProfilPage() {
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleChangePassword} className="space-y-4">
-                {currentUser.role !== 'directeur' && (
-                  <div className="space-y-1 mb-6 border-b border-border/40 pb-4">
-                    <Label htmlFor="identifiant" className="text-xs font-bold text-muted-foreground uppercase">Adresse E-mail (Identifiant)</Label>
-                    <Input 
-                      id="identifiant" 
-                      value={currentUser.email || ''}
-                      disabled
-                      className="text-xs h-9 font-mono font-bold bg-muted text-muted-foreground border-border" 
-                    />
-                  </div>
-                )}
-                
                 <div className="space-y-1">
                   <Label htmlFor="old-password" className="text-xs font-bold text-muted-foreground uppercase">Mot de passe actuel</Label>
                   <Input 
