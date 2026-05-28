@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 
 export default function ClassesPage() {
   const router = useRouter()
-  const { classes, eleves, inscriptions, activeAnneeScolaire, addClasse, updateClasse, deleteClasse } = useSchoolStore()
+  const { classes, eleves, inscriptions, activeAnneeScolaire, addClasse, updateClasse, deleteClasse, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [niveauFilter, setNiveauFilter] = useState('tous')
@@ -42,6 +42,14 @@ export default function ClassesPage() {
   }
 
   const handleSave = () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (!formData.nom || !formData.niveau) return toast({ title: "Erreur", description: "Veuillez remplir les champs.", variant: "destructive" })
     
     if (editingId) {
@@ -61,6 +69,14 @@ export default function ClassesPage() {
   }
 
   const confirmDelete = () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (deleteId) {
       deleteClasse(deleteId)
       toast({ title: "Succès", description: "Classe supprimée." })

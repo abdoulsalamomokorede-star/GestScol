@@ -44,6 +44,8 @@ import {
   BookmarkCheck
 } from 'lucide-react'
 
+import { PremiumGuard } from '@/components/ui/PremiumGuard'
+
 export default function AbsencesPage() {
   const { 
     currentUser, 
@@ -52,8 +54,11 @@ export default function AbsencesPage() {
     classes, 
     inscriptions,
     justifierAbsence,
+    addAbsence,
+    addNotification,
     anneesScolaires,
-    activeAnneeScolaire
+    activeAnneeScolaire,
+    ecole
   } = useSchoolStore()
   
   const { toast } = useToast()
@@ -107,6 +112,16 @@ export default function AbsencesPage() {
 
   // --- REDIRECTION SI NON CONNECTÉ (SÉCURITÉ APRÈS DÉCLARATION DES HOOKS) ---
   if (!currentUser) return null
+
+  // Bloquer l'accès si l'établissement utilise la formule gratuite
+  if (ecole?.abonnement?.plan === 'gratuit') {
+    return (
+      <PremiumGuard 
+        title="Gestion des Absences" 
+        description="Réalisez l'appel journalier en ligne (matin et après-midi), suivez le taux d'assiduité global ou individuel de vos élèves, et gérez officiellement les motifs de justification des absences."
+      />
+    )
+  }
 
   if (currentUser.role === 'parent' && enfants.length === 0) {
     return (
@@ -200,28 +215,38 @@ export default function AbsencesPage() {
     if (e.statut !== 'actif') return false;
     const inscription = inscriptions.find(ins => 
       ins.eleveId === e.id && 
+      ins.statut === 'validee' &&
       (ins.anneeScolaire === activeAnneeScolaire?.id || ins.anneeScolaire === activeAnneeScolaire?.nom)
     );
-    const classeId = inscription ? inscription.classeId : e.classeId;
+    if (!inscription) return false;
     
-    return isEnseignant ? classesEnseignant.some(c => c.id === classeId) : true;
+    return isEnseignant ? classesEnseignant.some(c => c.id === inscription.classeId) : true;
   }).length;
 
   const calculTauxGlobal = () => {
     if (totalElevesPoches === 0) return 100
     const totalAbsencesPossibles = totalElevesPoches * totalSessionsBase
     const totalAbsencesReelles = absences.filter(a => {
+      // S'assurer que l'absence concerne un élève inscrit validé pour l'année active
+      const isEleveInscritActif = inscriptions.some(ins =>
+        ins.eleveId === a.eleveId &&
+        ins.statut === 'validee' &&
+        (ins.anneeScolaire === activeAnneeScolaire?.id || ins.anneeScolaire === activeAnneeScolaire?.nom)
+      );
+      if (!isEleveInscritActif) return false;
+
       if (isEnseignant) {
         const el = eleves.find(e => e.id === a.eleveId)
         if (!el) return false;
         
         const inscription = inscriptions.find(ins => 
           ins.eleveId === a.eleveId && 
+          ins.statut === 'validee' &&
           (ins.anneeScolaire === activeAnneeScolaire?.id || ins.anneeScolaire === activeAnneeScolaire?.nom)
         );
-        const classeId = inscription ? inscription.classeId : el.classeId;
+        if (!inscription) return false;
         
-        return classesEnseignant.some(c => c.id === classeId)
+        return classesEnseignant.some(c => c.id === inscription.classeId)
       }
       return true
     }).length
@@ -259,7 +284,7 @@ export default function AbsencesPage() {
   }
 
   // Soumission Signalement Parent
-  const handleSignalSubmit = (e: React.FormEvent) => {
+  const handleSignalSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedEnfantId) {
       toast({
@@ -279,15 +304,54 @@ export default function AbsencesPage() {
     }
 
     setSignalLoading(true)
-    setTimeout(() => {
+    try {
+      // 1. Récupérer les informations de l'élève concerné
+      const enfantActif = eleves.find(el => el.id === selectedEnfantId)
+      if (!enfantActif) throw new Error("Élève introuvable")
+
+      const classeEnfant = classes.find(c => c.id === enfantActif.classeId)
+
+      // 2. Créer l'absence en base de données ou store via addAbsence
+      const newAbsence = {
+        id: `abs-parent-${Date.now()}`,
+        eleveId: selectedEnfantId,
+        date: signalDate,
+        seance: signalSeance,
+        justifiee: false,
+        motif: signalMotif,
+        anneeScolaire: activeAnneeScolaire?.nom || '2024-2025'
+      }
+      await addAbsence(newAbsence)
+
+      // 3. Diffuser une notification système à la direction de l'école
+      const seanceLabel = signalSeance === 'matin' ? 'Matin' : 'Après-midi'
+      const dateLabel = formatDate(signalDate)
+
+      await addNotification({
+        titre: `Signalement d'absence : ${enfantActif.prenom} ${enfantActif.nom}`,
+        description: `Le parent de l'élève ${enfantActif.prenom} ${enfantActif.nom} (Classe : ${classeEnfant?.nom || 'N/A'}) signale son absence pour la séance du ${seanceLabel} le ${dateLabel}. Motif : ${signalMotif}`,
+        type: 'absence',
+        eleveId: selectedEnfantId,
+        classeId: enfantActif.classeId
+      })
+
       toast({
         title: "Signalement Transmis",
         description: "Votre signalement a été envoyé à la direction de l'école. N'oubliez pas de fournir un justificatif officiel (certificat médical, etc.) dès le retour de l'élève.",
-        variant: "default",
+        className: "bg-success text-white border-none shadow-lg"
       })
+      
       setSignalMotif('')
+    } catch (err: any) {
+      console.error(err)
+      toast({
+        title: "Erreur",
+        description: "Impossible de transmettre votre signalement. Veuillez réessayer.",
+        variant: "destructive"
+      })
+    } finally {
       setSignalLoading(false)
-    }, 800)
+    }
   }
 
   return (

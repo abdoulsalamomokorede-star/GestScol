@@ -17,7 +17,7 @@ function MatieresContent() {
   const searchParams = useSearchParams()
   const initialClasseId = searchParams.get('classeId') || 'toutes'
 
-  const { matieres, classes, addMatiere, updateMatiere, deleteMatiere } = useSchoolStore()
+  const { matieres, classes, addMatiere, updateMatiere, deleteMatiere, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [classFilter, setClassFilter] = useState(initialClasseId)
@@ -62,6 +62,14 @@ function MatieresContent() {
   }
 
   const handleSave = () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (!formData.nom || !formData.classeId) return toast({ title: "Erreur", description: "Veuillez remplir les champs.", variant: "destructive" })
     
     if (editingId) {
@@ -81,6 +89,14 @@ function MatieresContent() {
   }
 
   const confirmDelete = () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (deleteId) {
       deleteMatiere(deleteId)
       toast({ title: "Succès", description: "Matière supprimée." })

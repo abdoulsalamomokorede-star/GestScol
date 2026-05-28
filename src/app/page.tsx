@@ -1079,13 +1079,15 @@ export default function LandingPage() {
               Notre équipe d'assistance basée à Abidjan est à votre écoute pour organiser une démonstration sur place ou en visioconférence.
             </p>
             <div className="pt-2">
-              <Link 
-                href="/contact" 
+              <a 
+                href="https://wa.me/2250586037974" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs px-4 py-2 rounded-lg border border-emerald-200 shadow-sm transition-all"
                 id="contact-support-faq"
               >
                 Contacter notre conseiller WhatsApp
-              </Link>
+              </a>
             </div>
           </div>
 

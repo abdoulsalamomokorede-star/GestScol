@@ -68,10 +68,19 @@ export default function DashboardLayout({
   }
 
   // --- SUBSCRIPTION GUARD ---
-  // On vérifie le statut de l'abonnement
-  const isAbonnementInvalide = ecole?.abonnement && ['expire', 'suspendu'].includes(ecole.abonnement.statut)
+  // On vérifie le statut de l'abonnement et la date de fin temporelle d'expiration
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+  const isAbonnementInvalide = ecole?.abonnement && (
+    ['expire', 'suspendu'].includes(ecole.abonnement.statut) ||
+    (ecole.abonnement.dateFin && new Date(ecole.abonnement.dateFin) < new Date())
+  )
   
-  if (isAbonnementInvalide) {
+  // Si le Directeur ou l'utilisateur est sur la page d'abonnement, on ne bloque pas pour permettre le renouvellement
+  const isPageAbonnement = pathname.startsWith('/abonnement')
+  
+  if (isAbonnementInvalide && !isPageAbonnement && currentUser.role !== 'directeur') {
+    const isExpired = ecole.abonnement?.statut === 'expire' || (ecole.abonnement?.dateFin && new Date(ecole.abonnement.dateFin) < new Date())
+    
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50 p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-border">
@@ -81,48 +90,38 @@ export default function DashboardLayout({
             </div>
             <h1 className="text-2xl font-bold text-slate-800">Accès Suspendu</h1>
             <p className="text-sm text-slate-600">
-              L'abonnement de votre établissement (<span className="font-semibold">{ecole.nom}</span>) est actuellement 
-              <span className="text-red-500 font-bold ml-1">{ecole.abonnement?.statut === 'expire' ? 'expiré' : 'suspendu'}</span>.
+              L&apos;abonnement de votre établissement (<span className="font-semibold">{ecole.nom}</span>) est actuellement 
+              <span className="text-red-500 font-bold ml-1">{isExpired ? 'expiré' : 'suspendu'}</span>.
             </p>
             
             <div className="bg-orange-50 text-orange-800 p-4 rounded-xl text-xs w-full flex items-start gap-3 mt-2">
               <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
               <p className="text-left">
-                L'accès à l'espace de gestion et aux espaces parents/enseignants est restreint jusqu'au renouvellement de la souscription.
+                L&apos;accès à l&apos;espace de gestion et aux espaces parents/enseignants est restreint jusqu&apos;au renouvellement de la souscription.
               </p>
             </div>
 
-            {currentUser.role === 'directeur' ? (
-              <div className="pt-4 w-full">
-                <p className="text-xs text-slate-500 mb-3">Veuillez régulariser la situation pour restaurer l'accès.</p>
-                <button className="w-full py-2.5 px-4 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Renouveler l'abonnement
-                </button>
-              </div>
-            ) : (
-              <div className="pt-4 w-full">
-                <p className="text-xs text-slate-500 mb-3">Veuillez contacter la direction de l'établissement pour plus d'informations.</p>
-                <button 
-                  onClick={() => {
-                    supabase.auth.signOut().then(() => {
-                      setCurrentUser(null) // Nettoyer l'état Zustand et le cookie currentUser
-                      const path = window.location.pathname
-                      if (path.startsWith('/enseignant')) {
-                        router.push('/login/enseignant')
-                      } else if (path.startsWith('/parent')) {
-                        router.push('/login/parent')
-                      } else {
-                        router.push('/login')
-                      }
-                    })
-                  }}
-                  className="w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors"
-                >
-                  Retour à la connexion
-                </button>
-              </div>
-            )}
+            <div className="pt-4 w-full">
+              <p className="text-xs text-slate-500 mb-3">Veuillez contacter la direction de l'établissement pour plus d'informations.</p>
+              <button 
+                onClick={() => {
+                  supabase.auth.signOut().then(() => {
+                    setCurrentUser(null) // Nettoyer l'état Zustand et le cookie currentUser
+                    const path = window.location.pathname
+                    if (path.startsWith('/enseignant')) {
+                      router.push('/login/enseignant')
+                    } else if (path.startsWith('/parent')) {
+                      router.push('/login/parent')
+                    } else {
+                      router.push('/login')
+                    }
+                  })
+                }}
+                className="w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                Retour à la connexion
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -134,6 +133,23 @@ export default function DashboardLayout({
       <Sidebar className="hidden md:flex w-64" />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
+        
+        {/* Bandeau d'abonnement expiré persistant pour le Directeur */}
+        {isAbonnementInvalide && currentUser.role === 'directeur' && (
+          <div className="bg-red-600 text-white py-2.5 px-6 text-xs font-bold flex items-center justify-between gap-4 border-b border-red-700 shadow-md shrink-0">
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-white animate-ping shrink-0" />
+              <span>Votre abonnement GestScol a expiré. Vous êtes en mode <strong>Lecture Seule</strong>. La création, modification et suppression de données sont inactives.</span>
+            </span>
+            <button 
+              onClick={() => window.location.href = '/abonnement'}
+              className="bg-white hover:bg-slate-50 text-red-700 px-3 py-1.5 rounded-lg border-none shadow-sm transition-all font-semibold shrink-0"
+            >
+              Renouveler mon abonnement
+            </button>
+          </div>
+        )}
+
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           {children}
         </main>

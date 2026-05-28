@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
-import { Search, Plus, UserCheck, AlertTriangle, Eye, Edit, Trash2, Check, ChevronsUpDown } from 'lucide-react'
+import { Search, Plus, UserCheck, AlertTriangle, Eye, Edit, Trash2, Check, ChevronsUpDown, Zap } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -71,6 +71,30 @@ export default function ElevesPage() {
 
   return (
     <div className="space-y-6">
+      {isLimitReached && (
+        <div className="bg-gradient-to-r from-amber-500/10 to-primary/10 border border-amber-500/30 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm animate-pulse-subtle">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-lg bg-amber-500/10 text-amber-600 mt-0.5">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-display font-bold text-text text-base">Limite d'élèves atteinte (Forfait Gratuit)</h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                Votre école a atteint le quota maximum de {ecole.abonnement?.maxEleves} élèves autorisés dans la formule actuelle. 
+                Passez à la vitesse supérieure en mettant à niveau votre abonnement via **CinetPay** pour inscrire de nouveaux élèves sans restriction !
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => router.push('/abonnement')}
+            className="bg-amber-500 hover:bg-amber-600 text-white font-semibold self-stretch md:self-auto shrink-0 shadow-md transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            <Zap className="h-4 w-4 fill-current" />
+            Mettre à niveau
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-display font-bold text-text">Gestion des Élèves</h2>
@@ -86,9 +110,9 @@ export default function ElevesPage() {
             Nouvel Élève
           </Button>
           {isLimitReached && (
-            <p className="text-[10px] text-red-500 font-semibold max-w-[200px] text-right leading-tight">
-              Limite d'élèves atteinte ({ecole.abonnement?.maxEleves}). Veuillez upgrader votre abonnement.
-            </p>
+            <span className="text-[10px] text-amber-600 font-bold max-w-[200px] text-right leading-tight">
+              Abonnement à mettre à niveau
+            </span>
           )}
         </div>
       </div>

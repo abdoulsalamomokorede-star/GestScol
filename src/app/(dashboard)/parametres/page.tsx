@@ -3,14 +3,15 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { getInitiales, translateDbError } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Combobox } from '@/components/ui/combobox'
 import { useToast } from '@/hooks/use-toast'
+import { PremiumGuard } from '@/components/ui/PremiumGuard'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { getInitiales, translateDbError } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
@@ -42,7 +43,7 @@ import { createUtilisateurAuth, adminUpdatePassword } from '@/app/actions/admin'
 
 export default function ParametresPage() {
   const router = useRouter()
-  const { currentUser, eleves, updateEleve, addEnseignant, enseignants, ecole, updateEcole, deleteEnseignant, comptesSimules, addCompteConnexion, updateCompteConnexion, deleteCompteConnexion, inscriptions, absences, paiements, notes, bulletins } = useSchoolStore()
+  const { currentUser, eleves, updateEleve, addEnseignant, enseignants, ecole, updateEcole, deleteEnseignant, comptesSimules, addCompteConnexion, updateCompteConnexion, deleteCompteConnexion, inscriptions, absences, paiements, notes, bulletins, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
 
   // Verrou d'accès pour les non-directeurs
@@ -83,6 +84,14 @@ export default function ParametresPage() {
   }
 
   const confirmDeleteAnnee = async () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (deleteAnneeId) {
       await deleteAnneeScolaire(deleteAnneeId)
       toast({ title: "Succès", description: "L'année scolaire a été supprimée." })
@@ -97,6 +106,14 @@ export default function ParametresPage() {
   }
 
   const saveEditAnnee = async () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (editingAnneeId && editingAnneeNom.trim()) {
       const exists = anneesScolaires.some(a => a.nom === editingAnneeNom.trim() && a.id !== editingAnneeId)
       if (exists) {
@@ -172,6 +189,15 @@ export default function ParametresPage() {
   const handleSaveGeneraux = (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
+
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
@@ -192,6 +218,15 @@ export default function ParametresPage() {
 
   const handleCreateCompte = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
 
     if (role === 'enseignant') {
       if (!selectedEnseignantId) {
@@ -399,6 +434,14 @@ export default function ParametresPage() {
   }
 
   const confirmDeleteCompte = () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (deleteCompteId) {
       deleteCompteConnexion(deleteCompteId)
       if (deleteCompteRole === 'enseignant') {
@@ -419,6 +462,14 @@ export default function ParametresPage() {
   }
 
   const confirmChangePassword = async () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (passwordCompteId && newPassword) {
       // Met à jour la table de log
       updateCompteConnexion(passwordCompteId, { mdpTemporaire: newPassword })
@@ -627,7 +678,13 @@ export default function ParametresPage() {
 
       {/* CONTENU : CRÉATION DE COMPTES */}
       {activeTab === 'comptes' && (
-        <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in-50 duration-200">
+        ecole?.abonnement?.plan === 'gratuit' ? (
+          <PremiumGuard 
+            title="Création de Comptes Enseignants & Parents" 
+            description="Activez l'accès en ligne pour vos enseignants et vos parents d'élèves. Permettez-leur de collaborer en temps réel (saisie des notes, appel, relevés financiers, messagerie)."
+          />
+        ) : (
+          <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in-50 duration-200">
           
           {/* APERÇU DE LA CARTE DE SÉCURITÉ DU COMPTE CRÉÉ */}
           {compteCreeApercu && (
@@ -1046,7 +1103,8 @@ export default function ParametresPage() {
               </Card>
             </div>
           </div>
-        </div>
+          </div>
+        )
       )}
 
       {/* CONTENU : ANNÉES SCOLAIRES */}

@@ -36,7 +36,7 @@ const generateMatricule = () => {
 }
 
 export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalProps) {
-  const { classes, eleves, addEleve, updateEleve } = useSchoolStore()
+  const { classes, eleves, addEleve, updateEleve, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
   // For shadcn, usually it's `useToast` hook that returns `{ toast }`.
   // Wait, shadcn toaster might not be fully configured, but I will use the standard hook if available.
@@ -139,6 +139,15 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     
     // Validation basique
     if (!formData.matricule || !formData.prenom || !formData.nom || !formData.classeId || !formData.parentTelephone) {

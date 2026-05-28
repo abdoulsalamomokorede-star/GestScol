@@ -1,8 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { User, Eleve, Classe, Note, Paiement, Absence, Matiere, Inscription, Bulletin, AnneeScolaire, Ecole, UserCompteSimule } from '../types'
+import { User, Eleve, Classe, Note, Paiement, Absence, Matiere, Inscription, Bulletin, AnneeScolaire, Ecole, UserCompteSimule, AbonnementEcole, NotificationItem, NotificationType } from '../types'
 import { classesMock, elevesMock, notesMock, paiementsMock, absencesMock, matieresMock, ecoleMock, usersMock, inscriptionsMock, bulletinsMock } from '../data/mockData'
 import { createClient } from '../lib/supabase/client'
+import { updateSchoolAbonnement, getSchoolAbonnement } from '../app/actions/abonnement'
+import { createNotification, markAsRead, fetchUserLectures, deleteNotificationDb } from '../app/actions/notifications'
+import { toast } from '../hooks/use-toast'
 
 interface SchoolState {
   ecole: Ecole
@@ -19,8 +22,23 @@ interface SchoolState {
   anneesScolaires: AnneeScolaire[]
   activeAnneeScolaire: AnneeScolaire | null
   comptesSimules: UserCompteSimule[]
+  notifications: NotificationItem[]
+  suppressedNotificationIds: string[]
   
   updateEcole: (data: Partial<Ecole>) => void
+  updateAbonnement: (data: Partial<AbonnementEcole>) => Promise<void>
+  
+  fetchNotifications: () => Promise<void>
+  addNotification: (data: {
+    titre: string
+    description: string
+    type: NotificationType
+    destinataireRole?: 'parent' | 'enseignant' | 'all'
+    classeId?: string
+    eleveId?: string
+  }) => Promise<void>
+  markNotificationAsRead: (id: string) => Promise<void>
+  deleteNotification: (id: string) => Promise<void>
   
   fetchSupabaseData: () => Promise<void>
   
@@ -87,6 +105,30 @@ interface SchoolState {
   deleteBulletin: (id: string) => Promise<void>
   getBulletinsByClasseAndTrimestre: (classeId: string, trimestre: 1 | 2 | 3) => Bulletin[]
   calculerBulletinsClasse: (classeId: string, trimestre: 1 | 2 | 3, anneeScolaire: string) => Bulletin[]
+  isAbonnementExpired: () => boolean
+}
+
+const checkAbonnement = (state: any, suppressToast = false): boolean => {
+  const ecole = state.ecole
+  if (!ecole?.abonnement) return false
+  const isExpired = ['expire', 'suspendu'].includes(ecole.abonnement.statut) ||
+    (ecole.abonnement.dateFin && new Date(ecole.abonnement.dateFin) < new Date())
+  if (isExpired) {
+    const errorMsg = "Abonnement expiré. Veuillez le renouveler pour effectuer cette action."
+    if (!suppressToast) {
+      try {
+        toast({
+          title: "Action impossible",
+          description: errorMsg,
+          variant: "destructive"
+        })
+      } catch (e) {
+        console.warn("Could not display toast from checkAbonnement:", e)
+      }
+    }
+    return true
+  }
+  return false
 }
 
 export const useSchoolStore = create<SchoolState>()(
@@ -94,32 +136,192 @@ export const useSchoolStore = create<SchoolState>()(
     (set, get) => ({
       ecole: ecoleMock,
       updateEcole: async (data) => {
-    const state = get()
-    if (state.ecole.id) {
-      try {
-        const supabase = createClient()
-        const { error } = await supabase
-          .from('ecoles')
-          .update({
-            nom: data.nom,
-            identifiant: data.identifiant,
-            ville: data.ville,
-            adresse: data.adresse,
-            telephone: data.telephone,
-            logo: data.logo,
-            annee_scolaire: data.anneeScolaire
-          })
-          .eq('id', state.ecole.id)
-        
-        if (error) {
-          console.warn("Erreur Supabase updateEcole:", error.message)
+        if (checkAbonnement(get())) return
+        const state = get()
+        if (state.ecole.id) {
+          try {
+            const supabase = createClient()
+            const { error } = await supabase
+              .from('ecoles')
+              .update({
+                nom: data.nom,
+                identifiant: data.identifiant,
+                ville: data.ville,
+                adresse: data.adresse,
+                telephone: data.telephone,
+                logo: data.logo,
+                annee_scolaire: data.anneeScolaire
+              })
+              .eq('id', state.ecole.id)
+            
+            if (error) {
+              console.warn("Erreur Supabase updateEcole:", error.message)
+            }
+          } catch (err) {
+            console.warn("Exception updateEcole:", err)
+          }
         }
-      } catch (err) {
-        console.warn("Exception updateEcole:", err)
-      }
-    }
-    set((state) => ({ ecole: { ...state.ecole, ...data } }))
-  },
+        set((state) => ({ ecole: { ...state.ecole, ...data } }))
+      },
+      updateAbonnement: async (data) => {
+        const state = get()
+        if (state.ecole.id) {
+          const res = await updateSchoolAbonnement(state.ecole.id, data)
+          if (!res.success) {
+            console.warn("Erreur de mise à jour de l'abonnement en base :", res.error)
+          }
+        }
+        
+        set((state) => {
+          const currentAbonnement = state.ecole.abonnement || {
+            id: '',
+            ecoleId: state.ecole.id,
+            plan: 'gratuit',
+            statut: 'en_attente',
+            dateDebut: new Date().toISOString(),
+            montantPaye: 0,
+            maxEleves: 50
+          }
+          
+          return {
+            ecole: {
+              ...state.ecole,
+              abonnement: {
+                ...currentAbonnement,
+                ...data
+              }
+            }
+          }
+        })
+      },
+      fetchNotifications: async () => {
+        const state = get()
+        const currentUser = state.currentUser
+        if (!currentUser || !state.ecole.id) return
+
+        try {
+          const supabase = createClient()
+          
+          // 1. Charger les lectures de l'utilisateur connecté
+          const lecturesRes = await fetchUserLectures(currentUser.id)
+          const readIds = lecturesRes.readIds || []
+
+          // 2. Récupérer les notifications de Supabase pour cette école
+          const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('ecole_id', state.ecole.id)
+            .order('created_at', { ascending: false })
+
+          if (error) {
+            console.warn("Erreur Supabase fetchNotifications (Basculement en mode local):", error.message)
+            return
+          }
+
+          if (data) {
+            const mapped: NotificationItem[] = data.map(item => ({
+              id: item.id,
+              ecoleId: item.ecole_id,
+              titre: item.titre,
+              description: item.description,
+              type: item.type as any,
+              destinataireRole: item.destinataire_role || undefined,
+              classeId: item.classe_id || undefined,
+              eleveId: item.eleve_id || undefined,
+              creePar: item.cree_par || undefined,
+              createdAt: item.created_at,
+              lu: readIds.includes(item.id)
+            }))
+            
+            set({ notifications: mapped })
+          }
+
+        } catch (err) {
+          console.warn("Exception fetchNotifications (Utilisation de l'état mocké existant):", err)
+        }
+      },
+
+      addNotification: async (data) => {
+        const state = get()
+        if (!state.ecole.id) return
+
+        const newNotifObj = {
+          ecoleId: state.ecole.id,
+          titre: data.titre,
+          description: data.description,
+          type: data.type,
+          destinataireRole: data.destinataireRole,
+          classeId: data.classeId,
+          eleveId: data.eleveId,
+          creePar: state.currentUser?.id
+        }
+
+        // 1. Envoyer en base de données via notre Server Action RLS-bypass
+        const res = await createNotification(newNotifObj)
+        
+        // 2. Mettre à jour l'état local
+        if (res.success && res.data) {
+          set(state => ({
+            notifications: [res.data!, ...state.notifications]
+          }))
+        } else {
+          // Si la table n'existe pas en DB, on l'ajoute au store local mocké
+          const localMockNotif: NotificationItem = {
+            id: `mock-temp-${Date.now()}`,
+            ecoleId: state.ecole.id,
+            titre: data.titre,
+            description: data.description,
+            type: data.type,
+            destinataireRole: data.destinataireRole,
+            classeId: data.classeId,
+            eleveId: data.eleveId,
+            creePar: state.currentUser?.id,
+            createdAt: new Date().toISOString(),
+            lu: false
+          }
+          set(state => ({
+            notifications: [localMockNotif, ...state.notifications]
+          }))
+        }
+      },
+
+      markNotificationAsRead: async (id) => {
+        const state = get()
+        const currentUser = state.currentUser
+        if (!currentUser) return
+
+        // 1. Si ce n'est pas une notification mockée temporaire, enregistrer en base via la Server Action
+        if (!id.startsWith('mock-temp-') && !id.startsWith('mock-')) {
+          await markAsRead(id, currentUser.id)
+        }
+
+        // 2. Mettre à jour l'état local
+        set(state => ({
+          notifications: state.notifications.map(n => n.id === id ? { ...n, lu: true } : n)
+        }))
+      },
+
+      deleteNotification: async (id) => {
+        const state = get()
+        const currentUser = state.currentUser
+        if (!currentUser) return
+
+        if (currentUser.role === 'directeur') {
+          // Le Directeur supprime définitivement la notification en base pour tout le monde
+          if (!id.startsWith('mock-temp-') && !id.startsWith('mock-')) {
+            await deleteNotificationDb(id)
+          }
+          // On la retire également localement
+          set(state => ({
+            notifications: state.notifications.filter(n => n.id !== id)
+          }))
+        } else {
+          // Les parents et enseignants ne font que la masquer pour eux-mêmes de manière persistante avec isolation utilisateur
+          set(state => ({
+            suppressedNotificationIds: [...(state.suppressedNotificationIds || []), `${currentUser.id}_${id}`]
+          }))
+        }
+      },
       currentUser: null,
       eleves: elevesMock,
       classes: classesMock,
@@ -144,6 +346,63 @@ export const useSchoolStore = create<SchoolState>()(
       ],
       activeAnneeScolaire: { id: 'as-2024-2025', nom: '2024-2025', dateDebut: '2024-09-01', dateFin: '2025-07-31', statut: 'active' },
       comptesSimules: [],
+      notifications: [
+        {
+          id: 'mock-1',
+          ecoleId: 'ecole-1',
+          titre: 'Reçu de versement scolarité',
+          description: "Un versement de 150 000 FCFA a été enregistré via CinetPay (Wave) pour l'élève Amenan Grace Kouassi (Classe: CM2 A).",
+          createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+          type: 'paiement',
+          eleveId: 'el-1',
+          classeId: 'c3',
+          lu: false
+        },
+        {
+          id: 'mock-2',
+          ecoleId: 'ecole-1',
+          titre: 'Absence enregistrée',
+          description: "L'absence de l'élève Mamadou Traoré (Classe: CM2 A) a été signalée pour la séance du matin (Motif: Visite médicale).",
+          createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+          type: 'absence',
+          eleveId: 'el-2',
+          classeId: 'c3',
+          lu: false
+        },
+        {
+          id: 'mock-3',
+          ecoleId: 'ecole-1',
+          titre: 'Bulletin du 1er Trimestre disponible',
+          description: "Le bulletin officiel de l'élève Mireille Essi Aka (Classe: CP1 A) a été généré et approuvé par la direction.",
+          createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+          type: 'bulletin',
+          eleveId: 'el-11',
+          classeId: 'c1',
+          lu: true
+        },
+        {
+          id: 'mock-4',
+          ecoleId: 'ecole-1',
+          titre: 'Nouvel élève inscrit',
+          description: "Dossier d'inscription complété et validé pour Ibrahim Cheick Diallo (Classe: CP1 A).",
+          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+          type: 'inscription',
+          eleveId: 'el-12',
+          classeId: 'c1',
+          lu: true
+        },
+        {
+          id: 'mock-5',
+          ecoleId: 'ecole-1',
+          titre: "Réunion des parents d'élèves",
+          description: "La direction de GestScol convie tous les parents d'élèves à la grande réunion de fin d'année le samedi 6 juin à 9h00.",
+          createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+          type: 'communique',
+          destinataireRole: 'parent',
+          lu: false
+        }
+      ],
+      suppressedNotificationIds: [],
 
       clearSchoolData: (ecoleData) => set({
         ecole: { ...ecoleMock, ...ecoleData, id: ecoleData.id || '' },
@@ -156,12 +415,15 @@ export const useSchoolStore = create<SchoolState>()(
         enseignants: [],
         inscriptions: [],
         bulletins: [],
-        comptesSimules: []
+        comptesSimules: [],
+        notifications: [],
+        suppressedNotificationIds: []
       }),
 
       setComptesSimules: (comptes) => set({ comptesSimules: comptes }),
 
       addCompteConnexion: async (compte) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const { error } = await supabase.from('comptes_connexion').insert({
@@ -189,6 +451,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       updateCompteConnexion: async (id, data) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -210,6 +473,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       deleteCompteConnexion: async (id) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('comptes_connexion').delete().eq('id', id)
@@ -247,7 +511,10 @@ export const useSchoolStore = create<SchoolState>()(
           const { data: bulletins } = await supabase.from('bulletins').select('*')
           const { data: comptesConnexion } = await supabase.from('comptes_connexion').select('*')
           const { data: enseignantsMatieres } = await supabase.from('enseignants_matieres').select('*')
-          const { data: abonnements } = await supabase.from('abonnements').select('*').eq('ecole_id', ecoleId)
+          
+          // Récupération sécurisée bypassant RLS pour s'assurer que les parents et enseignants lisent le bon statut d'abonnement
+          const abonnementRes = await getSchoolAbonnement(ecoleId)
+          const abonnements = abonnementRes.success && abonnementRes.data ? [abonnementRes.data] : null
 
           if (anneesScolaires) {
             const mappedAnnees = anneesScolaires.map(a => ({
@@ -265,15 +532,15 @@ export const useSchoolStore = create<SchoolState>()(
           if (ecoles && ecoles.length > 0) {
             const ecoleAbonnement = abonnements && abonnements.length > 0 ? {
               id: abonnements[0].id,
-              ecoleId: abonnements[0].ecole_id,
+              ecoleId: abonnements[0].ecoleId,
               plan: abonnements[0].plan,
               statut: abonnements[0].statut,
-              dateDebut: abonnements[0].date_debut,
-              dateFin: abonnements[0].date_fin,
-              transactionRef: abonnements[0].transaction_ref,
-              modePaiement: abonnements[0].mode_paiement,
-              montantPaye: abonnements[0].montant_paye,
-              maxEleves: abonnements[0].max_eleves
+              dateDebut: abonnements[0].dateDebut,
+              dateFin: abonnements[0].dateFin,
+              transactionRef: abonnements[0].transactionRef,
+              modePaiement: abonnements[0].modePaiement,
+              montantPaye: abonnements[0].montantPaye,
+              maxEleves: abonnements[0].maxEleves
             } : undefined
 
             set({ ecole: {
@@ -519,6 +786,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
       
       addAnneeScolaire: async (annee) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const ecoleId = get().ecole?.id
@@ -544,6 +812,7 @@ export const useSchoolStore = create<SchoolState>()(
         } catch (e) { console.error(e) }
       },
       updateAnneeScolaire: async (id, data) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -561,6 +830,7 @@ export const useSchoolStore = create<SchoolState>()(
         }))
       },
       deleteAnneeScolaire: async (id) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('annees_scolaires').delete().eq('id', id)
@@ -572,6 +842,7 @@ export const useSchoolStore = create<SchoolState>()(
         }))
       },
       setActiveAnneeScolaire: async (id) => {
+        if (checkAbonnement(get())) return
         const state = get()
         const newActive = state.anneesScolaires.find(a => a.id === id)
         if (!newActive) return
@@ -610,6 +881,9 @@ export const useSchoolStore = create<SchoolState>()(
       getInscriptions: () => get().inscriptions,
       getInscriptionsByEleve: (eleveId) => get().inscriptions.filter(i => i.eleveId === eleveId),
       addInscription: async (data) => {
+        if (checkAbonnement(get(), true)) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const insertData: any = {
@@ -704,6 +978,9 @@ export const useSchoolStore = create<SchoolState>()(
         }
       },
       updateInscription: async (id, data) => {
+        if (checkAbonnement(get(), true)) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -763,6 +1040,7 @@ export const useSchoolStore = create<SchoolState>()(
         }
       },
       deleteInscription: async (id) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('inscriptions').delete().eq('id', id)
@@ -783,6 +1061,7 @@ export const useSchoolStore = create<SchoolState>()(
       getEleveById: (id) => get().eleves.find(e => e.id === id),
       
       addEleve: async (eleve) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('eleves').insert({
@@ -813,6 +1092,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
       
       updateEleve: async (id, data) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -838,6 +1118,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       deleteEleve: async (id) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('eleves').delete().eq('id', id)
@@ -859,6 +1140,7 @@ export const useSchoolStore = create<SchoolState>()(
       getClasseById: (id) => get().classes.find(c => c.id === id),
 
       addClasse: async (classe) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('classes').insert({
@@ -879,6 +1161,7 @@ export const useSchoolStore = create<SchoolState>()(
         } catch (e) { console.error(e) }
       },
       updateClasse: async (id, data) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -893,6 +1176,7 @@ export const useSchoolStore = create<SchoolState>()(
         set((state) => ({ classes: state.classes.map(c => c.id === id ? { ...c, ...data } : c) }))
       },
       deleteClasse: async (id) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('classes').delete().eq('id', id)
@@ -908,6 +1192,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       addNote: async (note) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('notes').insert({
@@ -932,6 +1217,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
       
       updateNote: async (id, data) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -949,6 +1235,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       deleteNote: async (id) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('notes').delete().eq('id', id)
@@ -963,6 +1250,7 @@ export const useSchoolStore = create<SchoolState>()(
       getPaiementsByEleve: (eleveId) => get().paiements.filter(p => p.eleveId === eleveId),
       
       addPaiement: async (paiement) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('paiements').insert({
@@ -992,6 +1280,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       updatePaiementStatut: async (id, statut, mode, reference) => {
+        if (checkAbonnement(get())) return
         const updateData: any = { statut }
         if (mode) updateData.mode_paiement = mode
         if (reference) updateData.reference = reference
@@ -1016,7 +1305,9 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       enregistrerPaiementInstallment: async (id, montantEncaisse, mode, reference) => {
-        const paiementsState = get().paiements
+        if (checkAbonnement(get())) return
+        const state = get()
+        const paiementsState = state.paiements
         const p = paiementsState.find(p => p.id === id)
         if (!p) return
 
@@ -1058,9 +1349,31 @@ export const useSchoolStore = create<SchoolState>()(
             historiquePaiements: newHistorique
           } : pmt)
         }))
+
+        // Génération automatique d'une notification système de paiement pour le parent
+        try {
+          const el = get().eleves.find(e => e.id === p.eleveId)
+          if (el) {
+            const formatMode = mode === 'wave' ? 'Wave' : mode === 'orange_money' ? 'Orange Money' : mode === 'mtn_momo' ? 'MTN MoMo' : 'Espèces'
+            const formattedMontant = new Intl.NumberFormat('fr-FR').format(montantEncaisse) + ' FCFA'
+            const classeName = get().classes.find(c => c.id === el.classeId)?.nom || 'Inconnue'
+            
+            await get().addNotification({
+              titre: 'Reçu de versement scolarité',
+              description: `Un versement de ${formattedMontant} a été enregistré via ${formatMode} pour l'élève ${el.prenom} ${el.nom} (Classe: ${classeName}).`,
+              type: 'paiement',
+              eleveId: el.id,
+              classeId: el.classeId,
+              destinataireRole: 'parent'
+            })
+          }
+        } catch (err) {
+          console.warn("Erreur lors de la génération de notification automatique de paiement :", err)
+        }
       },
 
       annulerVersement: async (id, versementIdx) => {
+        if (checkAbonnement(get())) return
         const p = get().paiements.find(p => p.id === id)
         if (!p) return
         
@@ -1102,6 +1415,7 @@ export const useSchoolStore = create<SchoolState>()(
 
 
       updateClasseTarifs: async (classeId, montantScolarite, montantInscription) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('classes').update({
@@ -1117,6 +1431,7 @@ export const useSchoolStore = create<SchoolState>()(
       getAbsencesByEleve: (eleveId) => get().absences.filter(a => a.eleveId === eleveId),
       
       addAbsence: async (absence) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('absences').insert({
@@ -1140,6 +1455,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       enregistrerAbsences: async (date, seance, absencesAAjouter, eleveIds) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           if (eleveIds.length > 0) {
@@ -1186,9 +1502,35 @@ export const useSchoolStore = create<SchoolState>()(
             absences: [...cleanAbsences, ...absencesAAjouter]
           }
         })
+
+        // Génération automatique des notifications système d'absence pour les parents
+        try {
+          if (absencesAAjouter.length > 0) {
+            for (const a of absencesAAjouter) {
+              const el = get().eleves.find(e => e.id === a.eleveId)
+              if (el) {
+                const formatSeance = a.seance === 'matin' ? 'matin' : 'après-midi'
+                const formatJustifiee = a.justifiee ? 'Justifiée' : 'Non justifiée'
+                const formatMotif = a.motif ? ` (Motif : ${a.motif})` : ''
+                
+                await get().addNotification({
+                  titre: 'Absence enregistrée',
+                  description: `L'absence de l'élève ${el.prenom} ${el.nom} (Classe: ${get().classes.find(c => c.id === el.classeId)?.nom || 'Inconnue'}) a été signalée pour la séance du ${formatSeance} le ${new Date(a.date).toLocaleDateString('fr-FR')}. Statut: ${formatJustifiee}${formatMotif}.`,
+                  type: 'absence',
+                  eleveId: el.id,
+                  classeId: el.classeId,
+                  destinataireRole: 'parent'
+                })
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Erreur lors de la génération de notification automatique d'absence :", err)
+        }
       },
 
       justifierAbsence: async (absenceId, motif, justifiee = true) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('absences').update({
@@ -1207,6 +1549,7 @@ export const useSchoolStore = create<SchoolState>()(
 
       addMatiere: async (matiere) => {
         try {
+          if (checkAbonnement(get())) return
           const supabase = createClient()
           const { data, error } = await supabase.from('matieres').insert({
             nom: matiere.nom,
@@ -1236,6 +1579,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
       updateMatiere: async (id, data) => {
         try {
+          if (checkAbonnement(get())) return
           const supabase = createClient()
           const updateData: any = {}
           if (data.nom) updateData.nom = data.nom
@@ -1256,66 +1600,78 @@ export const useSchoolStore = create<SchoolState>()(
               await supabase.from('enseignants_matieres').insert(insertData)
             }
           }
+          set((state) => ({ matieres: state.matieres.map(m => m.id === id ? { ...m, ...data } : m) }))
         } catch (e) {
           console.warn("Exception updateMatiere:", e)
         }
-        set((state) => ({ matieres: state.matieres.map(m => m.id === id ? { ...m, ...data } : m) }))
       },
       deleteMatiere: async (id) => {
         try {
+          if (checkAbonnement(get())) return
           const supabase = createClient()
           await supabase.from('matieres').delete().eq('id', id)
+          set((state) => ({ matieres: state.matieres.filter(m => m.id !== id) }))
         } catch (e) {
           console.warn("Exception deleteMatiere:", e)
         }
-        set((state) => ({ matieres: state.matieres.filter(m => m.id !== id) }))
       },
-
+ 
       addEnseignant: async (ens) => {
-        const supabase = createClient()
-        const { data, error } = await supabase.from('utilisateurs').insert({
-          nom: ens.nom,
-          prenom: ens.prenom,
-          civilite: ens.civilite,
-          email: ens.email || `temp-${Date.now()}@gestscol.local`,
-          telephone: ens.telephone,
-          role: 'enseignant',
-          ecole_id: ens.ecoleId || get().ecole?.id || null
-        }).select().single()
-        
-        if (error) {
-          console.warn("Erreur addEnseignant:", error.message)
-          throw new Error(error.message)
-        } else if (data) {
-          const newEns: User = { ...ens, id: data.id }
-          set((state) => ({ enseignants: [...state.enseignants, newEns] }))
+        try {
+          if (checkAbonnement(get())) return
+          const supabase = createClient()
+          const { data, error } = await supabase.from('utilisateurs').insert({
+            nom: ens.nom,
+            prenom: ens.prenom,
+            civilite: ens.civilite,
+            email: ens.email || `temp-${Date.now()}@gestscol.local`,
+            telephone: ens.telephone,
+            role: 'enseignant',
+            ecole_id: ens.ecoleId || get().ecole?.id || null
+          }).select().single()
+          
+          if (error) {
+            console.warn("Erreur addEnseignant:", error.message)
+            throw new Error(error.message)
+          } else if (data) {
+            const newEns: User = { ...ens, id: data.id }
+            set((state) => ({ enseignants: [...state.enseignants, newEns] }))
+          }
+        } catch (e) {
+          console.warn("Exception addEnseignant:", e)
         }
       },
       updateEnseignant: async (id, data) => {
-        const supabase = createClient()
-        const updateData: any = {}
-        if (data.nom) updateData.nom = data.nom
-        if (data.prenom) updateData.prenom = data.prenom
-        if (data.civilite) updateData.civilite = data.civilite
-        if (data.email !== undefined) updateData.email = data.email || `temp-${Date.now()}@gestscol.local`
-        if (data.telephone !== undefined) updateData.telephone = data.telephone
-        
-        const { error } = await supabase.from('utilisateurs').update(updateData).eq('id', id)
-        if (error) {
-          console.warn("Erreur updateEnseignant:", error.message)
-          throw new Error(error.message)
+        try {
+          if (checkAbonnement(get())) return
+          const supabase = createClient()
+          const updateData: any = {}
+          if (data.nom) updateData.nom = data.nom
+          if (data.prenom) updateData.prenom = data.prenom
+          if (data.civilite) updateData.civilite = data.civilite
+          if (data.email !== undefined) updateData.email = data.email || `temp-${Date.now()}@gestscol.local`
+          if (data.telephone !== undefined) updateData.telephone = data.telephone
+          
+          const { error } = await supabase.from('utilisateurs').update(updateData).eq('id', id)
+          if (error) {
+            console.warn("Erreur updateEnseignant:", error.message)
+            throw new Error(error.message)
+          }
+          
+          set((state) => ({ enseignants: state.enseignants.map(e => e.id === id ? { ...e, ...data } : e) }))
+        } catch (e) {
+          console.warn("Exception updateEnseignant:", e)
         }
-        
-        set((state) => ({ enseignants: state.enseignants.map(e => e.id === id ? { ...e, ...data } : e) }))
       },
       deleteEnseignant: async (id) => {
         try {
+          if (checkAbonnement(get())) return
           const supabase = createClient()
           await supabase.from('utilisateurs').delete().eq('id', id)
+          set((state) => ({ enseignants: state.enseignants.filter(e => e.id !== id) }))
         } catch (e) {
           console.warn("Exception deleteEnseignant:", e)
         }
-        set((state) => ({ enseignants: state.enseignants.filter(e => e.id !== id) }))
       },
 
       getMoyenneEleve: (eleveId, trimestre) => {
@@ -1337,6 +1693,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       addBulletin: async (bulletin) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('bulletins').insert({
@@ -1366,6 +1723,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
       
       updateBulletin: async (id, data) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -1381,6 +1739,7 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       deleteBulletin: async (id) => {
+        if (checkAbonnement(get())) return
         try {
           const supabase = createClient()
           await supabase.from('bulletins').delete().eq('id', id)
@@ -1484,6 +1843,13 @@ export const useSchoolStore = create<SchoolState>()(
         })
         
         return bulletinsGeneres
+      },
+      isAbonnementExpired: () => {
+        const ecole = get().ecole
+        if (!ecole?.abonnement) return false
+        const isExpiredStatut = ['expire', 'suspendu'].includes(ecole.abonnement.statut)
+        const isExpiredDate = ecole.abonnement.dateFin ? new Date(ecole.abonnement.dateFin) < new Date() : false
+        return isExpiredStatut || isExpiredDate
       }
     }),
     {

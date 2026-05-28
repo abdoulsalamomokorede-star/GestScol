@@ -17,7 +17,7 @@ import { Check, ChevronsUpDown } from 'lucide-react'
 
 function InscriptionsPageContent() {
   const router = useRouter()
-  const { inscriptions, eleves, classes, deleteInscription, anneesScolaires, activeAnneeScolaire } = useSchoolStore()
+  const { inscriptions, eleves, classes, deleteInscription, anneesScolaires, activeAnneeScolaire, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -76,6 +76,14 @@ function InscriptionsPageContent() {
   }
 
   const confirmDelete = () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (deleteId) {
       deleteInscription(deleteId)
       toast({ title: "Succès", description: "Inscription supprimée." })

@@ -11,6 +11,7 @@ import logoImg from '@/app/logo.png'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@/types'
 import Link from 'next/link'
+import { getSchoolAbonnement } from '@/app/actions/abonnement'
 
 export default function ParentLoginPage() {
   const [email, setEmail] = useState('')
@@ -70,6 +71,17 @@ export default function ParentLoginPage() {
         await supabase.auth.signOut()
         setIsLoading(false)
         return
+      }
+
+      // Bloquer la connexion si l'établissement utilise la formule gratuite
+      if (profile.ecole_id) {
+        const abonnementRes = await getSchoolAbonnement(profile.ecole_id)
+        if (abonnementRes.success && abonnementRes.data?.plan === 'gratuit') {
+          setError("Votre établissement utilise la formule gratuite. L'accès à cet espace requiert un abonnement Standard ou Premium.")
+          await supabase.auth.signOut()
+          setIsLoading(false)
+          return
+        }
       }
 
       const userProfile: User = {

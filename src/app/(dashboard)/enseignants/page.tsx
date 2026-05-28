@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function EnseignantsPage() {
   const router = useRouter()
-  const { enseignants, addEnseignant, updateEnseignant, deleteEnseignant, currentUser } = useSchoolStore()
+  const { enseignants, addEnseignant, updateEnseignant, deleteEnseignant, currentUser, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [civiliteFiltre, setCiviliteFiltre] = useState('tous')
@@ -50,6 +50,14 @@ export default function EnseignantsPage() {
   }
 
   const handleSave = async () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (!formData.nom || !formData.prenom) return toast({ title: "Erreur", description: "Veuillez remplir le nom et prénom.", variant: "destructive" })
     
     if (formData.email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -86,6 +94,14 @@ export default function EnseignantsPage() {
   }
 
   const confirmDelete = () => {
+    if (isAbonnementExpired()) {
+      toast({
+        title: "Action impossible",
+        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        variant: "destructive"
+      })
+      return
+    }
     if (deleteId) {
       deleteEnseignant(deleteId)
       toast({ title: "Succès", description: "Enseignant supprimé." })

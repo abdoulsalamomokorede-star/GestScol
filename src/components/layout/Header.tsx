@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { getInitiales } from '@/lib/utils'
@@ -26,18 +26,83 @@ const getPageTitle = (pathname: string) => {
   if (pathname.startsWith('/notifications')) return 'Notifications'
   if (pathname.startsWith('/profil')) return 'Mon Profil'
   if (pathname.startsWith('/parametres')) return 'Paramètres Généraux'
+  if (pathname.startsWith('/aide')) return "Guide d'Utilisation"
   return 'Espace GestScol'
 }
 
 export default function Header() {
   const pathname = usePathname()
-  const { currentUser } = useSchoolStore()
+  const { currentUser, notifications, eleves, classes, fetchNotifications, suppressedNotificationIds } = useSchoolStore()
   const [open, setOpen] = useState(false)
+
+  // Actualiser les notifications au montage
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
   
   if (!currentUser) return null
 
   const title = getPageTitle(pathname)
   const roleLabel = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
+
+  // Filtrage intelligent identique à la page /notifications pour avoir le compte précis de notifications non lues avec cloisonnement utilisateur
+  const displayNotifications = notifications
+    .filter(n => !suppressedNotificationIds?.includes(`${currentUser.id}_${n.id}`))
+    .filter(notif => {
+    if (!currentUser) return false
+    
+    // Directeur : Voit tout
+    if (currentUser.role === 'directeur') return true
+    
+    // Parent : Communiqués généraux, communiqués parents, et dossiers de ses propres enfants
+    if (currentUser.role === 'parent') {
+      if (notif.type === 'communique') {
+        return notif.destinataireRole === 'all' || notif.destinataireRole === 'parent'
+      }
+      if (notif.type === 'systeme' && !notif.eleveId && !notif.classeId) return true
+
+      const parentKidsIds = eleves
+        .filter(el => el.parentUserId === currentUser.id)
+        .map(el => el.id)
+      
+      if (notif.eleveId && parentKidsIds.includes(notif.eleveId)) return true
+
+      const parentKidsClasses = eleves
+        .filter(el => el.parentUserId === currentUser.id)
+        .map(el => el.classeId)
+
+      if (notif.classeId && parentKidsClasses.includes(notif.classeId)) return true
+      return false
+    }
+    
+    // Enseignant : Communiqués généraux, communiqués enseignants, et ce qui concerne ses classes principales
+    if (currentUser.role === 'enseignant') {
+      if (notif.type === 'communique') {
+        return notif.destinataireRole === 'all' || notif.destinataireRole === 'enseignant'
+      }
+      if (notif.type === 'systeme' && !notif.eleveId && !notif.classeId) return true
+      
+      const teacherClassesIds = classes
+        .filter(c => c.enseignantPrincipalId === currentUser.id)
+        .map(c => c.id)
+        
+      if (notif.classeId && teacherClassesIds.includes(notif.classeId)) {
+        return notif.type === 'absence' || notif.type === 'bulletin' || notif.type === 'systeme'
+      }
+      
+      if (notif.eleveId) {
+        const el = eleves.find(e => e.id === notif.eleveId)
+        if (el && teacherClassesIds.includes(el.classeId)) {
+          return notif.type === 'absence' || notif.type === 'bulletin' || notif.type === 'systeme'
+        }
+      }
+      return false
+    }
+    
+    return false
+  })
+
+  const unreadCount = displayNotifications.filter(n => !n.lu).length
 
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 shrink-0 z-10 shadow-sm">
@@ -61,13 +126,17 @@ export default function Header() {
       </div>
 
       <div className="flex items-center space-x-2 md:space-x-4">
-        {/* Notifications */}
+        {/* Notifications avec badge dynamique */}
         <Link 
           href="/notifications"
           className="relative p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors inline-block"
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-card" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 h-4.5 min-w-[18px] px-1 rounded-full bg-danger text-white text-[9px] font-extrabold flex items-center justify-center border border-card shadow-sm animate-pulse-subtle">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </Link>
  
         {/* Profil Menu */}

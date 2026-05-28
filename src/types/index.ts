@@ -274,3 +274,23 @@ export type UserCompteSimule = {
   mdpTemporaire?: string
   enseignantId?: string
 }
+
+// -------------------------------------------------------------
+// NOTIFICATIONS
+// -------------------------------------------------------------
+
+export type NotificationType = 'paiement' | 'absence' | 'bulletin' | 'inscription' | 'systeme' | 'communique'
+
+export type NotificationItem = {
+  id: string
+  ecoleId: string
+  titre: string
+  description: string
+  type: NotificationType
+  destinataireRole?: 'parent' | 'enseignant' | 'all'
+  classeId?: string
+  eleveId?: string
+  creePar?: string
+  createdAt: string
+  lu: boolean
+}

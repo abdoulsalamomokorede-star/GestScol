@@ -121,13 +121,20 @@ export async function registerSchoolAndAdmin(data: RegisterPayload) {
     let statut = 'actif'
     let montant = 0
     let maxEleves = 50
+    let dateFin: string | null = null
 
     if (data.plan === 'standard') {
       montant = 150000
       maxEleves = 300
+      const fin = new Date()
+      fin.setFullYear(fin.getFullYear() + 1)
+      dateFin = fin.toISOString()
     } else if (data.plan === 'premium') {
       montant = 250000
       maxEleves = 99999 // Illimité
+      const fin = new Date()
+      fin.setFullYear(fin.getFullYear() + 1)
+      dateFin = fin.toISOString()
     }
 
     const { error: abonnementError } = await supabase
@@ -139,7 +146,8 @@ export async function registerSchoolAndAdmin(data: RegisterPayload) {
         mode_paiement: data.paymentMethod || null,
         montant_paye: montant,
         max_eleves: maxEleves,
-        transaction_ref: data.paymentPhone ? `SIM-${Date.now()}` : null
+        transaction_ref: data.paymentPhone ? `SIM-${Date.now()}` : null,
+        date_fin: dateFin
       })
 
     if (abonnementError) {

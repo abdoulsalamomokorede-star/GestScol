@@ -26,6 +26,7 @@ import { getInitiales } from '@/lib/utils'
 import BulletinPDF from '@/components/bulletins/BulletinPDF'
 
 import { Combobox } from '@/components/ui/combobox'
+import { PremiumGuard } from '@/components/ui/PremiumGuard'
 
 // Chargement dynamique de PDFDownloadLink pour éviter les erreurs de SSR Next.js
 const PDFDownloadLink = dynamic(
@@ -49,7 +50,8 @@ export default function BulletinsPage() {
     activeAnneeScolaire,
     addBulletin, 
     updateBulletin,
-    calculerBulletinsClasse 
+    calculerBulletinsClasse,
+    ecole
   } = useSchoolStore()
 
   // États locaux
@@ -97,6 +99,16 @@ export default function BulletinsPage() {
       <div className="flex h-96 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    )
+  }
+
+  // Bloquer l'accès si l'établissement utilise la formule gratuite
+  if (ecole?.abonnement?.plan === 'gratuit') {
+    return (
+      <PremiumGuard 
+        title="Générateur de Bulletins" 
+        description="Générez les bulletins officiels de l'établissement sous format PDF A4 en un clic. Saisissez l'appréciation globale de la direction, calculez les moyennes générales et les moyennes de classe, et déterminez le rang de chaque élève automatiquement."
+      />
     )
   }
 

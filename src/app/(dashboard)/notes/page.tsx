@@ -9,15 +9,26 @@ import { Plus, AlertCircle, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import NoteInput from '@/components/notes/NoteInput'
 import { Note } from '@/types'
+import { PremiumGuard } from '@/components/ui/PremiumGuard'
 
 export default function NotesPage() {
-  const { classes, eleves, matieres, notes, inscriptions, currentUser, addNote, updateNote, deleteNote, anneesScolaires, activeAnneeScolaire } = useSchoolStore()
+  const { classes, eleves, matieres, notes, inscriptions, currentUser, addNote, updateNote, deleteNote, anneesScolaires, activeAnneeScolaire, ecole } = useSchoolStore()
 
   const [selectedClasseId, setSelectedClasseId] = useState<string>('')
   const [selectedTrimestre, setSelectedTrimestre] = useState<1 | 2 | 3>(1)
   const [selectedMatiereId, setSelectedMatiereId] = useState<string>('')
   const [selectedAnneeScolaire, setSelectedAnneeScolaire] = useState<string>(activeAnneeScolaire?.id || '')
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Bloquer l'accès si l'établissement utilise la formule gratuite
+  if (ecole?.abonnement?.plan === 'gratuit') {
+    return (
+      <PremiumGuard 
+        title="Gestion des Notes" 
+        description="Saisissez les notes de devoirs et de compositions, configurez les coefficients par matière, et visualisez instantanément le calcul de la moyenne générale pondérée de vos élèves pour chaque trimestre."
+      />
+    )
+  }
 
   if (currentUser?.role === 'parent') {
     return (

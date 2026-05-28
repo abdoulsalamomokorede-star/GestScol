@@ -39,18 +39,18 @@ export default function EnseignantDashboardPage() {
 
   const mesClasses = classes.filter(c => classesIdsEnseignees.includes(c.id))
   
-  // 2. Tous les élèves actifs inscrits dans ces classes
+  // 2. Tous les élèves actifs inscrits dans ces classes avec une inscription validée pour l'année en cours
   const mesEleves = eleves.filter(e => {
     if (e.statut !== 'actif') return false;
     
-    // On priorise la classe de l'inscription active
     const inscription = inscriptions.find(ins => 
       ins.eleveId === e.id && 
+      ins.statut === 'validee' &&
       (ins.anneeScolaire === activeAnneeScolaire?.id || ins.anneeScolaire === activeAnneeScolaire?.nom)
     );
     
-    const classeId = inscription ? inscription.classeId : e.classeId;
-    return classesIdsEnseignees.includes(classeId);
+    if (!inscription) return false;
+    return classesIdsEnseignees.includes(inscription.classeId);
   })
 
   // 3. Absences de ces élèves à la date sélectionnée
@@ -121,10 +121,10 @@ export default function EnseignantDashboardPage() {
                 const elevesDeLaClasse = mesEleves.filter(e => {
                   const inscription = inscriptions.find(ins => 
                     ins.eleveId === e.id && 
+                    ins.statut === 'validee' &&
                     (ins.anneeScolaire === activeAnneeScolaire?.id || ins.anneeScolaire === activeAnneeScolaire?.nom)
                   );
-                  const classeId = inscription ? inscription.classeId : e.classeId;
-                  return classeId === classe.id;
+                  return inscription?.classeId === classe.id;
                 })
                 const total = elevesDeLaClasse.length
                 
@@ -173,9 +173,11 @@ export default function EnseignantDashboardPage() {
                   
                   const inscription = inscriptions.find(ins => 
                     ins.eleveId === eleve.id && 
+                    ins.statut === 'validee' &&
                     (ins.anneeScolaire === activeAnneeScolaire?.id || ins.anneeScolaire === activeAnneeScolaire?.nom)
                   );
-                  const currentClasseId = inscription ? inscription.classeId : eleve.classeId;
+                  const currentClasseId = inscription?.classeId;
+                  if (!currentClasseId) return null;
                   const classe = mesClasses.find(c => c.id === currentClasseId)
 
                   return (

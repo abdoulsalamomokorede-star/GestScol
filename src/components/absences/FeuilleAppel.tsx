@@ -38,7 +38,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
   const { eleves, absences, enregistrerAbsences, currentUser, activeAnneeScolaire, inscriptions } = useSchoolStore()
   const { toast } = useToast()
 
-  // Filtrer les élèves actifs de la classe qui ont une inscription pour l'année en cours
+  // Filtrer les élèves actifs de la classe qui ont une inscription validée pour l'année en cours
   const elevesClasse = eleves.filter(e => {
     if (e.statut !== 'actif') return false;
     
@@ -48,13 +48,11 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
              (ins.anneeScolaire === activeAnneeScolaire?.id || ins.anneeScolaire === activeAnneeScolaire?.nom)
     );
     
+    // Si aucune inscription active pour l'année en cours ou si elle n'est pas validée, on l'exclut
+    if (!inscriptionActive || inscriptionActive.statut !== 'validee') return false;
+    
     // C'est l'inscription qui fait foi pour la classe de l'année en cours
-    const currentClasseId = inscriptionActive ? inscriptionActive.classeId : e.classeId;
-    
-    if (currentClasseId !== classeId) return false;
-    
-    // Si une inscription existe, on s'assure qu'elle est validée pour l'appel
-    if (inscriptionActive && inscriptionActive.statut !== 'validee') return false;
+    if (inscriptionActive.classeId !== classeId) return false;
     
     return true;
   })
