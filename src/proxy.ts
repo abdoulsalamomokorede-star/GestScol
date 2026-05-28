@@ -62,16 +62,18 @@ export async function proxy(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const hasUserSession = request.cookies.has('currentUser')
+  const isAuthenticated = !!user && hasUserSession
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
   const isPublicPage = request.nextUrl.pathname === '/' || isAuthPage
 
-  if (!user && !isPublicPage) {
+  if (!isAuthenticated && !isPublicPage) {
     // Rediriger vers login si non connecté et page privée
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && isAuthPage) {
+  if (isAuthenticated && isAuthPage) {
     // Rediriger vers dashboard si connecté et tente d'accéder à login
     // On pourrait rediriger selon le rôle, mais /dashboard gère déjà ça ou /redirect
     return NextResponse.redirect(new URL('/dashboard', request.url))

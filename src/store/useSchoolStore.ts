@@ -504,13 +504,47 @@ export const useSchoolStore = create<SchoolState>()(
           const { data: classes } = await supabase.from('classes').select('*').eq('ecole_id', ecoleId)
           const { data: eleves } = await supabase.from('eleves').select('*').eq('ecole_id', ecoleId)
           const { data: inscriptions } = await supabase.from('inscriptions').select('*').eq('ecole_id', ecoleId)
-          const { data: matieres } = await supabase.from('matieres').select('*')
-          const { data: notes } = await supabase.from('notes').select('*')
-          const { data: paiements } = await supabase.from('paiements').select('*')
-          const { data: absences } = await supabase.from('absences').select('*')
-          const { data: bulletins } = await supabase.from('bulletins').select('*')
-          const { data: comptesConnexion } = await supabase.from('comptes_connexion').select('*')
-          const { data: enseignantsMatieres } = await supabase.from('enseignants_matieres').select('*')
+
+          // Extraction des IDs de l'établissement pour assurer le cloisonnement strict des données (multi-tenant)
+          const userIds = utilisateurs ? utilisateurs.map(u => u.id) : []
+          const enseignantsIds = utilisateurs ? utilisateurs.filter(u => u.role === 'enseignant').map(u => u.id) : []
+          const classesIds = classes ? classes.map(c => c.id) : []
+          const elevesIds = eleves ? eleves.map(e => e.id) : []
+
+          let matieres: any[] = []
+          let notes: any[] = []
+          let paiements: any[] = []
+          let absences: any[] = []
+          let bulletins: any[] = []
+          let comptesConnexion: any[] = []
+          let enseignantsMatieres: any[] = []
+
+          if (classesIds.length > 0) {
+            const { data: mData } = await supabase.from('matieres').select('*').in('classe_id', classesIds)
+            if (mData) matieres = mData
+          }
+
+          if (elevesIds.length > 0) {
+            const { data: nData } = await supabase.from('notes').select('*').in('eleve_id', elevesIds)
+            const { data: pData } = await supabase.from('paiements').select('*').in('eleve_id', elevesIds)
+            const { data: aData } = await supabase.from('absences').select('*').in('eleve_id', elevesIds)
+            const { data: bData } = await supabase.from('bulletins').select('*').in('eleve_id', elevesIds)
+            
+            if (nData) notes = nData
+            if (pData) paiements = pData
+            if (aData) absences = aData
+            if (bData) bulletins = bData
+          }
+
+          if (userIds.length > 0) {
+            const { data: cData } = await supabase.from('comptes_connexion').select('*').in('id', userIds)
+            if (cData) comptesConnexion = cData
+          }
+
+          if (enseignantsIds.length > 0) {
+            const { data: emData } = await supabase.from('enseignants_matieres').select('*').in('enseignant_id', enseignantsIds)
+            if (emData) enseignantsMatieres = emData
+          }
           
           // Récupération sécurisée bypassant RLS pour s'assurer que les parents et enseignants lisent le bon statut d'abonnement
           const abonnementRes = await getSchoolAbonnement(ecoleId)

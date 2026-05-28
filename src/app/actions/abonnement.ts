@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { AbonnementEcole } from '@/types'
 import { revalidatePath } from 'next/cache'
 
@@ -12,6 +13,30 @@ export async function updateSchoolAbonnement(ecoleId: string, data: Partial<Abon
   try {
     if (!ecoleId) {
       return { success: false, error: "Identifiant de l'école manquant." }
+    }
+
+    // 1. Récupérer la session de l'utilisateur connecté sur le serveur
+    const serverSupabase = await createServerClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { success: false, error: "Non autorisé. Veuillez vous connecter." }
+    }
+
+    // 2. Récupérer son rôle et son établissement en base
+    const { data: profile, error: profileError } = await serverSupabase
+      .from('utilisateurs')
+      .select('role, ecole_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return { success: false, error: "Profil utilisateur introuvable." }
+    }
+
+    // 3. Valider que l'utilisateur est Directeur de cette école spécifique
+    if (profile.role !== 'directeur' || profile.ecole_id !== ecoleId) {
+      return { success: false, error: "Accès refusé. Privilèges de Directeur requis pour cet établissement." }
     }
 
     const supabase = createAdminClient()

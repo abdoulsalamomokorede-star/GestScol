@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { NotificationItem, NotificationType } from '@/types'
 import { revalidatePath } from 'next/cache'
 
@@ -21,6 +22,30 @@ export async function createNotification(data: {
   try {
     if (!data.ecoleId) {
       return { success: false, error: "Identifiant de l'école manquant." }
+    }
+
+    // 1. Récupérer la session de l'appelant
+    const serverSupabase = await createServerClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { success: false, error: "Non autorisé. Veuillez vous connecter." }
+    }
+
+    // 2. Récupérer son profil en base
+    const { data: profile, error: profileError } = await serverSupabase
+      .from('utilisateurs')
+      .select('role, ecole_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return { success: false, error: "Profil utilisateur introuvable." }
+    }
+
+    // 3. Seul un Directeur ou un Enseignant de la même école peut émettre des notifications
+    if ((profile.role !== 'directeur' && profile.role !== 'enseignant') || profile.ecole_id !== data.ecoleId) {
+      return { success: false, error: "Accès refusé. Privilèges insuffisants pour cet établissement." }
     }
 
     const supabase = createAdminClient()
@@ -149,6 +174,41 @@ export async function fetchUserLectures(utilisateurId: string) {
 export async function deleteNotificationDb(notificationId: string) {
   try {
     if (!notificationId) return { success: false, error: "Identifiant notification manquant." }
+
+    // 1. Récupérer la session de l'appelant
+    const serverSupabase = await createServerClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { success: false, error: "Non autorisé. Veuillez vous connecter." }
+    }
+
+    // 2. Récupérer son profil en base
+    const { data: profile, error: profileError } = await serverSupabase
+      .from('utilisateurs')
+      .select('role, ecole_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return { success: false, error: "Profil utilisateur introuvable." }
+    }
+
+    // 3. Seul le Directeur de l'école de la notification peut la supprimer
+    // Récupérer la notification ciblée pour vérifier son ecole_id
+    const { data: notif, error: notifError } = await serverSupabase
+      .from('notifications')
+      .select('ecole_id')
+      .eq('id', notificationId)
+      .single()
+
+    if (notifError || !notif) {
+      return { success: false, error: "Notification introuvable." }
+    }
+
+    if (profile.role !== 'directeur' || profile.ecole_id !== notif.ecole_id) {
+      return { success: false, error: "Accès refusé. Privilèges de Directeur requis pour cet établissement." }
+    }
 
     const supabase = createAdminClient()
 

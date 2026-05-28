@@ -42,6 +42,8 @@ export default function DashboardLayout({
   useEffect(() => {
     // Si l'hydratation est terminée et que le state est toujours vide
     if (hasHydrated && !currentUser) {
+      // Garantir l'effacement du cookie de session locale
+      setCurrentUser(null)
       // On efface le cookie et on retourne au login
       supabase.auth.signOut().then(() => {
         const path = window.location.pathname
@@ -56,7 +58,7 @@ export default function DashboardLayout({
         }
       })
     }
-  }, [currentUser, hasHydrated, router, supabase])
+  }, [currentUser, hasHydrated, router, supabase, setCurrentUser])
 
   // Évite les erreurs d'hydratation et le rendu d'une page vide sans redirection
   if (!hasHydrated || !currentUser || !isInitialFetchDone) {

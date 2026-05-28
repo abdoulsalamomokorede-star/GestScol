@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
-import { Bulletin, Ecole, Eleve, Matiere, Note, User, Classe } from '@/types'
+import { Bulletin, Ecole, Eleve, Matiere, Note, User, Classe, AnneeScolaire } from '@/types'
 
 // Drapeau ivoirien stylisé sous forme de ligne fine
 const DrapeauLine = () => (
@@ -279,6 +279,7 @@ interface BulletinPDFProps {
   classes: Classe[]
   enseignants: User[]
   absences: { id: string; eleveId: string; justifiee: boolean }[] // Absences du store pour calcul direct
+  anneesScolaires?: AnneeScolaire[] // Liste des années scolaires pour la résolution conviviale
 }
 
 export default function BulletinPDF({
@@ -289,6 +290,7 @@ export default function BulletinPDF({
   classes,
   enseignants,
   absences,
+  anneesScolaires,
 }: BulletinPDFProps) {
   
   // Remplacer les initiales ou retours d'appreciations
@@ -309,6 +311,11 @@ export default function BulletinPDF({
         const principal = enseignants.find((u) => u.id === classe?.enseignantPrincipalId)
         
         if (!eleve || !classe) return null
+
+        // Résolution conviviale de l'année scolaire (nom au lieu de l'UUID/ID)
+        const anneeScolaireNom = anneesScolaires?.find(
+          a => a.id === bulletin.anneeScolaire || a.nom === bulletin.anneeScolaire
+        )?.nom || bulletin.anneeScolaire
 
         // Calcul des absences de l'élève
         const absencesEleve = absences.filter((a) => a.eleveId === eleve.id)
@@ -337,7 +344,7 @@ export default function BulletinPDF({
                 <Text style={styles.countryTitle}>RÉPUBLIQUE DE CÔTE D'IVOIRE</Text>
                 <Text style={styles.motto}>Union - Discipline - Travail</Text>
                 <DrapeauLine />
-                <Text style={styles.orgSub}>Année Scolaire : {bulletin.anneeScolaire}</Text>
+                <Text style={styles.orgSub}>Année Scolaire : {anneeScolaireNom}</Text>
               </View>
             </View>
 

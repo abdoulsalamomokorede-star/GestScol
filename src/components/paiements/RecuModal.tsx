@@ -32,7 +32,7 @@ export default function RecuModal({
   eleve,
   classe,
 }: RecuModalProps) {
-  const { currentUser, annulerVersement, paiements } = useSchoolStore()
+  const { currentUser, annulerVersement, paiements, ecole, activeAnneeScolaire } = useSchoolStore()
   const { toast } = useToast()
   const [confirmCancelData, setConfirmCancelData] = useState<{idx: number, montant: number} | null>(null)
 
@@ -155,16 +155,16 @@ export default function RecuModal({
           <div className="flex flex-col items-center text-center pb-4 border-b border-dashed border-border print:border-black/30">
             <div className="flex items-center space-x-2 text-primary print:text-black mb-2 no-print">
               <Award className="h-5 w-5 sm:h-6 sm:w-6" />
-              <span className="font-display font-extrabold text-base sm:text-lg">LES FLAMBOYANTS</span>
+              <span className="font-display font-extrabold text-base sm:text-lg">{(ecole?.nom || ecoleMock.nom).toUpperCase()}</span>
             </div>
             <h3 className="font-display font-bold text-sm sm:text-base text-text print:text-black uppercase">
-              {ecoleMock.nom}
+              {ecole?.nom || ecoleMock.nom}
             </h3>
             <p className="text-xs text-muted-foreground print:text-black/80 mt-0.5">
-              {ecoleMock.adresse} • Tél: {ecoleMock.telephone}
+              {ecole?.adresse || ecoleMock.adresse} • Tél: {ecole?.telephone || ecoleMock.telephone}
             </p>
             <p className="text-xs font-semibold text-primary print:text-black mt-1">
-              Année Scolaire: {ecoleMock.anneeScolaire}
+              Année Scolaire: {activeAnneeScolaire?.nom || ecole?.anneeScolaire || ecoleMock.anneeScolaire}
             </p>
           </div>
 

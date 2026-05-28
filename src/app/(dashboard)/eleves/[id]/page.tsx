@@ -40,7 +40,10 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
     currentUser,
     calculerBulletinsClasse,
     classes,
-    enseignants
+    enseignants,
+    ecole,
+    activeAnneeScolaire,
+    anneesScolaires
   } = useSchoolStore()
 
   const eleve = getEleveById(id)
@@ -56,8 +59,9 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
   const trimestreNum = Number(selectedTrimestre) as 1 | 2 | 3
   
   // Calculer les bulletins de la classe pour ce trimestre
+  const currentAnneeScolaireId = activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
   const bulletinsClasse = eleve?.classeId
-    ? calculerBulletinsClasse(eleve.classeId, trimestreNum, ecoleMock.anneeScolaire)
+    ? calculerBulletinsClasse(eleve.classeId, trimestreNum, currentAnneeScolaireId)
     : []
   
   // Trouver le bulletin spécifique de cet élève
@@ -174,12 +178,13 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
                       document={
                         <BulletinPDF
                           bulletins={[bulletinEleve]}
-                          ecole={ecoleMock}
+                          ecole={ecole}
                           eleves={[eleve]}
                           matieres={matieres}
                           classes={classes}
                           enseignants={enseignants}
                           absences={absences}
+                          anneesScolaires={anneesScolaires}
                         />
                       }
                       fileName={`Bulletin_${eleve.nom}_${eleve.prenom}_T${selectedTrimestre}.pdf`}

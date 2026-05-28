@@ -228,15 +228,16 @@ export default function BulletinsPage() {
                     document={
                       <BulletinPDF
                         bulletins={bulletinsAvecNotes}
-                        ecole={ecoleMock}
+                        ecole={ecole}
                         eleves={eleves}
                         matieres={matieres}
                         classes={classes}
                         enseignants={enseignants}
                         absences={absences}
+                        anneesScolaires={anneesScolaires}
                       />
                     }
-                    fileName={`Bulletins_${currentClasse?.nom || ''}_T${selectedTrimestre}_${ecoleMock.anneeScolaire}.pdf`}
+                    fileName={`Bulletins_${currentClasse?.nom || ''}_T${selectedTrimestre}_${activeAnneeScolaire?.nom || ecole?.anneeScolaire || '2024-2025'}.pdf`}
                   >
                     {/* @ts-ignore */}
                     {({ loading }) => (
@@ -464,12 +465,13 @@ export default function BulletinsPage() {
                                 document={
                                   <BulletinPDF
                                     bulletins={[b]}
-                                    ecole={ecoleMock}
+                                    ecole={ecole}
                                     eleves={eleves}
                                     matieres={matieres}
                                     classes={classes}
                                     enseignants={enseignants}
                                     absences={absences}
+                                    anneesScolaires={anneesScolaires}
                                   />
                                 }
                                 fileName={`Bulletin_${eleve.nom}_${eleve.prenom}_T${selectedTrimestre}.pdf`}
