@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { registerSchoolAndAdmin } from '@/app/actions/register'
@@ -84,6 +84,8 @@ function RegisterWizard() {
   // --- États généraux du formulaire ---
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [plan, setPlan] = useState<'gratuit' | 'standard' | 'premium'>('standard')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const submittingRef = useRef(false)
 
   const [schoolInfo, setSchoolInfo] = useState<SchoolFormState>({
     schoolName: '',
@@ -258,6 +260,9 @@ function RegisterWizard() {
       }
     }
 
+    if (submittingRef.current) return
+    submittingRef.current = true
+    setIsSubmitting(true)
     setIsProvisioning(true)
     setProvisionStep(0)
 
@@ -298,7 +303,15 @@ function RegisterWizard() {
       if (!result.success) {
         clearInterval(interval)
         setIsProvisioning(false)
-        toast({ title: "Erreur", description: result.error || "Échec de l'inscription.", variant: "destructive" })
+        submittingRef.current = false
+        setIsSubmitting(false)
+        
+        let errMsg = result.error || "Échec de l'inscription."
+        if (errMsg.toLowerCase().includes("rate limit") || errMsg.toLowerCase().includes("too many requests") || errMsg.toLowerCase().includes("once per minute")) {
+          errMsg = "Trop de tentatives d'inscription. Veuillez patienter quelques minutes avant de réessayer."
+        }
+        
+        toast({ title: "Erreur", description: errMsg, variant: "destructive" })
         return
       }
 
@@ -331,10 +344,18 @@ function RegisterWizard() {
 
         router.push('/dashboard')
       }, waitTime)
-    } catch (error) {
+    } catch (error: any) {
       clearInterval(interval)
       setIsProvisioning(false)
-      toast({ title: "Erreur serveur", description: "Veuillez réessayer plus tard.", variant: "destructive" })
+      submittingRef.current = false
+      setIsSubmitting(false)
+      
+      let errMsg = "Veuillez réessayer plus tard."
+      if (error && error.message && (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many requests") || error.message.toLowerCase().includes("once per minute"))) {
+        errMsg = "Trop de tentatives d'inscription. Veuillez patienter quelques minutes avant de réessayer."
+      }
+      
+      toast({ title: "Erreur serveur", description: errMsg, variant: "destructive" })
     }
   }
 
@@ -1013,6 +1034,7 @@ function RegisterWizard() {
                   type="button" 
                   variant="outline" 
                   onClick={handlePrevStep}
+                  disabled={isSubmitting}
                   className="flex items-center gap-1.5"
                 >
                   <ArrowLeft className="h-4 w-4" /> Retour
@@ -1025,6 +1047,7 @@ function RegisterWizard() {
                 <Button 
                   type="button" 
                   onClick={handleNextStep}
+                  disabled={isSubmitting}
                   className="bg-primary hover:bg-primary-dark text-white flex items-center gap-1.5"
                 >
                   Continuer <ArrowRight className="h-4 w-4" />
@@ -1032,9 +1055,18 @@ function RegisterWizard() {
               ) : (
                 <Button 
                   type="submit" 
+                  disabled={isSubmitting}
                   className="bg-primary hover:bg-primary-dark text-white flex items-center gap-1.5 font-bold"
                 >
-                  {plan !== 'gratuit' ? 'Payer et déployer' : 'Confirmer et déployer'} <Sparkles className="h-4.5 w-4.5" />
+                  {isSubmitting ? (
+                    <>
+                      Traitement en cours... <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      {plan !== 'gratuit' ? 'Payer et déployer' : 'Confirmer et déployer'} <Sparkles className="h-4.5 w-4.5" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

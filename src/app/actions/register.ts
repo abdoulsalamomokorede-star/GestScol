@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 type RegisterPayload = {
@@ -28,6 +29,42 @@ export async function registerSchoolAndAdmin(data: RegisterPayload) {
   try {
     const supabase = await createClient()
 
+    // 0. Vérifier si l'utilisateur existe déjà dans notre base de données locale (utilisateurs)
+    const { data: existingUser } = await supabase
+      .from('utilisateurs')
+      .select('id, email, ecole_id')
+      .eq('email', data.adminEmail)
+      .maybeSingle()
+
+    if (existingUser) {
+      return { 
+        success: false, 
+        error: "Cet e-mail est déjà associé à un compte existant. Veuillez vous connecter." 
+      }
+    }
+
+    // 0.5. Nettoyer tout compte orphelin dans auth.users si possible
+    try {
+      const adminSupabase = createAdminClient()
+      const { data: usersData, error: listError } = await adminSupabase.auth.admin.listUsers()
+      if (!listError && usersData && usersData.users) {
+        const authUser = usersData.users.find(
+          (u) => u.email?.toLowerCase() === data.adminEmail.toLowerCase()
+        )
+        if (authUser) {
+          console.log(`[Autoguérison] Suppression du compte auth orphelin détecté : ${authUser.id} (${authUser.email})`)
+          const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(authUser.id)
+          if (deleteError) {
+            console.error("[Autoguérison] Erreur lors de la suppression de l'utilisateur orphelin :", deleteError)
+          } else {
+            console.log(`[Autoguérison] Compte auth orphelin ${authUser.id} supprimé avec succès.`)
+          }
+        }
+      }
+    } catch (adminError) {
+      console.warn("[Autoguérison] Impossible de nettoyer les comptes orphelins (les variables d'administration ne sont pas disponibles) :", adminError)
+    }
+
     // 1. Créer le compte utilisateur dans Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.adminEmail,
@@ -43,8 +80,15 @@ export async function registerSchoolAndAdmin(data: RegisterPayload) {
 
     if (authError) {
       console.error("Auth Error:", authError)
-      if (authError.message.includes("already registered")) {
+      const msg = authError.message.toLowerCase()
+      if (msg.includes("already registered") || msg.includes("already be associated")) {
         return { success: false, error: "Cette adresse email est déjà utilisée." }
+      }
+      if (msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("once per minute")) {
+        return { 
+          success: false, 
+          error: "Trop de tentatives d'inscription. Veuillez patienter quelques minutes avant de réessayer." 
+        }
       }
       return { success: false, error: authError.message }
     }
