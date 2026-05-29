@@ -515,7 +515,7 @@ export default function ParametresPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div>
-          <h1 className="text-3xl font-display font-bold text-text flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-text flex items-center gap-2 sm:gap-3">
             <span className="p-2 rounded-2xl bg-primary/10 text-primary">
               <Settings className="h-8 w-8" />
             </span>

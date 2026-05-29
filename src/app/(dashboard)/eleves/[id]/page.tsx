@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { getInitiales, formatDate, formatCFA } from '@/lib/utils'
-import { ArrowLeft, User, BookOpen, CreditCard, CalendarOff, Phone, Mail, Loader2, Download } from 'lucide-react'
+import { ArrowLeft, User, BookOpen, CreditCard, CalendarOff, Phone, Mail, Loader2, Download, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -111,114 +111,127 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
             >
               Modifier le dossier
             </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-primary text-white hover:bg-primary-dark font-semibold">
-                  Générer Bulletin
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold font-display text-text">Générer le Bulletin PDF</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trimestre</label>
-                    <Select value={selectedTrimestre} onValueChange={(val) => setSelectedTrimestre(val as '1' | '2' | '3')}>
-                      <SelectTrigger className="w-full border-border">
-                        <SelectValue placeholder="Choisir un trimestre" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1er Trimestre</SelectItem>
-                        <SelectItem value="2">2ème Trimestre</SelectItem>
-                        <SelectItem value="3">3ème Trimestre</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+            {ecole?.abonnement?.plan === 'gratuit' ? (
+              <div
+                className="h-10 px-4 bg-primary/10 text-primary/60 border border-primary/20 cursor-not-allowed font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm select-none"
+                title="Abonnement Standard requis pour générer les bulletins PDF"
+              >
+                <Lock className="h-4 w-4 shrink-0" />
+                <span>Générer Bulletin</span>
+                <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                  👑 Premium
+                </span>
+              </div>
+            ) : (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary text-white hover:bg-primary-dark font-semibold">
+                    Générer Bulletin
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px] bg-card border-border">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold font-display text-text">Générer le Bulletin PDF</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trimestre</label>
+                      <Select value={selectedTrimestre} onValueChange={(val) => setSelectedTrimestre(val as '1' | '2' | '3')}>
+                        <SelectTrigger className="w-full border-border">
+                          <SelectValue placeholder="Choisir un trimestre" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1er Trimestre</SelectItem>
+                          <SelectItem value="2">2ème Trimestre</SelectItem>
+                          <SelectItem value="3">3ème Trimestre</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  {bulletinEleve && bulletinEleve.notes.length > 0 ? (
-                    <div className="bg-slate-50 border border-border p-4 rounded-lg space-y-3">
-                      <div className="flex justify-between items-center border-b border-border/55 pb-2">
-                        <span className="text-xs text-muted-foreground font-medium">Moyenne Générale</span>
-                        <span className={`text-sm font-bold font-display px-2 py-0.5 rounded ${
-                          bulletinEleve.moyenneGenerale >= 10 ? 'text-emerald-600 bg-emerald-50' : 'text-danger bg-red-50'
-                        }`}>
-                          {bulletinEleve.moyenneGenerale.toFixed(2)} / 20
-                        </span>
+                    {bulletinEleve && bulletinEleve.notes.length > 0 ? (
+                      <div className="bg-slate-50 border border-border p-4 rounded-lg space-y-3">
+                        <div className="flex justify-between items-center border-b border-border/55 pb-2">
+                          <span className="text-xs text-muted-foreground font-medium">Moyenne Générale</span>
+                          <span className={`text-sm font-bold font-display px-2 py-0.5 rounded ${
+                            bulletinEleve.moyenneGenerale >= 10 ? 'text-emerald-600 bg-emerald-50' : 'text-danger bg-red-50'
+                          }`}>
+                            {bulletinEleve.moyenneGenerale.toFixed(2)} / 20
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-border/55 pb-2">
+                          <span className="text-xs text-muted-foreground font-medium">Rang</span>
+                          <span className="text-xs font-bold text-text bg-slate-200/60 px-2 py-0.5 rounded">
+                            {bulletinEleve.rangClasse}e sur {bulletinEleve.effectifClasse}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground font-medium">Mention</span>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                            bulletinEleve.moyenneGenerale >= 10 ? 'bg-primary-light text-primary' : 'bg-red-50 text-danger'
+                          }`}>
+                            {bulletinEleve.appreciation}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center border-b border-border/55 pb-2">
-                        <span className="text-xs text-muted-foreground font-medium">Rang</span>
-                        <span className="text-xs font-bold text-text bg-slate-200/60 px-2 py-0.5 rounded">
-                          {bulletinEleve.rangClasse}e sur {bulletinEleve.effectifClasse}
-                        </span>
+                    ) : (
+                      <div className="bg-amber-50 border border-amber-200/50 p-4 rounded-lg text-center text-xs text-amber-800">
+                        Aucune note disponible pour ce trimestre ou relevé incomplet.
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground font-medium">Mention</span>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                          bulletinEleve.moyenneGenerale >= 10 ? 'bg-primary-light text-primary' : 'bg-red-50 text-danger'
-                        }`}>
-                          {bulletinEleve.appreciation}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-amber-50 border border-amber-200/50 p-4 rounded-lg text-center text-xs text-amber-800">
-                      Aucune note disponible pour ce trimestre ou relevé incomplet.
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex justify-end gap-3 border-t border-border pt-4 mt-2">
-                  <DialogClose asChild>
-                    <Button variant="outline" size="sm">Fermer</Button>
-                  </DialogClose>
+                    )}
+                  </div>
                   
-                  {isMounted && bulletinEleve && bulletinEleve.notes.length > 0 ? (
-                    <PDFDownloadLink
-                      document={
-                        <BulletinPDF
-                          bulletins={[bulletinEleve]}
-                          ecole={ecole}
-                          eleves={[eleve]}
-                          matieres={matieres}
-                          classes={classes}
-                          enseignants={enseignants}
-                          absences={absences}
-                          anneesScolaires={anneesScolaires}
-                        />
-                      }
-                      fileName={`Bulletin_${eleve.nom}_${eleve.prenom}_T${selectedTrimestre}.pdf`}
-                    >
-                      {/* @ts-ignore */}
-                      {({ loading }) => (
-                        <Button
-                          className="bg-primary hover:bg-primary-dark text-white font-semibold flex items-center gap-2"
-                          disabled={loading}
-                          size="sm"
-                        >
-                          {loading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Calcul...
-                            </>
-                          ) : (
-                            <>
-                              <Download className="h-4 w-4" />
-                              Télécharger le PDF
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </PDFDownloadLink>
-                  ) : (
-                    <Button size="sm" disabled className="bg-slate-100 text-slate-400 font-semibold flex items-center gap-2 border border-border shadow-none">
-                      <Download className="h-4 w-4" />
-                      Incomplet
-                    </Button>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
+                  <div className="flex justify-end gap-3 border-t border-border pt-4 mt-2">
+                    <DialogClose asChild>
+                      <Button variant="outline" size="sm">Fermer</Button>
+                    </DialogClose>
+                    
+                    {isMounted && bulletinEleve && bulletinEleve.notes.length > 0 ? (
+                      <PDFDownloadLink
+                        document={
+                          <BulletinPDF
+                            bulletins={[bulletinEleve]}
+                            ecole={ecole}
+                            eleves={[eleve]}
+                            matieres={matieres}
+                            classes={classes}
+                            enseignants={enseignants}
+                            absences={absences}
+                            anneesScolaires={anneesScolaires}
+                          />
+                        }
+                        fileName={`Bulletin_${eleve.nom}_${eleve.prenom}_T${selectedTrimestre}.pdf`}
+                      >
+                        {/* @ts-ignore */}
+                        {({ loading }) => (
+                          <Button
+                            className="bg-primary hover:bg-primary-dark text-white font-semibold flex items-center gap-2"
+                            disabled={loading}
+                            size="sm"
+                          >
+                            {loading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Calcul...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="h-4 w-4" />
+                                Télécharger le PDF
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </PDFDownloadLink>
+                    ) : (
+                      <Button size="sm" disabled className="bg-slate-100 text-slate-400 font-semibold flex items-center gap-2 border border-border shadow-none">
+                        <Download className="h-4 w-4" />
+                        Incomplet
+                      </Button>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         )}
       </div>
@@ -277,16 +290,26 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
             Informations
           </TabsTrigger>
           <TabsTrigger value="notes" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <BookOpen className="w-4 h-4 mr-2" />
-            Notes
+            <BookOpen className="w-4 h-4 mr-2 shrink-0" />
+            <span>Notes</span>
+            {ecole?.abonnement?.plan === 'gratuit' && (
+              <span className="ml-1.5 text-[8px] bg-amber-500/20 text-amber-700 font-extrabold px-1 rounded uppercase tracking-wider shrink-0">
+                Premium
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="paiements" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <CreditCard className="w-4 h-4 mr-2" />
+            <CreditCard className="w-4 h-4 mr-2 shrink-0" />
             Paiements
           </TabsTrigger>
           <TabsTrigger value="absences" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <CalendarOff className="w-4 h-4 mr-2" />
-            Absences
+            <CalendarOff className="w-4 h-4 mr-2 shrink-0" />
+            <span>Absences</span>
+            {ecole?.abonnement?.plan === 'gratuit' && (
+              <span className="ml-1.5 text-[8px] bg-amber-500/20 text-amber-700 font-extrabold px-1 rounded uppercase tracking-wider shrink-0">
+                Premium
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -346,44 +369,61 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
 
           <TabsContent value="notes" className="mt-0">
             <Card className="border-border/50 shadow-sm">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg font-display">Relevé de Notes (Trimestre 1)</CardTitle>
+                {ecole?.abonnement?.plan === 'gratuit' && (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                    👑 Premium
+                  </span>
+                )}
               </CardHeader>
               <CardContent>
-                {notes.filter(n => n.trimestre === 1).length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">Aucune note enregistrée pour ce trimestre.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left border border-border/50 rounded-lg overflow-hidden">
-                      <thead className="bg-muted/50 text-muted-foreground font-medium">
-                        <tr>
-                          <th className="px-4 py-3">Matière</th>
-                          <th className="px-4 py-3 text-center">Note /20</th>
-                          <th className="px-4 py-3 text-center">Type</th>
-                          <th className="px-4 py-3 text-center">Coefficient</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/50">
-                        {notes.filter(n => n.trimestre === 1).map(note => {
-                          const matiere = matieres.find(m => m.id === note.matiereId)
-                          return (
-                            <tr key={note.id} className="hover:bg-muted/20">
-                              <td className="px-4 py-3 font-medium">{matiere?.nom || 'Inconnue'}</td>
-                              <td className="px-4 py-3 text-center font-bold text-text">
-                                <span className={note.valeur < 10 ? 'text-danger' : 'text-success'}>
-                                  {note.valeur}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-center text-muted-foreground">
-                                {note.type === 'composition' ? 'Composition' : note.type === 'devoir' ? `Devoir ${note.numero || ''}` : 'Oral'}
-                              </td>
-                              <td className="px-4 py-3 text-center text-muted-foreground">{matiere?.coefficient}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                {ecole?.abonnement?.plan === 'gratuit' ? (
+                  <div className="text-center py-12 space-y-3">
+                    <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-sm font-bold text-text">Relevé de Notes Verrouillé</h4>
+                    <p className="text-xs text-muted-foreground max-w-[320px] mx-auto leading-relaxed">
+                      La consultation des devoirs, des compositions et le calcul automatique de la moyenne trimestrielle nécessitent un abonnement payant.
+                    </p>
                   </div>
+                ) : (
+                  notes.filter(n => n.trimestre === 1).length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Aucune note enregistrée pour ce trimestre.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left border border-border/50 rounded-lg overflow-hidden">
+                        <thead className="bg-muted/50 text-muted-foreground font-medium">
+                          <tr>
+                            <th className="px-4 py-3">Matière</th>
+                            <th className="px-4 py-3 text-center">Note /20</th>
+                            <th className="px-4 py-3 text-center">Type</th>
+                            <th className="px-4 py-3 text-center">Coefficient</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/50">
+                          {notes.filter(n => n.trimestre === 1).map(note => {
+                            const matiere = matieres.find(m => m.id === note.matiereId)
+                            return (
+                              <tr key={note.id} className="hover:bg-muted/20">
+                                <td className="px-4 py-3 font-medium">{matiere?.nom || 'Inconnue'}</td>
+                                <td className="px-4 py-3 text-center font-bold text-text">
+                                  <span className={note.valeur < 10 ? 'text-danger' : 'text-success'}>
+                                    {note.valeur}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-center text-muted-foreground">
+                                  {note.type === 'composition' ? 'Composition' : note.type === 'devoir' ? `Devoir ${note.numero || ''}` : 'Oral'}
+                                </td>
+                                <td className="px-4 py-3 text-center text-muted-foreground">{matiere?.coefficient}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
                 )}
               </CardContent>
             </Card>
@@ -448,33 +488,51 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
             <Card className="border-border/50 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg font-display">Relevé des Absences</CardTitle>
-                <div className="text-sm font-medium">
-                  Total : <span className="text-danger">{absences.length}</span> absence(s)
-                </div>
+                {ecole?.abonnement?.plan === 'gratuit' ? (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                    👑 Premium
+                  </span>
+                ) : (
+                  <div className="text-sm font-medium">
+                    Total : <span className="text-danger">{absences.length}</span> absence(s)
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
-                {absences.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">Aucune absence enregistrée.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {absences.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(absence => (
-                      <div key={absence.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:border-primary/30 transition-colors">
-                        <div className="flex items-center space-x-4">
-                          <div className={`p-3 rounded-full ${absence.justifiee ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-                            <CalendarOff className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-text">{formatDate(absence.date)}</p>
-                            <p className="text-sm text-muted-foreground">Séance : {absence.seance}</p>
-                            {absence.motif && <p className="text-sm text-muted-foreground mt-1">Motif : {absence.motif}</p>}
-                          </div>
-                        </div>
-                        <Badge variant="outline" className={absence.justifiee ? 'bg-success/10 text-success border-success/20' : 'bg-danger/10 text-danger border-danger/20'}>
-                          {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
-                        </Badge>
-                      </div>
-                    ))}
+                {ecole?.abonnement?.plan === 'gratuit' ? (
+                  <div className="text-center py-12 space-y-3">
+                    <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-sm font-bold text-text">Relevé d'Assiduité Verrouillé</h4>
+                    <p className="text-xs text-muted-foreground max-w-[320px] mx-auto leading-relaxed">
+                      L'historique détaillé des absences et retards de l'élève est réservé aux formules payantes.
+                    </p>
                   </div>
+                ) : (
+                  absences.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Aucune absence enregistrée.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {absences.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(absence => (
+                        <div key={absence.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:border-primary/30 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            <div className={`p-3 rounded-full ${absence.justifiee ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                              <CalendarOff className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-text">{formatDate(absence.date)}</p>
+                              <p className="text-sm text-muted-foreground">Séance : {absence.seance}</p>
+                              {absence.motif && <p className="text-sm text-muted-foreground mt-1">Motif : {absence.motif}</p>}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className={absence.justifiee ? 'bg-success/10 text-success border-success/20' : 'bg-danger/10 text-danger border-danger/20'}>
+                            {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )
                 )}
               </CardContent>
             </Card>

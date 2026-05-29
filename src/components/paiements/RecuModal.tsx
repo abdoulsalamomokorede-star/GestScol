@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Printer, X, Award, CheckCircle, Trash2 } from 'lucide-react'
+import { Printer, X, Award, CheckCircle, Trash2, Lock } from 'lucide-react'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { useToast } from '@/hooks/use-toast'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
@@ -319,10 +319,20 @@ export default function RecuModal({
           <Button
             type="button"
             onClick={handlePrint}
-            className="bg-primary hover:bg-primary-dark text-white font-bold"
+            disabled={ecole?.abonnement?.plan === 'gratuit'}
+            className="bg-primary hover:bg-primary-dark text-white font-bold flex items-center gap-2"
           >
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimer le reçu
+            {ecole?.abonnement?.plan === 'gratuit' ? (
+              <>
+                <Lock className="h-4 w-4 shrink-0" />
+                <span>Imprimer le reçu (Premium)</span>
+              </>
+            ) : (
+              <>
+                <Printer className="h-4 w-4 shrink-0" />
+                <span>Imprimer le reçu</span>
+              </>
+            )}
           </Button>
         </DialogFooter>
 

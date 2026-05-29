@@ -164,7 +164,7 @@ export default function EnseignantsPage() {
                       </Avatar>
                       <div>
                         <p className="font-medium text-text">{enseignant.civilite ? `${enseignant.civilite} ` : ''}{enseignant.prenom} {enseignant.nom}</p>
-                        <p className="text-xs text-muted-foreground">ID: {enseignant.id}</p>
+                        <p className="text-xs text-muted-foreground">Personnel Enseignant</p>
                       </div>
                     </div>
                   </td>

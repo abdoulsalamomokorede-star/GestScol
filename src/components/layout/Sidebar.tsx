@@ -116,14 +116,14 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
         ...section,
         items: section.items.filter(item => {
           const hasRole = item.roles.includes(currentUser.role)
-          const isAllowedByPlan = !item.premium || plan !== 'gratuit'
-          return hasRole && isAllowedByPlan
+          return hasRole
         })
       }))
       .filter(section => section.items.length > 0)
   }
 
   const sections = getNavigationSections()
+  const plan = ecole?.abonnement?.plan || 'gratuit'
 
   return (
     <div className={cn("bg-sidebar flex flex-col text-white shadow-xl flex-shrink-0 h-full", className)}>
@@ -171,6 +171,26 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                   <div className="space-y-0.5 animate-in slide-in-from-top-1 duration-200">
                     {section.items.map((item) => {
                       const isActive = pathname.startsWith(item.href)
+                      const isLocked = item.premium && plan === 'gratuit'
+                      
+                      if (isLocked) {
+                        return (
+                          <div
+                            key={item.name}
+                            className="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg text-white/40 cursor-not-allowed select-none bg-white/[0.02] border border-white/5"
+                            title="Fonctionnalité Premium — Abonnement Standard requis"
+                          >
+                            <div className="flex items-center">
+                              <item.icon className="mr-3 h-4 w-4 shrink-0 text-white/30" />
+                              <span>{item.name}</span>
+                            </div>
+                            <span className="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              👑 Premium
+                            </span>
+                          </div>
+                        )
+                      }
+
                       return (
                         <Link
                           key={item.name}

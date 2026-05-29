@@ -64,6 +64,7 @@ function InscriptionsPageContent() {
   }, [inscriptions, eleves, searchTerm, classFilter, anneeFilter, statutFilter, sexeFilter])
 
   const getClasseName = (id: string) => classes.find(c => c.id === id)?.nom || 'Inconnue'
+  const getAnneeName = (id: string) => anneesScolaires.find(a => a.id === id)?.nom || id
   const getEleve = (id: string) => eleves.find(e => e.id === id)
 
   const handleOpen = (inscription?: Inscription) => {
@@ -228,7 +229,7 @@ function InscriptionsPageContent() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-text">{getClasseName(ins.classeId)}</p>
-                      <p className="text-xs text-muted-foreground">{ins.anneeScolaire}</p>
+                      <p className="text-xs text-muted-foreground">{getAnneeName(ins.anneeScolaire)}</p>
                     </td>
                     <td className="px-6 py-4 font-medium text-text">
                       {new Intl.NumberFormat('fr-FR').format(ins.fraisInscription)} FCFA

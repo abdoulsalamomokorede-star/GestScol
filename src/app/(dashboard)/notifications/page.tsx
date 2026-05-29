@@ -23,7 +23,8 @@ import {
   Plus,
   Send,
   Users,
-  Loader2
+  Loader2,
+  Lock
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
@@ -39,7 +40,8 @@ export default function NotificationsPage() {
     addNotification, 
     markNotificationAsRead, 
     deleteNotification,
-    suppressedNotificationIds
+    suppressedNotificationIds,
+    ecole
   } = useSchoolStore()
   
   const { toast } = useToast()
@@ -266,15 +268,27 @@ export default function NotificationsPage() {
             </Button>
           )}
 
-          {/* Bouton Publier un communiqué (Directeur uniquement) */}
+          {/* Bouton Publier un communiqué (Directeur uniquement, visible mais inactif si gratuit) */}
           {currentUser.role === 'directeur' && (
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary text-white hover:bg-primary-dark font-bold text-xs rounded-xl flex items-center gap-2 shadow-md">
-                  <Megaphone className="h-4 w-4" />
-                  Diffuser un communiqué
-                </Button>
-              </DialogTrigger>
+            ecole?.abonnement?.plan === 'gratuit' ? (
+              <div 
+                className="h-9 px-4 bg-amber-500/10 text-amber-700 border border-amber-500/25 cursor-not-allowed font-bold text-xs rounded-xl flex items-center gap-2 shadow-sm select-none"
+                title="Abonnement Standard requis pour diffuser des communiqués"
+              >
+                <Lock className="h-4 w-4 shrink-0 text-amber-600" />
+                <span>Diffuser un communiqué</span>
+                <span className="text-[9px] bg-amber-500/20 text-amber-800 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                  👑 Premium
+                </span>
+              </div>
+            ) : (
+              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary text-white hover:bg-primary-dark font-bold text-xs rounded-xl flex items-center gap-2 shadow-md">
+                    <Megaphone className="h-4 w-4" />
+                    Diffuser un communiqué
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-[500px] border border-border rounded-2xl">
                 <DialogHeader>
                   <DialogTitle className="font-display font-bold text-lg text-text">
@@ -386,7 +400,7 @@ export default function NotificationsPage() {
                 </form>
               </DialogContent>
             </Dialog>
-          )}
+          ))}
         </div>
       </div>
 

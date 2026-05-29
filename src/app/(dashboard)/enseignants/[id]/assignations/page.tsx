@@ -10,12 +10,22 @@ import { useSchoolStore } from '@/store/useSchoolStore'
 import { useToast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
+import { PremiumGuard } from '@/components/ui/PremiumGuard'
 
 export default function AssignationsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params)
   const router = useRouter()
   const { toast } = useToast()
-  const { enseignants, classes, matieres, updateClasse, updateMatiere } = useSchoolStore()
+  const { enseignants, classes, matieres, updateClasse, updateMatiere, ecole } = useSchoolStore()
+  
+  if (ecole?.abonnement?.plan === 'gratuit') {
+    return (
+      <PremiumGuard 
+        title="Assignation des Enseignants" 
+        description="Assignez vos enseignants aux classes et matières correspondantes, désignez les professeurs principaux (titulaires), et organisez la répartition horaire et pédagogique de votre corps professoral."
+      />
+    )
+  }
   
   const enseignant = enseignants.find(e => e.id === unwrappedParams.id)
   

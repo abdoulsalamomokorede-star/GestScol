@@ -258,15 +258,15 @@ export default function ProfilPage() {
 
             <div className="w-full border-t border-border/50 my-5 pt-4 space-y-3.5 text-left text-xs text-slate-600 dark:text-slate-400 font-medium">
                 <div className="flex items-center gap-2.5">
-                  <Mail className="h-4 w-4 text-muted shrink-0" />
+                  <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span className="truncate">{currentUser.email}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Phone className="h-4 w-4 text-muted shrink-0" />
+                  <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>{currentUser.telephone || 'Non renseigné'}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <MapPin className="h-4 w-4 text-muted shrink-0" />
+                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>Abidjan, Côte d&apos;Ivoire</span>
                 </div>
               </div>

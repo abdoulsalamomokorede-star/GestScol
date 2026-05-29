@@ -11,13 +11,23 @@ import { useToast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
 import { Label } from '@/components/ui/label'
+import { PremiumGuard } from '@/components/ui/PremiumGuard'
 
 function MatieresContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialClasseId = searchParams.get('classeId') || 'toutes'
 
-  const { matieres, classes, addMatiere, updateMatiere, deleteMatiere, isAbonnementExpired } = useSchoolStore()
+  const { matieres, classes, addMatiere, updateMatiere, deleteMatiere, isAbonnementExpired, ecole } = useSchoolStore()
+
+  if (ecole?.abonnement?.plan === 'gratuit') {
+    return (
+      <PremiumGuard 
+        title="Gestion des Matières" 
+        description="Configurez les matières enseignées dans votre établissement, définissez leurs coefficients respectifs par classe, et organisez le cursus pédagogique pour assurer un calcul précis des moyennes de vos élèves."
+      />
+    )
+  }
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [classFilter, setClassFilter] = useState(initialClasseId)

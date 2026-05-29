@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
-import { Users, TrendingUp, Calendar, FileText, Filter, GraduationCap, School } from 'lucide-react'
+import { Users, TrendingUp, Calendar, FileText, Filter, GraduationCap, School, Lock } from 'lucide-react'
 import KpiCard from '@/components/dashboard/KpiCard'
 import PaiementsParClasseChart from '@/components/dashboard/PaiementsParClasseChart'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,7 +13,7 @@ import { formatCFA, formatDate } from '@/lib/utils'
 import { ecoleMock } from '@/data/mockData'
 
 export default function DashboardPage() {
-  const { eleves, paiements, absences, classes, enseignants, bulletins, inscriptions, currentUser, notes, anneesScolaires, activeAnneeScolaire } = useSchoolStore()
+  const { eleves, paiements, absences, classes, enseignants, bulletins, inscriptions, currentUser, notes, anneesScolaires, activeAnneeScolaire, ecole } = useSchoolStore()
 
   // Filtres
   const [anneeScolaire, setAnneeScolaire] = useState(activeAnneeScolaire?.id || ecoleMock.anneeScolaire)
@@ -194,12 +194,14 @@ export default function DashboardPage() {
           value={absencesNonJustifiees}
           icon={Calendar}
           subtitle={moisAbsences === 'tous' ? "Depuis le début de l'année scolaire" : `Pour le mois ${moisAbsences}`}
+          isLocked={ecole?.abonnement?.plan === 'gratuit'}
         />
         <KpiCard
           title="Bulletins Générés"
           value={`${nombreBulletinsGeneres}/${bulletinsAttendus}`}
           icon={FileText}
           subtitle={trimestre === 'tous' ? "Générés sur l'année scolaire" : `Générés au T${trimestre}`}
+          isLocked={ecole?.abonnement?.plan === 'gratuit'}
         />
       </div>
 
@@ -279,34 +281,51 @@ export default function DashboardPage() {
         </Card>
 
         {/* Dernières absences */}
-        <Card className="shadow-sm border-border/50">
-          <CardHeader>
+        <Card className="shadow-sm border-border/50 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-display">
               {moisAbsences === 'tous' ? "Absences Récentes" : `Absences du Mois (${moisAbsences})`}
             </CardTitle>
+            {ecole?.abonnement?.plan === 'gratuit' && (
+              <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
+                👑 Premium
+              </span>
+            )}
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {dernieresAbsences.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4 text-sm">Aucune absence trouvée.</p>
-              ) : (
-                dernieresAbsences.map(absence => {
-                  const eleve = eleves.find(e => e.id === absence.eleveId)
-                  if (!eleve) return null
-                  return (
-                    <div key={absence.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
-                      <div>
-                        <p className="font-medium text-text text-sm">{eleve.prenom} {eleve.nom}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(absence.date)} ({absence.seance})</p>
+          <CardContent className="flex-1 flex flex-col justify-center">
+            {ecole?.abonnement?.plan === 'gratuit' ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-text">Suivi des Absences Verrouillé</h4>
+                <p className="text-xs text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
+                  L'accès à l'assiduité en temps réel, aux feuilles d'appel et au suivi des retards est réservé aux formules payantes.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dernieresAbsences.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4 text-sm">Aucune absence trouvée.</p>
+                ) : (
+                  dernieresAbsences.map(absence => {
+                    const eleve = eleves.find(e => e.id === absence.eleveId)
+                    if (!eleve) return null
+                    return (
+                      <div key={absence.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                        <div>
+                          <p className="font-medium text-text text-sm">{eleve.prenom} {eleve.nom}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(absence.date)} ({absence.seance})</p>
+                        </div>
+                        <Badge variant="outline" className={absence.justifiee ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"}>
+                          {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className={absence.justifiee ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"}>
-                        {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
-                      </Badge>
-                    </div>
-                  )
-                })
-              )}
-            </div>
+                    )
+                  })
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

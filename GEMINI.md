@@ -130,8 +130,13 @@ Dans Next.js 16, **`src/proxy.ts`** remplace le `middleware.ts` traditionnel. Po
   * `X-Content-Type-Options: nosniff`.
   * `Referrer-Policy` & `Permissions-Policy`.
 
-### 4. Restrictions de plans (PremiumGuard)
-* **Formule Gratuite** : Les liens `Notes`, `Absences`, `Bulletins`, `Support` et la gestion des comptes sont masqués pour le directeur. S'il tente d'accéder directement à l'URL, l'interface intercepte la route et affiche `PremiumGuard` (incitation de mise à niveau vers la formule Standard de 150 000 FCFA / an).
+### 4. Restrictions de plans & Bridage Premium Visuel (PremiumGuard & Locks)
+* **Stratégie d'incitation Premium (Visibilité Inactive)** : Plutôt que de simplement masquer les fonctionnalités, les éléments premium sont maintenus **visibles mais verrouillés/inactifs** avec un indicateur premium prestigieux (`👑 Premium` et une icône `Lock` dorée) pour susciter l'intérêt de l'utilisateur :
+  * **Sidebar & Navigation** : Les liens premium (`Notes`, `Absences`, `Bulletins`, `Support`) restent visibles avec une opacité de 40%, un curseur interdit (`cursor-not-allowed`) et un badge doré `👑 Premium` à droite.
+  * **Tableau de Bord Directeur** : Les cartes KPI (Absences, Bulletins) et le widget d'absences récentes s'affichent dans un état locked (avec cadenas, tirets à la place des valeurs et sous-titres incitatifs).
+  * **Fiche Dossier Élève** : Le bouton "Générer Bulletin" s'affiche sous forme d'indicateur inactif doré, et les onglets "Notes" & "Absences" restent visibles avec des badges Premium dorés. Cliquer dessus affiche un magnifique écran de verrouillage incitatif à la place du contenu.
+  * **Actions & Boutons** : Les boutons "Imprimer le reçu" (paiements) et "Diffuser un communiqué" (notifications) s'affichent sous forme inerte avec un contraste élevé en couleur ambre dorée (Premium) et un curseur interdit.
+* **Sécurité du Routage Direct** : Si l'utilisateur tente d'accéder directement à une URL restreinte (`/matieres` ou `/enseignants/[id]/assignations`), la route est interceptée côté client et affiche un écran complet de conversion `PremiumGuard` (incitation de mise à niveau vers la formule Standard de 150 000 FCFA / an).
 * **Abonnement Expiré** : L'accès aux données passées est préservé en lecture seule, mais toute écriture est interceptée côté client par la méthode de garde Zustand `checkAbonnement`, affichant un toast d'erreur bloquant sans perte de saisie pour l'utilisateur.
 
 ---
