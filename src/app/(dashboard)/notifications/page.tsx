@@ -254,7 +254,7 @@ export default function NotificationsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-start sm:justify-end shrink-0 self-start sm:self-center">
           {/* Bouton Tout marquer comme lu */}
           {unreadCount > 0 && (
             <Button 
