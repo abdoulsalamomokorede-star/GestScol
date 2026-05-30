@@ -243,7 +243,9 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 -mt-12">
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-4">
               <Avatar className="h-24 w-24 border-4 border-card rounded-xl shrink-0">
-                <AvatarImage src={eleve.photoUrl || ''} className="object-cover rounded-xl" />
+                {eleve.photoUrl ? (
+                  <AvatarImage src={eleve.photoUrl} className="object-cover rounded-xl" />
+                ) : null}
                 <AvatarFallback className="bg-primary text-white text-3xl font-display rounded-xl">
                   {getInitiales(eleve.nom, eleve.prenom)}
                 </AvatarFallback>

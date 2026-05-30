@@ -636,7 +636,9 @@ export default function ParametresPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-border/40 pb-4 mb-4">
                   <div className="relative group cursor-pointer shrink-0">
                     <Avatar className="h-16 w-16 border border-primary/20 shadow-sm rounded-xl">
-                      <AvatarImage src={logoEcole || ''} className="object-cover rounded-xl" />
+                      {logoEcole ? (
+                        <AvatarImage src={logoEcole} className="object-cover rounded-xl" />
+                      ) : null}
                       <AvatarFallback className="bg-primary/5 text-primary text-xl font-extrabold rounded-xl">
                         {getInitiales(nomEcole, '')}
                       </AvatarFallback>

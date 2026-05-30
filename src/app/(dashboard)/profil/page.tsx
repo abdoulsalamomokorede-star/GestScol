@@ -290,7 +290,9 @@ export default function ProfilPage() {
             {/* Avatar premium avec uploader */}
             <div className="relative group cursor-pointer mb-4">
               <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-md">
-                <AvatarImage src={currentUser.photoUrl || ''} className="object-cover" />
+                {currentUser.photoUrl ? (
+                  <AvatarImage src={currentUser.photoUrl} className="object-cover" />
+                ) : null}
                 <AvatarFallback className="bg-primary/5 text-primary text-2xl font-extrabold">
                   {getInitiales(currentUser.nom, currentUser.prenom)}
                 </AvatarFallback>

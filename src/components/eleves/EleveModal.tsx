@@ -220,7 +220,9 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
               <Label className="text-xs font-bold text-muted-foreground uppercase">Photo de l&apos;élève</Label>
               <div className="relative group cursor-pointer">
                 <Avatar className="h-20 w-20 border-2 border-primary/20 shadow-md">
-                  <AvatarImage src={formData.photoUrl || ''} className="object-cover" />
+                  {formData.photoUrl ? (
+                    <AvatarImage src={formData.photoUrl} className="object-cover" />
+                  ) : null}
                   <AvatarFallback className="bg-primary/5 text-primary text-xl font-extrabold">
                     {getInitiales(formData.nom || '', formData.prenom || '')}
                   </AvatarFallback>
