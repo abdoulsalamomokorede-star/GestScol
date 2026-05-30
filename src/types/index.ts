@@ -32,6 +32,7 @@ export type User = {
   role: UserRole
   ecoleId: string        // FK → Ecole.id
   identifiant?: string   // Utilisé pour les comptes_connexion
+  photoUrl?: string      // URL ou Base64 de la photo de profil
   // Note : pour role='enseignant', les classes/matières sont liées
   //        via Classe.enseignantPrincipalId et Matiere.enseignantId
   // Note : pour role='parent', le lien vers les enfants se fait

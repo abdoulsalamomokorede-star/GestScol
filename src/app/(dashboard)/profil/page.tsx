@@ -135,6 +135,61 @@ export default function ProfilPage() {
     }
   }
 
+  const handleProfilePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        toast({
+          title: "Fichier trop volumineux",
+          description: "La taille de l'image ne doit pas dépasser 1 Mo.",
+          variant: "destructive"
+        })
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = async () => {
+        if (typeof reader.result === 'string') {
+          const base64Photo = reader.result
+          
+          setLoading(true)
+          try {
+            const supabase = createClient()
+            
+            // 1. Sauvegarder dans la table utilisateurs
+            const { error: dbError } = await supabase
+              .from('utilisateurs')
+              .update({ photo_url: base64Photo })
+              .eq('id', currentUser.id)
+              
+            if (dbError) throw dbError
+
+            // 2. Mettre à jour le state global
+            setCurrentUser({
+              ...currentUser,
+              photoUrl: base64Photo
+            })
+            
+            toast({
+              title: "Photo de profil mise à jour",
+              description: "Votre nouvelle photo a été enregistrée avec succès.",
+              variant: "default"
+            })
+          } catch (err: any) {
+            console.error(err)
+            toast({
+              title: "Erreur",
+              description: err.message || "Impossible de sauvegarder la photo.",
+              variant: "destructive"
+            })
+          } finally {
+            setLoading(false)
+          }
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   // Changement de mot de passe
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -232,17 +287,18 @@ export default function ProfilPage() {
         {/* CARTE D'IDENTITÉ ACADÉMIQUE DE PRESTIGE */}
         <Card className="shadow-lg border-border/50 bg-card overflow-hidden h-fit lg:col-span-1 border-t-4 border-t-primary">
           <CardContent className="p-6 flex flex-col items-center text-center">
-            {/* Avatar premium */}
+            {/* Avatar premium avec uploader */}
             <div className="relative group cursor-pointer mb-4">
               <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-md">
-                <AvatarImage src="" />
+                <AvatarImage src={currentUser.photoUrl || ''} className="object-cover" />
                 <AvatarFallback className="bg-primary/5 text-primary text-2xl font-extrabold">
                   {getInitiales(currentUser.nom, currentUser.prenom)}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute inset-0 bg-black/45 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <label className="absolute inset-0 bg-black/45 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer">
                 <Camera className="h-5 w-5 text-white" />
-              </div>
+                <input type="file" accept="image/*" className="hidden" onChange={handleProfilePhotoChange} />
+              </label>
             </div>
 
             <h3 className="text-lg font-bold text-text leading-tight">

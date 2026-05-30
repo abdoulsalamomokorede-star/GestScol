@@ -202,11 +202,11 @@ export default function LoginPage() {
       setCurrentUser(userProfile)
       
       if (userProfile.role === 'enseignant') {
-        router.push('/enseignant/dashboard')
+        window.location.href = '/enseignant/dashboard'
       } else if (userProfile.role === 'parent') {
-        router.push('/parent/dashboard')
+        window.location.href = '/parent/dashboard'
       } else {
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     } catch (err: any) {
       console.error(err)

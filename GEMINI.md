@@ -116,13 +116,14 @@ GestScol/
 Dans Next.js 16, **`src/proxy.ts`** remplace le `middleware.ts` traditionnel. Pour éliminer les boucles de redirection infinies (desynchronisation entre le client et le serveur), la politique de sécurité suit ces deux piliers :
 * **Côté Serveur (`src/proxy.ts`)** : Le serveur ne considère l'utilisateur comme authentifié que s'il possède à la fois un utilisateur Supabase valide **ET** le cookie de session Zustand `currentUser`. Cela garantit que si Zustand est vidé, l'utilisateur est maintenu sur `/login` de manière stable.
 * **Côté Client (`src/app/(dashboard)/layout.tsx`)** : Si Zustand est réhydraté et que `currentUser` est détecté comme `null` (déconnexion ou expiration), le layout force **synchrone** `setCurrentUser(null)` pour effacer instantanément le cookie client avant de lancer la signature de sortie asynchrone Supabase.
+* **Redirection de Connexion (SPA Cache Bypass)** : Pour empêcher que l'interface reste bloquée sur la page de connexion après authentification réussie, l'application utilise une redirection forcée via **`window.location.href`** (plutôt que `router.push()`) lors de la connexion. Cela garantit un aller-retour réseau complet et force l'Edge Middleware à lire le cookie fraîchement écrit pour synchroniser immédiatement la session.
 
 ### 2. Isolation Multi-Tenant Hermétique
 * **Base de données** : Le store Zustand `fetchSupabaseData` applique un **cloisonnement strict**. Toutes les requêtes sensibles (`matieres`, `notes`, `paiements`, `absences`, `bulletins`) n'effectuent jamais de `select('*')` brut. Elles filtrent via des clauses `.in()` s'appuyant uniquement sur les classes et élèves légitimes de l'établissement du Directeur connecté.
 * **Server Actions RBAC** : Les Server Actions critiques (`updateSchoolAbonnement`, `createUtilisateurAuth`, `adminUpdatePassword`, `createNotification`) récupèrent la session utilisateur côté serveur et vérifient que l'utilisateur est bien le **Directeur** enregistré pour l'établissement concerné (`ecole_id`) avant de modifier des données.
 
 ### 3. Protection contre les Attaques Standard (OWASP)
-* **Account Takeover (ATO)** : Les actions d'administration valident le rôle de Directeur et imposent un mot de passe fort via un schéma de validation Zod (12 caractères minimum, majuscule, minuscule, chiffre, symbole).
+* **Account Takeover (ATO)** : Les actions d'administration valident le rôle de Directeur et imposent un mot de passe fort via un schéma de validation Zod de **8 caractères minimum** (contenant au moins une majuscule, une minuscule, un chiffre et un caractère spécial) pour tous les comptes.
 * **Sécurité HTTP (`next.config.ts`)** : Injection de headers stricts :
   * `Content-Security-Policy` (CSP) robuste autorisant uniquement les services fiables (Supabase, Wave, CinetPay).
   * `Strict-Transport-Security` (HSTS) actif pour 2 ans.
@@ -138,6 +139,9 @@ Dans Next.js 16, **`src/proxy.ts`** remplace le `middleware.ts` traditionnel. Po
   * **Actions & Boutons** : Les boutons "Imprimer le reçu" (paiements) et "Diffuser un communiqué" (notifications) s'affichent sous forme inerte avec un contraste élevé en couleur ambre dorée (Premium) et un curseur interdit.
 * **Sécurité du Routage Direct** : Si l'utilisateur tente d'accéder directement à une URL restreinte (`/matieres` ou `/enseignants/[id]/assignations`), la route est interceptée côté client et affiche un écran complet de conversion `PremiumGuard` (incitation de mise à niveau vers la formule Standard de 150 000 FCFA / an).
 * **Abonnement Expiré** : L'accès aux données passées est préservé en lecture seule, mais toute écriture est interceptée côté client par la méthode de garde Zustand `checkAbonnement`, affichant un toast d'erreur bloquant sans perte de saisie pour l'utilisateur.
+
+### 5. Gestion des Fichiers Médias par Encodage Local (Base64)
+Afin de garantir une réactivité optimale mobile-first sans nécessiter de configuration complexe de buckets de stockage externe ou d'authentification tiers, la gestion du **logo de l'établissement**, de la **photo de profil utilisateur** et de la **photo des élèves** est unifiée sous une architecture d'upload client asynchrone par conversion en **Base64**. Les fichiers sont limités à 1 Mo et persistés directement sous forme de chaînes de caractères dans leurs tables respectives (`ecoles.logo`, `utilisateurs.photo_url` et `eleves.photo_url`).
 
 ---
 

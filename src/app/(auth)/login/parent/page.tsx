@@ -183,7 +183,7 @@ export default function ParentLoginPage() {
       sessionStorage.removeItem('failedAttempts_parent')
 
       setCurrentUser(userProfile)
-      router.push('/parent/dashboard')
+      window.location.href = '/parent/dashboard'
       
     } catch (err: any) {
       console.error(err)

@@ -292,7 +292,7 @@ export default function RecuModal({
                 <span className="text-[10px] text-muted-foreground print:text-black/70 mb-1">Signé numériquement</span>
                 <div className="flex items-center space-x-1 text-success print:text-black font-bold">
                   <CheckCircle className="h-4 w-4" />
-                  <span>LES FLAMBOYANTS</span>
+                  <span>{(ecole?.nom || 'LES FLAMBOYANTS').toUpperCase()}</span>
                 </div>
               </div>
             </div>

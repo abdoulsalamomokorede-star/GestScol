@@ -183,7 +183,7 @@ export default function EnseignantLoginPage() {
       sessionStorage.removeItem('failedAttempts')
 
       setCurrentUser(userProfile)
-      router.push('/enseignant/dashboard')
+      window.location.href = '/enseignant/dashboard'
       
     } catch (err: any) {
       console.error(err)

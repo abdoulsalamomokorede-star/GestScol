@@ -9,7 +9,7 @@ import { ArrowLeft, User, BookOpen, CreditCard, CalendarOff, Phone, Mail, Loader
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -243,6 +243,7 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 -mt-12">
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-4">
               <Avatar className="h-24 w-24 border-4 border-card rounded-xl shrink-0">
+                <AvatarImage src={eleve.photoUrl || ''} className="object-cover rounded-xl" />
                 <AvatarFallback className="bg-primary text-white text-3xl font-display rounded-xl">
                   {getInitiales(eleve.nom, eleve.prenom)}
                 </AvatarFallback>

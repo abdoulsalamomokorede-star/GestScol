@@ -634,9 +634,27 @@ export const useSchoolStore = create<SchoolState>()(
                 email: u.email,
                 telephone: u.telephone,
                 role: u.role,
-                ecoleId: u.ecole_id
+                ecoleId: u.ecole_id,
+                photoUrl: u.photo_url
               })) 
             })
+
+            const currentUser = get().currentUser
+            if (currentUser) {
+              const dbMe = utilisateurs.find(u => u.id === currentUser.id)
+              if (dbMe) {
+                set({
+                  currentUser: {
+                    ...currentUser,
+                    nom: dbMe.nom,
+                    prenom: dbMe.prenom,
+                    email: dbMe.email,
+                    telephone: dbMe.telephone,
+                    photoUrl: dbMe.photo_url
+                  }
+                })
+              }
+            }
           }
 
           if (inscriptions) {
@@ -1141,6 +1159,7 @@ export const useSchoolStore = create<SchoolState>()(
           if (data.parentTelephone !== undefined) updateData.parent_telephone = data.parentTelephone
           if (data.parentEmail !== undefined) updateData.parent_email = data.parentEmail
           if (data.parentUserId !== undefined) updateData.parent_user_id = data.parentUserId || null
+          if (data.photoUrl !== undefined) updateData.photo_url = data.photoUrl
           
           await supabase.from('eleves').update(updateData).eq('id', id)
         } catch (e) {

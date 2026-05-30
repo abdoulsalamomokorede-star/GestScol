@@ -10,8 +10,9 @@ import { useSchoolStore } from '@/store/useSchoolStore'
 import { Eleve } from '@/types'
 import { useToast } from '@/hooks/use-toast'
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, Search, Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Calendar as CalendarIcon, Search, Check, ChevronsUpDown, Camera } from "lucide-react"
+import { cn, getInitiales } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
@@ -52,7 +53,8 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     statut: 'actif',
     parentNom: '',
     parentTelephone: '',
-    parentEmail: ''
+    parentEmail: '',
+    photoUrl: ''
   })
 
   const [typedDate, setTypedDate] = useState('')
@@ -78,7 +80,8 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
         statut: 'actif',
         parentNom: '',
         parentTelephone: '',
-        parentEmail: ''
+        parentEmail: '',
+        photoUrl: ''
       })
     }
   }, [eleveToEdit, isOpen])
@@ -137,6 +140,27 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleStudentPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        toast({
+          title: "Fichier trop volumineux",
+          description: "La taille de l'image ne doit pas dépasser 1 Mo.",
+          variant: "destructive"
+        })
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          handleSelectChange('photoUrl', reader.result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -190,6 +214,25 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Informations de l'élève</h3>
+            
+            {/* Photo de l'élève */}
+            <div className="flex flex-col items-center justify-center space-y-2 mb-4 border-b border-border/40 pb-4">
+              <Label className="text-xs font-bold text-muted-foreground uppercase">Photo de l&apos;élève</Label>
+              <div className="relative group cursor-pointer">
+                <Avatar className="h-20 w-20 border-2 border-primary/20 shadow-md">
+                  <AvatarImage src={formData.photoUrl || ''} className="object-cover" />
+                  <AvatarFallback className="bg-primary/5 text-primary text-xl font-extrabold">
+                    {getInitiales(formData.nom || '', formData.prenom || '')}
+                  </AvatarFallback>
+                </Avatar>
+                <label className="absolute inset-0 bg-black/45 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer">
+                  <Camera className="h-4 w-4 text-white" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleStudentPhotoChange} />
+                </label>
+              </div>
+              <span className="text-[10px] text-muted-foreground">Formats acceptés : JPG ou PNG, max 1 Mo</span>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-1">
                 <Label htmlFor="matricule">Matricule *</Label>

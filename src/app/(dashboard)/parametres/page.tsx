@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { 
   Settings, 
   UserPlus, 
@@ -36,7 +37,8 @@ import {
   Eye,
   EyeOff,
   Edit2,
-  Trash2
+  Trash2,
+  Camera
 } from 'lucide-react'
 import { UserCompteSimule } from '@/types'
 import { createUtilisateurAuth, adminUpdatePassword } from '@/app/actions/admin'
@@ -129,6 +131,28 @@ export default function ParametresPage() {
   }
   const [devise, setDevise] = useState('FCFA')
   const [telephoneEcole, setTelephoneEcole] = useState(ecole?.telephone || '')
+  const [logoEcole, setLogoEcole] = useState(ecole?.logo || '')
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        toast({
+          title: "Fichier trop volumineux",
+          description: "La taille de l'image ne doit pas dépasser 1 Mo.",
+          variant: "destructive"
+        })
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setLogoEcole(reader.result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   // --- CRÉATION DE COMPTE ---
   const [role, setRole] = useState<'enseignant' | 'parent'>('parent')
@@ -155,6 +179,7 @@ export default function ParametresPage() {
       setNomEcole(ecole.nom || '')
       setAdresse(ecole.adresse || '')
       setTelephoneEcole(ecole.telephone || '')
+      setLogoEcole(ecole.logo || '')
     }
   }, [ecole])
 
@@ -205,7 +230,8 @@ export default function ParametresPage() {
         nom: nomEcole,
         identifiant: ecole?.identifiant || 'ecole', 
         adresse: adresse,
-        telephone: telephoneEcole
+        telephone: telephoneEcole,
+        logo: logoEcole
       })
       
       toast({
@@ -304,7 +330,10 @@ export default function ParametresPage() {
 
       // L'identifiant devient l'e-mail pour des raisons de sécurité et de professionnalisme
       const identifiantGenere = email.toLowerCase().trim()
-      const mdpGenere = `${nom.toUpperCase()}${Math.floor(Math.random() * 9000) + 1000}!`
+      const cleanNom = nom.trim().replace(/[^a-zA-Z]/g, '') || "User"
+      const nomCapitalized = cleanNom.charAt(0).toUpperCase() + cleanNom.slice(1).toLowerCase()
+      // Générer un mot de passe temporaire d'au moins 8 caractères contenant Maj, Min, Chiffre et Symbole
+      const mdpGenere = `Gsc@${nomCapitalized}${Math.floor(Math.random() * 900) + 100}`
 
       const associatedStudents = eleves.filter(el => selectedEleveIds.includes(el.id))
       const elevesNoms = associatedStudents.map(el => `${el.prenom} ${el.nom}`)
@@ -603,6 +632,26 @@ export default function ParametresPage() {
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSaveGeneraux} className="space-y-4">
+                {/* Logo de l'établissement */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-border/40 pb-4 mb-4">
+                  <div className="relative group cursor-pointer shrink-0">
+                    <Avatar className="h-16 w-16 border border-primary/20 shadow-sm rounded-xl">
+                      <AvatarImage src={logoEcole || ''} className="object-cover rounded-xl" />
+                      <AvatarFallback className="bg-primary/5 text-primary text-xl font-extrabold rounded-xl">
+                        {getInitiales(nomEcole, '')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <label className="absolute inset-0 bg-black/45 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer">
+                      <Camera className="h-4 w-4 text-white" />
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                    </label>
+                  </div>
+                  <div className="text-left">
+                    <h4 className="text-xs font-bold text-text uppercase">Logo de l&apos;établissement</h4>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Cliquez sur l&apos;image pour charger votre logo officiel. Format recommandé : PNG carré avec fond transparent, max 1 Mo.</p>
+                  </div>
+                </div>
+
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label htmlFor="school-name" className="text-xs font-bold text-muted-foreground uppercase">Nom de l&apos;établissement</Label>
@@ -1279,8 +1328,11 @@ export default function ParametresPage() {
                 type="text"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Ex: NOUVEAU123!"
+                placeholder="Ex: Gsc@Mamadou249!"
               />
+              <span className="text-[10px] text-muted-foreground mt-1 block">
+                Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, une minuscule, un chiffre et un symbole.
+              </span>
             </div>
           </div>
           <DialogFooter>

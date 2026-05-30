@@ -151,7 +151,7 @@ export default function Header() {
               </span>
             </div>
             <Avatar className="h-9 w-9 border border-primary/20">
-              <AvatarImage src="" />
+              <AvatarImage src={currentUser.photoUrl || ''} className="object-cover" />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
                 {getInitiales(currentUser.nom, currentUser.prenom)}
               </AvatarFallback>

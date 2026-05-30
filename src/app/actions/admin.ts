@@ -7,7 +7,7 @@ import { z } from 'zod'
 const UtilisateurSchema = z.object({
   email: z.string().email("Format d'email invalide"),
   password: z.string()
-    .min(12, "Le mot de passe doit contenir au moins 12 caractères")
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
     .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
@@ -178,8 +178,8 @@ export async function adminUpdatePassword(userId: string, newPassword: string) {
     }
 
     // Valider la longueur minimale de mot de passe fort
-    if (newPassword.length < 12) {
-      return { success: false, error: "Le mot de passe doit contenir au moins 12 caractères." }
+    if (newPassword.length < 8) {
+      return { success: false, error: "Le mot de passe doit contenir au moins 8 caractères." }
     }
 
     const adminAuthClient = getAdminClient()
