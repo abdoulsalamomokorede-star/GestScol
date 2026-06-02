@@ -153,10 +153,14 @@ export default function RecuModal({
         <div id="print-area" className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 bg-card print:bg-white w-full min-w-0">
           {/* En-tête du reçu */}
           <div className="flex flex-col items-center text-center pb-4 border-b border-dashed border-border print:border-black/30">
-            <div className="flex items-center space-x-2 text-primary print:text-black mb-2 no-print">
-              <Award className="h-5 w-5 sm:h-6 sm:w-6" />
-              <span className="font-display font-extrabold text-base sm:text-lg">{(ecole?.nom || ecoleMock.nom).toUpperCase()}</span>
-            </div>
+            {ecole?.logo ? (
+              <img src={ecole.logo} alt="Logo" className="h-16 w-16 object-contain rounded-xl mb-3 print:h-16 print:w-16" />
+            ) : (
+              <div className="flex items-center space-x-2 text-primary print:text-black mb-2 no-print">
+                <Award className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className="font-display font-extrabold text-base sm:text-lg">{(ecole?.nom || ecoleMock.nom).toUpperCase()}</span>
+              </div>
+            )}
             <h3 className="font-display font-bold text-sm sm:text-base text-text print:text-black uppercase">
               {ecole?.nom || ecoleMock.nom}
             </h3>

@@ -144,15 +144,20 @@ export default function AidePage() {
                 </CardHeader>
                 <CardContent className="p-5 text-xs sm:text-sm leading-relaxed text-slate-600 space-y-4 font-medium">
                   <div className="space-y-2">
-                    <h5 className="font-bold text-text uppercase text-[10px] tracking-wider text-primary">Procédure d&apos;inscription :</h5>
+                    <h5 className="font-bold text-text uppercase text-[10px] tracking-wider text-primary">Procédure d&apos;inscription & de Réinscription :</h5>
                     <p>
-                      Pour inscrire un nouvel élève, rendez-vous dans l&apos;onglet **Inscriptions** et complétez le formulaire de saisie. Vous devez obligatoirement spécifier :
+                      Pour éviter de devoir ressaisir les informations civiles de chaque élève à chaque nouvelle rentrée scolaire, GestScol sépare intelligemment la création du dossier permanent de l&apos;inscription de l&apos;année :
                     </p>
-                    <ul className="list-disc pl-5 space-y-1 text-xs">
-                      <li>**Identité** : Nom de famille, prénoms complets, genre, date de naissance, et classe d&apos;affectation.</li>
-                      <li>**Matricule unique** : Généré automatiquement ou saisi manuellement selon la structure de l&apos;école.</li>
-                      <li>**Rattachement Parent** : Saisissez l&apos;adresse email ou le numéro de téléphone (+225) du parent responsable. Ce rattachement est indispensable pour qu&apos;il puisse accéder à son propre portail privé.</li>
-                    </ul>
+                    <ol className="list-decimal pl-5 space-y-2 text-xs">
+                      <li>
+                        **Étape 1 : Création unique du Dossier Élève (Onglet « Élèves »)**<br />
+                        Rendez-vous dans l&apos;onglet **Élèves** et cliquez sur **« Ajouter un élève »**. Renseignez ses informations civiles (Nom, Prénom, Genre, Date de naissance), les contacts de ses parents (Nom, Téléphone +225, Email pour le portail parent) et importez sa photo de profil. Ce dossier est permanent et n&apos;est créé qu&apos;**une seule fois** durant tout le cursus de l&apos;enfant dans votre école.
+                      </li>
+                      <li>
+                        **Étape 2 : Inscription ou Réinscription Annuelle (Onglet « Inscriptions »)**<br />
+                        Une fois le dossier permanent créé, rendez-vous dans l&apos;onglet **Inscriptions** pour l&apos;affecter à une classe pour l&apos;année en cours. Cliquez sur **« Nouvelle Inscription »** (ou Réinscription), recherchez simplement l&apos;élève dans la liste déroulante rapide, sélectionnez sa classe pour l&apos;année scolaire active et validez. GestScol configure automatiquement sa scolarité et génère son inscription sans aucune saisie redondante.
+                      </li>
+                    </ol>
                   </div>
 
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-xs text-amber-800 leading-relaxed font-semibold">

@@ -10,15 +10,15 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useToast } from '@/hooks/use-toast'
 import { getInitiales } from '@/lib/utils'
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  KeyRound, 
-  ShieldAlert, 
-  ShieldCheck, 
-  Save, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  KeyRound,
+  ShieldAlert,
+  ShieldCheck,
+  Save,
   Camera,
   School,
   Lock
@@ -32,7 +32,7 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(false)
   const [phone, setPhone] = useState(currentUser?.telephone || '')
   const [email, setEmail] = useState(currentUser?.email || '')
-  
+
   // Sécurité mot de passe
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -50,15 +50,15 @@ export default function ProfilPage() {
     )
   }
 
-  const roleLabel = currentUser.role === 'directeur' 
-    ? 'Directeur de l\'Établissement' 
-    : currentUser.role === 'enseignant' 
-      ? 'Enseignant Principal' 
+  const roleLabel = currentUser.role === 'directeur'
+    ? 'Directeur de l\'Établissement'
+    : currentUser.role === 'enseignant'
+      ? 'Enseignant Principal'
       : 'Parent d\'Élève'
 
   const handleSaveCoordonnees = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validation numéro ivoirien (10 chiffres)
     const phoneDigits = phone.replace(/[^0-9]/g, '')
     if (phone.includes('+225') && phoneDigits.replace('225', '').length !== 10) {
@@ -71,11 +71,11 @@ export default function ProfilPage() {
     }
 
     setLoading(true)
-    
+
     try {
       const supabase = createClient()
       const trimmedEmail = email.trim()
-      
+
       // 1. Mettre à jour l'email dans l'Auth Supabase (si modifié)
       let emailChanged = false
       if (currentUser.email !== trimmedEmail && trimmedEmail !== '') {
@@ -83,13 +83,13 @@ export default function ProfilPage() {
         if (authError) throw authError
         emailChanged = true
       }
-      
+
       // 2. Mettre à jour dans la table utilisateurs (pour tout le monde)
       const { error: dbError } = await supabase
         .from('utilisateurs')
         .update({ email: trimmedEmail, telephone: phone })
         .eq('id', currentUser.id)
-        
+
       if (dbError) throw dbError
 
       // 3. Pour parent ou enseignant, mettre également à jour la table comptes_connexion
@@ -98,7 +98,7 @@ export default function ProfilPage() {
           .from('comptes_connexion')
           .update({ email: trimmedEmail, identifiant: trimmedEmail, telephone: phone })
           .eq('id', currentUser.id)
-          
+
         if (cxError) throw cxError
       }
 
@@ -150,17 +150,17 @@ export default function ProfilPage() {
       reader.onload = async () => {
         if (typeof reader.result === 'string') {
           const base64Photo = reader.result
-          
+
           setLoading(true)
           try {
             const supabase = createClient()
-            
+
             // 1. Sauvegarder dans la table utilisateurs
             const { error: dbError } = await supabase
               .from('utilisateurs')
               .update({ photo_url: base64Photo })
               .eq('id', currentUser.id)
-              
+
             if (dbError) throw dbError
 
             // 2. Mettre à jour le state global
@@ -168,7 +168,7 @@ export default function ProfilPage() {
               ...currentUser,
               photoUrl: base64Photo
             })
-            
+
             toast({
               title: "Photo de profil mise à jour",
               description: "Votre nouvelle photo a été enregistrée avec succès.",
@@ -203,10 +203,15 @@ export default function ProfilPage() {
       return
     }
 
-    if (newPassword.length < 6) {
+    const hasUppercase = /[A-Z]/.test(newPassword)
+    const hasLowercase = /[a-z]/.test(newPassword)
+    const hasNumber = /[0-9]/.test(newPassword)
+    const hasSpecialChar = /[^A-Za-z0-9]/.test(newPassword)
+
+    if (newPassword.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
       toast({
-        title: "Mot de passe trop court",
-        description: "Votre nouveau mot de passe doit comporter au moins 6 caractères.",
+        title: "Sécurité insuffisante",
+        description: "Le nouveau mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.",
         variant: "destructive"
       })
       return
@@ -224,33 +229,33 @@ export default function ProfilPage() {
     setLoading(true)
     try {
       const supabase = createClient()
-      
+
       // 1. Tenter une connexion silencieuse pour vérifier l'ancien mot de passe (pour tout le monde)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: currentUser.email || '',
         password: oldPassword
       })
-      
+
       if (signInError) throw new Error("Votre mot de passe actuel est incorrect.")
-      
+
       // 2. Mettre à jour le mot de passe dans Supabase Auth
       const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
       if (updateError) throw updateError
-      
+
       // 3. Pour parent ou enseignant, mettre également à jour la table comptes_connexion
       if (currentUser.role !== 'directeur') {
         const { error: cxError } = await supabase
           .from('comptes_connexion')
           .update({ mdp_temporaire: newPassword })
           .eq('id', currentUser.id)
-          
+
         if (cxError) throw cxError
       }
 
       setOldPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      
+
       toast({
         title: "Mot de passe modifié",
         description: "Votre mot de passe a été sécurisé et renouvelé avec succès.",
@@ -315,21 +320,21 @@ export default function ProfilPage() {
             </Badge>
 
             <div className="w-full border-t border-border/50 my-5 pt-4 space-y-3.5 text-left text-xs text-slate-600 dark:text-slate-400 font-medium">
-                <div className="flex items-center gap-2.5">
-                  <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="truncate">{currentUser.email}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span>{currentUser.telephone || 'Non renseigné'}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span>Abidjan, Côte d&apos;Ivoire</span>
-                </div>
+              <div className="flex items-center gap-2.5">
+                <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="truncate">{currentUser.email}</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center gap-2.5">
+                <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span>{currentUser.telephone || 'Non renseigné'}</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span>Abidjan, Côte d&apos;Ivoire</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* COLONNE LOGIQUE MODIFICATION */}
         <div className="lg:col-span-2 space-y-6">
@@ -360,31 +365,31 @@ export default function ProfilPage() {
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase">Adresse Email</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      value={email} 
-                      onChange={(e) => setEmail(e.target.value)} 
-                      className="text-xs h-9 border-border font-semibold bg-background" 
-                      required 
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="text-xs h-9 border-border font-semibold bg-background"
+                      required
                     />
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="phone" className="text-xs font-bold text-muted-foreground uppercase">Téléphone portable (+225)</Label>
-                    <Input 
-                      id="phone" 
-                      type="tel" 
-                      value={phone} 
-                      onChange={(e) => setPhone(e.target.value)} 
-                      placeholder="+225 07 00 00 00 00" 
-                      className="text-xs h-9 border-border font-semibold bg-background" 
-                      required 
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+225 07 00 00 00 00"
+                      className="text-xs h-9 border-border font-semibold bg-background"
+                      required
                     />
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={loading}
                   className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shrink-0 ml-auto"
                 >
@@ -410,13 +415,13 @@ export default function ProfilPage() {
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div className="space-y-1">
                   <Label htmlFor="old-password" className="text-xs font-bold text-muted-foreground uppercase">Mot de passe actuel</Label>
-                  <Input 
-                    id="old-password" 
-                    type="password" 
+                  <Input
+                    id="old-password"
+                    type="password"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
                     placeholder="Saisissez votre mot de passe actuel"
-                    className="text-xs h-9 border-border bg-background" 
+                    className="text-xs h-9 border-border bg-background"
                     required
                   />
                 </div>
@@ -424,32 +429,32 @@ export default function ProfilPage() {
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label htmlFor="new-password" className="text-xs font-bold text-muted-foreground uppercase">Nouveau mot de passe</Label>
-                    <Input 
-                      id="new-password" 
-                      type="password" 
+                    <Input
+                      id="new-password"
+                      type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min. 6 caractères"
-                      className="text-xs h-9 border-border bg-background" 
+                      placeholder="Min. 8 caractères"
+                      className="text-xs h-9 border-border bg-background"
                       required
                     />
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="confirm-password" className="text-xs font-bold text-muted-foreground uppercase">Confirmer le nouveau mot de passe</Label>
-                    <Input 
-                      id="confirm-password" 
-                      type="password" 
+                    <Input
+                      id="confirm-password"
+                      type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirmez à l'identique"
-                      className="text-xs h-9 border-border bg-background" 
+                      className="text-xs h-9 border-border bg-background"
                       required
                     />
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={loading}
                   className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shrink-0 ml-auto"
                 >

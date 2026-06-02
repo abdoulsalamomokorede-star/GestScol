@@ -4,6 +4,7 @@ import { User, Eleve, Classe, Note, Paiement, Absence, Matiere, Inscription, Bul
 import { classesMock, elevesMock, notesMock, paiementsMock, absencesMock, matieresMock, ecoleMock, usersMock, inscriptionsMock, bulletinsMock } from '../data/mockData'
 import { createClient } from '../lib/supabase/client'
 import { updateSchoolAbonnement, getSchoolAbonnement } from '../app/actions/abonnement'
+import { updateSchoolDetails } from '../app/actions/ecole'
 import { createNotification, markAsRead, fetchUserLectures, deleteNotificationDb } from '../app/actions/notifications'
 import { toast } from '../hooks/use-toast'
 
@@ -33,7 +34,7 @@ interface SchoolState {
     titre: string
     description: string
     type: NotificationType
-    destinataireRole?: 'parent' | 'enseignant' | 'all'
+    destinataireRole?: 'parent' | 'enseignant' | 'directeur' | 'all'
     classeId?: string
     eleveId?: string
   }) => Promise<void>
@@ -48,7 +49,7 @@ interface SchoolState {
   deleteCompteConnexion: (id: string) => Promise<void>
 
   initializeAnneesScolaires: () => void
-  addAnneeScolaire: (annee: AnneeScolaire) => Promise<void>
+  addAnneeScolaire: (annee: AnneeScolaire | any) => Promise<any>
   updateAnneeScolaire: (id: string, data: Partial<AnneeScolaire>) => Promise<void>
   deleteAnneeScolaire: (id: string) => Promise<void>
   setActiveAnneeScolaire: (id: string) => Promise<void>
@@ -57,55 +58,63 @@ interface SchoolState {
   
   getEleves: (classeId?: string) => Eleve[]
   getEleveById: (id: string) => Eleve | undefined
-  addEleve: (eleve: Eleve) => Promise<void>
-  updateEleve: (id: string, data: Partial<Eleve>) => Promise<void>
-  deleteEleve: (id: string) => Promise<void>
+  addEleve: (eleve: Eleve) => Promise<{ success: boolean; error?: string }>
+  updateEleve: (id: string, data: Partial<Eleve>) => Promise<{ success: boolean; error?: string }>
+  deleteEleve: (id: string) => Promise<{ success: boolean; error?: string }>
   
   getClasses: () => Classe[]
   getClasseById: (id: string) => Classe | undefined
-  addClasse: (classe: Classe) => Promise<void>
-  updateClasse: (id: string, data: Partial<Classe>) => Promise<void>
-  deleteClasse: (id: string) => Promise<void>
+  addClasse: (classe: Classe) => Promise<{ success: boolean; error?: string }>
+  updateClasse: (id: string, data: Partial<Classe>) => Promise<{ success: boolean; error?: string }>
+  deleteClasse: (id: string) => Promise<{ success: boolean; error?: string }>
   
   getNotesByEleve: (eleveId: string, trimestre?: 1 | 2 | 3) => Note[]
-  addNote: (note: Note) => Promise<void>
-  updateNote: (id: string, data: Partial<Note>) => Promise<void>
-  deleteNote: (id: string) => Promise<void>
+  addNote: (note: Note) => Promise<{ success: boolean; error?: string }>
+  updateNote: (id: string, data: Partial<Note>) => Promise<{ success: boolean; error?: string }>
+  deleteNote: (id: string) => Promise<{ success: boolean; error?: string }>
   
   getPaiementsByEleve: (eleveId: string) => Paiement[]
-  addPaiement: (paiement: Paiement) => Promise<void>
-  updatePaiementStatut: (id: string, statut: 'paye' | 'en_attente' | 'retard', mode?: 'especes' | 'wave' | 'orange_money' | 'mtn_momo', reference?: string) => Promise<void>
-  enregistrerPaiementInstallment: (id: string, montantEncaisse: number, mode: 'especes' | 'wave' | 'orange_money' | 'mtn_momo', reference?: string) => Promise<void>
-  annulerVersement: (id: string, versementIdx: number) => Promise<void>
-  updateClasseTarifs: (classeId: string, montantScolarite: number, montantInscription: number) => Promise<void>
+  addPaiement: (paiement: Paiement) => Promise<{ success: boolean; error?: string }>
+  updatePaiementStatut: (id: string, statut: 'paye' | 'en_attente' | 'retard', mode?: 'especes' | 'wave' | 'orange_money' | 'mtn_momo', reference?: string) => Promise<{ success: boolean; error?: string }>
+  enregistrerPaiementInstallment: (id: string, montantEncaisse: number, mode: 'especes' | 'wave' | 'orange_money' | 'mtn_momo', reference?: string) => Promise<{ success: boolean; error?: string }>
+  annulerVersement: (id: string, versementIdx: number) => Promise<{ success: boolean; error?: string }>
+  updateClasseTarifs: (classeId: string, montantScolarite: number, montantInscription: number) => Promise<{ success: boolean; error?: string }>
   
   getAbsencesByEleve: (eleveId: string) => Absence[]
-  addAbsence: (absence: Absence) => Promise<void>
-  enregistrerAbsences: (date: string, seance: 'matin' | 'apres-midi', absences: Absence[], eleveIds: string[]) => Promise<void>
-  justifierAbsence: (absenceId: string, motif?: string, justifiee?: boolean) => Promise<void>
+  addAbsence: (absence: Absence) => Promise<{ success: boolean; error?: string }>
+  enregistrerAbsences: (date: string, seance: 'matin' | 'apres-midi', absences: Absence[], eleveIds: string[]) => Promise<{ success: boolean; error?: string }>
+  justifierAbsence: (absenceId: string, motif?: string, justifiee?: boolean) => Promise<{ success: boolean; error?: string }>
   
-  addMatiere: (matiere: Matiere) => Promise<void>
-  updateMatiere: (id: string, data: Partial<Matiere>) => Promise<void>
-  deleteMatiere: (id: string) => Promise<void>
+  addMatiere: (matiere: Matiere) => Promise<{ success: boolean; error?: string }>
+  updateMatiere: (id: string, data: Partial<Matiere>) => Promise<{ success: boolean; error?: string }>
+  deleteMatiere: (id: string) => Promise<{ success: boolean; error?: string }>
 
-  addEnseignant: (ens: User) => Promise<void>
-  updateEnseignant: (id: string, data: Partial<User>) => Promise<void>
-  deleteEnseignant: (id: string) => Promise<void>
+  addEnseignant: (ens: User) => Promise<{ success: boolean; error?: string }>
+  updateEnseignant: (id: string, data: Partial<User>) => Promise<{ success: boolean; error?: string }>
+  deleteEnseignant: (id: string) => Promise<{ success: boolean; error?: string }>
+  gererAjoutEnseignant: (emailEnseignant: string) => Promise<{ success: boolean; cas?: 'associe' | 'invite'; nomEnseignant?: string; error?: string }>
+  annulerInvitationEnseignant: (invitationId: string) => Promise<{ success: boolean; error?: string }>
+  chargerEnseignants: () => Promise<{ associes: any[]; invitationsEnAttente: any[] }>
   
   getInscriptions: () => Inscription[]
   getInscriptionsByEleve: (eleveId: string) => Inscription[]
-  addInscription: (inscription: Inscription | any) => Promise<any>
-  updateInscription: (id: string, data: Partial<Inscription>) => Promise<any>
-  deleteInscription: (id: string) => Promise<void>
+  addInscription: (inscription: Inscription | any) => Promise<{ success: boolean; error?: string }>
+  updateInscription: (id: string, data: Partial<Inscription>) => Promise<{ success: boolean; error?: string }>
+  deleteInscription: (id: string) => Promise<{ success: boolean; error?: string }>
   
   getMoyenneEleve: (eleveId: string, trimestre: 1 | 2 | 3) => number
 
-  addBulletin: (bulletin: Bulletin) => Promise<void>
-  updateBulletin: (id: string, data: Partial<Bulletin>) => Promise<void>
-  deleteBulletin: (id: string) => Promise<void>
+  addBulletin: (bulletin: Bulletin) => Promise<{ success: boolean; error?: string }>
+  updateBulletin: (id: string, data: Partial<Bulletin>) => Promise<{ success: boolean; error?: string }>
+  deleteBulletin: (id: string) => Promise<{ success: boolean; error?: string }>
   getBulletinsByClasseAndTrimestre: (classeId: string, trimestre: 1 | 2 | 3) => Bulletin[]
   calculerBulletinsClasse: (classeId: string, trimestre: 1 | 2 | 3, anneeScolaire: string) => Bulletin[]
   isAbonnementExpired: () => boolean
+  ecoleId: string | null
+  fetchEcolesUtilisateur: () => Promise<any[]>
+  ajouterEcole: (donnees: any) => Promise<{ success: boolean; data?: any; error?: string }>
+  supprimerEcole: (ecoleId: string) => Promise<{ success: boolean; error?: string }>
+  setEcoleCourante: (ecoleId: string) => Promise<void>
 }
 
 const checkAbonnement = (state: any, suppressToast = false): boolean => {
@@ -139,26 +148,9 @@ export const useSchoolStore = create<SchoolState>()(
         if (checkAbonnement(get())) return
         const state = get()
         if (state.ecole.id) {
-          try {
-            const supabase = createClient()
-            const { error } = await supabase
-              .from('ecoles')
-              .update({
-                nom: data.nom,
-                identifiant: data.identifiant,
-                ville: data.ville,
-                adresse: data.adresse,
-                telephone: data.telephone,
-                logo: data.logo,
-                annee_scolaire: data.anneeScolaire
-              })
-              .eq('id', state.ecole.id)
-            
-            if (error) {
-              console.warn("Erreur Supabase updateEcole:", error.message)
-            }
-          } catch (err) {
-            console.warn("Exception updateEcole:", err)
+          const res = await updateSchoolDetails(state.ecole.id, data)
+          if (!res.success) {
+            console.warn("Erreur updateSchoolDetails en base :", res.error)
           }
         }
         set((state) => ({ ecole: { ...state.ecole, ...data } }))
@@ -206,11 +198,16 @@ export const useSchoolStore = create<SchoolState>()(
           const lecturesRes = await fetchUserLectures(currentUser.id)
           const readIds = lecturesRes.readIds || []
 
-          // 2. Récupérer les notifications de Supabase pour cette école
-          const { data, error } = await supabase
+          let query = supabase
             .from('notifications')
             .select('*')
             .eq('ecole_id', state.ecole.id)
+
+          if (currentUser.role !== 'directeur') {
+            query = query.or(`destinataire_role.eq.${currentUser.role},destinataire_role.eq.tous,destinataire_role.eq.all`)
+          }
+
+          const { data, error } = await query
             .order('created_at', { ascending: false })
 
           if (error) {
@@ -309,7 +306,15 @@ export const useSchoolStore = create<SchoolState>()(
         if (currentUser.role === 'directeur') {
           // Le Directeur supprime définitivement la notification en base pour tout le monde
           if (!id.startsWith('mock-temp-') && !id.startsWith('mock-')) {
-            await deleteNotificationDb(id)
+            const res = await deleteNotificationDb(id)
+            if (!res.success) {
+              toast({
+                title: "Erreur de suppression",
+                description: res.error || "Impossible de supprimer la notification de la base de données.",
+                variant: "destructive"
+              })
+              return
+            }
           }
           // On la retire également localement
           set(state => ({
@@ -322,6 +327,7 @@ export const useSchoolStore = create<SchoolState>()(
           }))
         }
       },
+      ecoleId: null,
       currentUser: null,
       eleves: elevesMock,
       classes: classesMock,
@@ -490,20 +496,229 @@ export const useSchoolStore = create<SchoolState>()(
           const currentUser = get().currentUser;
           if (!currentUser) return; // Do not fetch if no user is logged in
           
+          const supabase = createClient()
+
+          // ── CAS PARENT (Bug 7) ───────────────────────────────────
+          if (currentUser.role === 'parent') {
+            const eleveIds: string[] = []
+
+            // Méthode A : via comptes_connexion
+            const { data: connexions } = await supabase
+              .from('comptes_connexion')
+              .select('eleves_associes')
+              .eq('id', currentUser.id)
+              .maybeSingle()
+            
+            const associes = connexions?.eleves_associes || []
+            eleveIds.push(...associes)
+
+            // Méthode B (fallback) : via parent_email sur les élèves
+            if (eleveIds.length === 0) {
+              const { data: elevesParEmail } = await supabase
+                .from('eleves')
+                .select('id')
+                .ilike('parent_email', currentUser.email)
+              eleveIds.push(...(elevesParEmail?.map(e => e.id) ?? []))
+            }
+
+            if (eleveIds.length === 0) {
+              console.warn('[Parent] Aucun élève lié à ce compte')
+              return
+            }
+
+            // Resolve class IDs from eleves to load classes
+            const { data: dbEleves } = await supabase.from('eleves').select('*').in('id', eleveIds)
+            const classIds = dbEleves ? Array.from(new Set(dbEleves.map(e => e.classe_id).filter(Boolean))) as string[] : []
+            const ecoleIds = dbEleves ? Array.from(new Set(dbEleves.map(e => e.ecole_id).filter(Boolean))) as string[] : []
+            const activeEcoleId = get().ecoleId || (ecoleIds.length > 0 ? ecoleIds[0] : null)
+
+            const [notes, absences, paiements, bulletins, dbClasses, dbEcoles, dbMatieres, inscriptions, dbAnnees, abonnementRes] = await Promise.all([
+              supabase.from('notes').select('*').in('eleve_id', eleveIds),
+              supabase.from('absences').select('*').in('eleve_id', eleveIds),
+              supabase.from('paiements').select('*').in('eleve_id', eleveIds),
+              supabase.from('bulletins').select('*').in('eleve_id', eleveIds),
+              classIds.length > 0 ? supabase.from('classes').select('*').in('id', classIds) : Promise.resolve({ data: [] }),
+              ecoleIds.length > 0 ? supabase.from('ecoles').select('*').in('id', ecoleIds) : Promise.resolve({ data: [] }),
+              classIds.length > 0 ? supabase.from('matieres').select('*').in('classe_id', classIds) : Promise.resolve({ data: [] }),
+              supabase.from('inscriptions').select('*').in('eleve_id', eleveIds),
+              ecoleIds.length > 0 ? supabase.from('annees_scolaires').select('*').in('ecole_id', ecoleIds) : Promise.resolve({ data: [] }),
+              activeEcoleId ? getSchoolAbonnement(activeEcoleId) : Promise.resolve({ success: false, data: null })
+            ])
+
+            const mappedAnnees = (dbAnnees.data ?? []).map(a => ({
+              id: a.id,
+              nom: a.nom,
+              dateDebut: a.date_debut,
+              dateFin: a.date_fin,
+              statut: a.statut as 'active' | 'archivee'
+            }))
+            const active = mappedAnnees.find(a => a.statut === 'active')
+
+            // Mettre à jour le store avec les données récupérées
+            set({
+              notes: (notes.data ?? []).map(n => ({
+                id: n.id,
+                eleveId: n.eleve_id,
+                matiereId: n.matiere_id,
+                valeur: n.valeur,
+                coefficient: n.coefficient,
+                type: n.type,
+                numero: n.numero,
+                date: n.date,
+                trimestre: n.trimestre,
+                anneeScolaire: n.annee_scolaire
+              })),
+              absences: (absences.data ?? []).map(a => ({
+                id: a.id,
+                eleveId: a.eleve_id,
+                date: a.date,
+                seance: a.seance,
+                justifiee: a.justifiee,
+                motif: a.motif,
+                anneeScolaire: a.annee_scolaire
+              })),
+              paiements: (paiements.data ?? []).map(p => ({
+                id: p.id,
+                eleveId: p.eleve_id,
+                inscriptionId: p.inscription_id,
+                montant: p.montant,
+                montantPaye: p.montant_paye,
+                type: p.type,
+                statut: p.statut,
+                datePaiement: p.date_paiement,
+                dateLimite: p.date_limite,
+                modePaiement: p.mode_paiement,
+                reference: p.reference,
+                historiquePaiements: p.historique_paiements || [],
+                anneeScolaire: p.annee_scolaire
+              })),
+              bulletins: (bulletins.data ?? []).map(b => ({
+                id: b.id,
+                eleveId: b.eleve_id,
+                classeId: b.classe_id,
+                trimestre: b.trimestre,
+                anneeScolaire: b.annee_scolaire,
+                notes: b.notes,
+                moyenneGenerale: b.moyenne_generale,
+                moyenneClasse: b.moyenne_classe,
+                rangClasse: b.rang_classe,
+                effectifClasse: b.effectif_classe,
+                appreciation: b.appreciation,
+                appreciationDirecteur: b.appreciation_directeur,
+                dateGeneration: b.date_generation,
+                estValide: b.est_valide || false
+              })),
+              eleves: (dbEleves ?? []).map(e => ({
+                id: e.id,
+                matricule: e.matricule,
+                nom: e.nom,
+                prenom: e.prenom,
+                dateNaissance: e.date_naissance,
+                sexe: e.sexe,
+                classeId: e.classe_id,
+                ecoleId: e.ecole_id,
+                parentNom: e.parent_nom,
+                parentTelephone: e.parent_telephone,
+                parentEmail: e.parent_email,
+                parentUserId: e.parent_user_id || currentUser.id,
+                photoUrl: e.photo_url,
+                statut: e.statut,
+                dateInscription: e.date_inscription
+              })),
+              inscriptions: (inscriptions.data ?? []).map(i => {
+                const pFrais = (paiements.data ?? [])?.find(p => p.inscription_id === i.id && p.type === 'inscription')
+                return {
+                  id: i.id,
+                  eleveId: i.eleve_id,
+                  anneeScolaire: i.annee_scolaire,
+                  dateInscription: i.date_inscription,
+                  classeId: i.classe_id,
+                  ecoleId: i.ecole_id,
+                  documentsFournis: i.documents_fournis || [],
+                  statut: i.statut,
+                  fraisInscription: i.frais_inscription !== undefined && i.frais_inscription !== null ? Number(i.frais_inscription) : (pFrais ? pFrais.montant : 0),
+                  documentsRecus: i.documents_recus || i.documents_fournis || []
+                }
+              }),
+              classes: (dbClasses.data ?? []).map(c => ({
+                id: c.id,
+                nom: c.nom,
+                niveau: c.niveau,
+                enseignantPrincipalId: c.enseignant_principal_id,
+                ecoleId: c.ecole_id,
+                montantScolarite: c.montant_scolarite,
+                montantInscription: c.montant_inscription
+              })),
+              matieres: (dbMatieres.data ?? []).map(m => ({
+                id: m.id,
+                nom: m.nom,
+                coefficient: m.coefficient,
+                classeId: m.classe_id
+              })),
+              anneesScolaires: mappedAnnees,
+              activeAnneeScolaire: active || null,
+              ecoleId: activeEcoleId,
+              ecole: dbEcoles.data && dbEcoles.data.length > 0 ? (() => {
+                const currentDbEcole = dbEcoles.data.find(e => e.id === activeEcoleId) || dbEcoles.data[0]
+                const ecoleAbonnement = abonnementRes && abonnementRes.success && abonnementRes.data ? {
+                  id: abonnementRes.data.id,
+                  ecoleId: abonnementRes.data.ecoleId,
+                  plan: abonnementRes.data.plan,
+                  statut: abonnementRes.data.statut,
+                  dateDebut: abonnementRes.data.dateDebut,
+                  dateFin: abonnementRes.data.dateFin,
+                  transactionRef: abonnementRes.data.transactionRef,
+                  modePaiement: abonnementRes.data.modePaiement,
+                  montantPaye: abonnementRes.data.montantPaye,
+                  maxEleves: abonnementRes.data.maxEleves
+                } : get().ecole?.abonnement
+                
+                return {
+                  id: currentDbEcole.id,
+                  nom: currentDbEcole.nom,
+                  ville: currentDbEcole.ville,
+                  adresse: currentDbEcole.adresse,
+                  telephone: currentDbEcole.telephone,
+                  logo: currentDbEcole.logo,
+                  anneeScolaire: currentDbEcole.annee_scolaire,
+                  niveaux: currentDbEcole.niveaux,
+                  abonnement: ecoleAbonnement
+                }
+              })() : get().ecole
+            })
+            return
+          }
+
           const targetEcoleId = currentUser.ecoleId;
           if (!targetEcoleId) return;
-
-          const supabase = createClient()
-          const { data: ecoles } = await supabase.from('ecoles').select('*').eq('id', targetEcoleId)
-          
           const ecoleId = targetEcoleId;
-          let anneesQuery = supabase.from('annees_scolaires').select('*').eq('ecole_id', ecoleId)
-          const { data: anneesScolaires } = await anneesQuery
-          
-          const { data: utilisateurs } = await supabase.from('utilisateurs').select('*').eq('ecole_id', ecoleId)
-          const { data: classes } = await supabase.from('classes').select('*').eq('ecole_id', ecoleId)
-          const { data: eleves } = await supabase.from('eleves').select('*').eq('ecole_id', ecoleId)
-          const { data: inscriptions } = await supabase.from('inscriptions').select('*').eq('ecole_id', ecoleId)
+
+          // Vague 1 : Exécuter toutes les requêtes réseau indépendantes en parallèle
+          const [
+            ecolesRes,
+            anneesRes,
+            utilisateursRes,
+            classesRes,
+            elevesRes,
+            inscriptionsRes,
+            abonnementRes
+          ] = await Promise.all([
+            supabase.from('ecoles').select('*').eq('id', targetEcoleId),
+            supabase.from('annees_scolaires').select('*').eq('ecole_id', ecoleId),
+            supabase.from('utilisateurs').select('*').eq('ecole_id', ecoleId),
+            supabase.from('classes').select('*').eq('ecole_id', ecoleId),
+            supabase.from('eleves').select('*').eq('ecole_id', ecoleId),
+            supabase.from('inscriptions').select('*').eq('ecole_id', ecoleId),
+            getSchoolAbonnement(ecoleId)
+          ])
+
+          const ecoles = ecolesRes.data || []
+          const anneesScolaires = anneesRes.data || []
+          const utilisateurs = utilisateursRes.data || []
+          const classes = classesRes.data || []
+          const eleves = elevesRes.data || []
+          const inscriptions = inscriptionsRes.data || []
+          const abonnements = abonnementRes.success && abonnementRes.data ? [abonnementRes.data] : null
 
           // Extraction des IDs de l'établissement pour assurer le cloisonnement strict des données (multi-tenant)
           const userIds = utilisateurs ? utilisateurs.map(u => u.id) : []
@@ -519,36 +734,46 @@ export const useSchoolStore = create<SchoolState>()(
           let comptesConnexion: any[] = []
           let enseignantsMatieres: any[] = []
 
-          if (classesIds.length > 0) {
-            const { data: mData } = await supabase.from('matieres').select('*').in('classe_id', classesIds)
-            if (mData) matieres = mData
-          }
+          // Vague 2 : Exécuter toutes les requêtes réseau dépendantes en parallèle
+          const [
+            matieresRes,
+            notesRes,
+            paiementsRes,
+            absencesRes,
+            bulletinsRes,
+            comptesRes,
+            enseignantsMatieresRes
+          ] = await Promise.all([
+            classesIds.length > 0 
+              ? supabase.from('matieres').select('*').in('classe_id', classesIds) 
+              : Promise.resolve({ data: [] }),
+            elevesIds.length > 0 
+              ? supabase.from('notes').select('*').in('eleve_id', elevesIds) 
+              : Promise.resolve({ data: [] }),
+            elevesIds.length > 0 
+              ? supabase.from('paiements').select('*').in('eleve_id', elevesIds) 
+              : Promise.resolve({ data: [] }),
+            elevesIds.length > 0 
+              ? supabase.from('absences').select('*').in('eleve_id', elevesIds) 
+              : Promise.resolve({ data: [] }),
+            elevesIds.length > 0 
+              ? supabase.from('bulletins').select('*').in('eleve_id', elevesIds) 
+              : Promise.resolve({ data: [] }),
+            userIds.length > 0 
+              ? supabase.from('comptes_connexion').select('*').in('id', userIds) 
+              : Promise.resolve({ data: [] }),
+            enseignantsIds.length > 0 
+              ? supabase.from('enseignants_matieres').select('*').in('enseignant_id', enseignantsIds) 
+              : Promise.resolve({ data: [] })
+          ])
 
-          if (elevesIds.length > 0) {
-            const { data: nData } = await supabase.from('notes').select('*').in('eleve_id', elevesIds)
-            const { data: pData } = await supabase.from('paiements').select('*').in('eleve_id', elevesIds)
-            const { data: aData } = await supabase.from('absences').select('*').in('eleve_id', elevesIds)
-            const { data: bData } = await supabase.from('bulletins').select('*').in('eleve_id', elevesIds)
-            
-            if (nData) notes = nData
-            if (pData) paiements = pData
-            if (aData) absences = aData
-            if (bData) bulletins = bData
-          }
-
-          if (userIds.length > 0) {
-            const { data: cData } = await supabase.from('comptes_connexion').select('*').in('id', userIds)
-            if (cData) comptesConnexion = cData
-          }
-
-          if (enseignantsIds.length > 0) {
-            const { data: emData } = await supabase.from('enseignants_matieres').select('*').in('enseignant_id', enseignantsIds)
-            if (emData) enseignantsMatieres = emData
-          }
-          
-          // Récupération sécurisée bypassant RLS pour s'assurer que les parents et enseignants lisent le bon statut d'abonnement
-          const abonnementRes = await getSchoolAbonnement(ecoleId)
-          const abonnements = abonnementRes.success && abonnementRes.data ? [abonnementRes.data] : null
+          if (matieresRes.data) matieres = matieresRes.data
+          if (notesRes.data) notes = notesRes.data
+          if (paiementsRes.data) paiements = paiementsRes.data
+          if (absencesRes.data) absences = absencesRes.data
+          if (bulletinsRes.data) bulletins = bulletinsRes.data
+          if (comptesRes.data) comptesConnexion = comptesRes.data
+          if (enseignantsMatieresRes.data) enseignantsMatieres = enseignantsMatieresRes.data
 
           if (anneesScolaires) {
             const mappedAnnees = anneesScolaires.map(a => ({
@@ -577,18 +802,21 @@ export const useSchoolStore = create<SchoolState>()(
               maxEleves: abonnements[0].maxEleves
             } : undefined
 
-            set({ ecole: {
-              id: ecoles[0].id,
-              identifiant: ecoles[0].identifiant,
-              nom: ecoles[0].nom,
-              ville: ecoles[0].ville,
-              adresse: ecoles[0].adresse,
-              telephone: ecoles[0].telephone,
-              logo: ecoles[0].logo,
-              niveaux: ecoles[0].niveaux,
-              anneeScolaire: ecoles[0].annee_scolaire,
-              abonnement: ecoleAbonnement
-            } })
+            set({ 
+              ecoleId: ecoles[0].id,
+              ecole: {
+                id: ecoles[0].id,
+                identifiant: ecoles[0].identifiant,
+                nom: ecoles[0].nom,
+                ville: ecoles[0].ville,
+                adresse: ecoles[0].adresse,
+                telephone: ecoles[0].telephone,
+                logo: ecoles[0].logo,
+                niveaux: ecoles[0].niveaux,
+                anneeScolaire: ecoles[0].annee_scolaire,
+                abonnement: ecoleAbonnement
+              }
+            })
           }
 
           if (classes) {
@@ -736,6 +964,7 @@ export const useSchoolStore = create<SchoolState>()(
               valeur: n.valeur,
               coefficient: n.coefficient,
               type: n.type,
+              numero: n.numero,
               date: n.date,
               trimestre: n.trimestre,
               anneeScolaire: n.annee_scolaire
@@ -774,7 +1003,8 @@ export const useSchoolStore = create<SchoolState>()(
               effectifClasse: b.effectif_classe,
               appreciation: b.appreciation,
               appreciationDirecteur: b.appreciation_directeur,
-              dateGeneration: b.date_generation
+              dateGeneration: b.date_generation,
+              estValide: b.est_valide || false
             })) })
           }
 
@@ -838,7 +1068,9 @@ export const useSchoolStore = create<SchoolState>()(
       },
       
       addAnneeScolaire: async (annee) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const ecoleId = get().ecole?.id
@@ -850,7 +1082,12 @@ export const useSchoolStore = create<SchoolState>()(
             ecole_id: ecoleId || null
           }).select().single()
           
-          if (!error && data) {
+          if (error) {
+            console.error("Error inserting school year:", error)
+            return { success: false, error: error.message }
+          }
+
+          if (data) {
             set(state => ({
               anneesScolaires: [...state.anneesScolaires, {
                 id: data.id,
@@ -860,8 +1097,13 @@ export const useSchoolStore = create<SchoolState>()(
                 statut: data.statut
               }]
             }))
+            return { success: true }
           }
-        } catch (e) { console.error(e) }
+          return { success: false, error: "L'année scolaire n'a pas pu être créée." }
+        } catch (e: any) {
+          console.error(e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
       },
       updateAnneeScolaire: async (id, data) => {
         if (checkAbonnement(get())) return
@@ -923,11 +1165,318 @@ export const useSchoolStore = create<SchoolState>()(
         if (typeof window !== 'undefined') {
           if (user) {
             document.cookie = "currentUser=true; path=/; max-age=86400; SameSite=Lax"
+            sessionStorage.setItem('lastRole', user.role)
           } else {
             document.cookie = "currentUser=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax"
           }
         }
         set({ currentUser: user })
+      },
+
+      fetchEcolesUtilisateur: async () => {
+        const { currentUser } = get()
+
+        if (!currentUser?.id) {
+          console.warn('[fetchEcolesUtilisateur] currentUser null — abandon')
+          return []
+        }
+
+        const supabase = createClient() // client public soumis à RLS
+
+        try {
+          if (currentUser.role === 'directeur') {
+            const { data, error } = await supabase
+              .from('ecoles')
+              .select(`
+                id,
+                nom,
+                ville,
+                adresse,
+                telephone,
+                logo,
+                annee_scolaire,
+                niveaux,
+                directeur_id,
+                classes(count),
+                eleves(count)
+              `)
+              .eq('directeur_id', currentUser.id)
+              .order('nom', { ascending: true })
+
+            if (error) {
+              console.error('[fetchEcolesUtilisateur] Directeur :', error.message)
+              return []
+            }
+
+            return (data ?? []).map((e: any) => ({
+              id: e.id,
+              nom: e.nom,
+              ville: e.ville,
+              adresse: e.adresse ?? '',
+              telephone: e.telephone ?? '',
+              logo: e.logo ?? undefined,
+              anneeScolaire: e.annee_scolaire ?? '',
+              niveaux: e.niveaux ?? [],
+              directeurId: e.directeur_id,
+              nbClasses: e.classes?.[0]?.count ?? 0,
+              nbEleves: e.eleves?.[0]?.count ?? 0,
+              tauxRecouvrement: 100,
+            }))
+          }
+
+          if (currentUser.role === 'enseignant') {
+            const { data: eeData, error: eeError } = await supabase
+              .from('enseignant_ecoles')
+              .select('ecole_id')
+              .eq('enseignant_id', currentUser.id)
+
+            if (eeError) {
+              console.error('[fetchEcolesUtilisateur] Enseignant jointures :', eeError.message)
+              return []
+            }
+
+            const ecoleIds = (eeData ?? []).map((x: any) => x.ecole_id).filter(Boolean)
+            if (ecoleIds.length === 0) {
+              return []
+            }
+
+            const { data, error } = await supabase
+              .from('ecoles')
+              .select('id, nom, ville, adresse, telephone, logo, annee_scolaire, niveaux, directeur_id, abonnements(plan)')
+              .in('id', ecoleIds)
+              .order('nom', { ascending: true })
+
+            if (error) {
+              console.error('[fetchEcolesUtilisateur] Enseignant :', error.message)
+              return []
+            }
+
+            const ecolesFiltrees = (data ?? []).filter((e: any) => {
+              const plans = e.abonnements || []
+              const plan = Array.isArray(plans) ? plans[0]?.plan : plans?.plan
+              return plan !== 'gratuit'
+            })
+
+            return ecolesFiltrees.map((e: any) => ({
+              id: e.id,
+              nom: e.nom,
+              ville: e.ville,
+              adresse: e.adresse ?? '',
+              telephone: e.telephone ?? '',
+              logo: e.logo ?? undefined,
+              anneeScolaire: e.annee_scolaire ?? '',
+              niveaux: e.niveaux ?? [],
+              directeurId: e.directeur_id,
+              nbClasses: 0,
+              nbEleves: 0,
+              tauxRecouvrement: 0,
+            }))
+          }
+
+          if (currentUser.role === 'parent') {
+            const eleveIds: string[] = []
+
+            // Méthode A : via comptes_connexion
+            const { data: connexions } = await supabase
+              .from('comptes_connexion')
+              .select('eleves_associes')
+              .eq('id', currentUser.id)
+              .maybeSingle()
+            
+            const associes = connexions?.eleves_associes || []
+            eleveIds.push(...associes)
+
+            // Méthode B (fallback) : via parent_email sur les élèves
+            if (eleveIds.length === 0 && currentUser.email) {
+              const { data: elevesParEmail } = await supabase
+                .from('eleves')
+                .select('id')
+                .ilike('parent_email', currentUser.email)
+              eleveIds.push(...(elevesParEmail?.map(e => e.id) ?? []))
+            }
+
+            if (eleveIds.length === 0) {
+              return []
+            }
+
+            // Récupérer les ecole_id des élèves
+            const { data: dbEleves } = await supabase
+              .from('eleves')
+              .select('ecole_id')
+              .in('id', eleveIds)
+
+            const ecoleIds = dbEleves
+              ? Array.from(new Set(dbEleves.map((e: any) => e.ecole_id).filter(Boolean)))
+              : []
+
+            if (ecoleIds.length === 0) {
+              return []
+            }
+
+            const { data, error } = await supabase
+              .from('ecoles')
+              .select('id, nom, ville, adresse, telephone, logo, annee_scolaire, niveaux, directeur_id, abonnements(plan)')
+              .in('id', ecoleIds)
+              .order('nom', { ascending: true })
+
+            if (error) {
+              console.error('[fetchEcolesUtilisateur] Parent :', error.message)
+              return []
+            }
+
+            const ecolesFiltrees = (data ?? []).filter((e: any) => {
+              const plans = e.abonnements || []
+              const plan = Array.isArray(plans) ? plans[0]?.plan : plans?.plan
+              return plan !== 'gratuit'
+            })
+
+            return ecolesFiltrees.map((e: any) => ({
+              id: e.id,
+              nom: e.nom,
+              ville: e.ville,
+              adresse: e.adresse ?? '',
+              telephone: e.telephone ?? '',
+              logo: e.logo ?? undefined,
+              anneeScolaire: e.annee_scolaire ?? '',
+              niveaux: e.niveaux ?? [],
+              directeurId: e.directeur_id,
+              nbClasses: 0,
+              nbEleves: 0,
+              tauxRecouvrement: 0,
+            }))
+          }
+        } catch (err) {
+          console.error('[fetchEcolesUtilisateur] Exception :', err)
+        }
+
+        return []
+      },
+
+      ajouterEcole: async (donnees) => {
+        const { currentUser } = get()
+        if (!currentUser || currentUser.role !== 'directeur') {
+          return { success: false, error: 'Accès refusé : rôle directeur requis' }
+        }
+        if (checkAbonnement(get())) {
+          return { success: false, error: 'Abonnement expiré. Impossible d\'ajouter un établissement.' }
+        }
+
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('ecoles')
+          .insert({
+            nom: donnees.nom,
+            ville: donnees.ville,
+            adresse: donnees.adresse || '',
+            telephone: donnees.telephone || '',
+            logo: donnees.logo || null,
+            niveaux: donnees.niveaux,
+            annee_scolaire: donnees.anneeScolaire,
+            directeur_id: currentUser.id,
+            identifiant: `GS-${Math.floor(100000 + Math.random() * 900000)}`
+          })
+          .select()
+          .single()
+
+        if (error) return { success: false, error: error.message }
+        
+        // Créer l'année scolaire par défaut pour cette école
+        const anneeScolaireDebut = donnees.anneeScolaire.split('-')[0] + '-09-01'
+        const anneeScolaireFin = donnees.anneeScolaire.split('-')[1] + '-07-31'
+        await supabase.from('annees_scolaires').insert({
+          ecole_id: data.id,
+          nom: donnees.anneeScolaire,
+          date_debut: anneeScolaireDebut,
+          date_fin: anneeScolaireFin,
+          statut: 'active'
+        })
+
+        // Activer un plan gratuit par défaut
+        await supabase.from('abonnements').insert({
+          ecole_id: data.id,
+          plan: 'gratuit',
+          statut: 'actif',
+          montant_paye: 0,
+          max_eleves: 50
+        })
+
+        const ecoleCreee = {
+          id: data.id,
+          nom: data.nom,
+          ville: data.ville,
+          adresse: data.adresse ?? '',
+          telephone: data.telephone ?? '',
+          logo: data.logo ?? undefined,
+          anneeScolaire: data.annee_scolaire,
+          niveaux: data.niveaux ?? [],
+          directeurId: data.directeur_id,
+          nbClasses: 0,
+          nbEleves: 0,
+          tauxRecouvrement: 100
+        }
+
+        return { success: true, data: ecoleCreee }
+      },
+
+      supprimerEcole: async (ecoleId) => {
+        const { currentUser } = get()
+        if (!currentUser || currentUser.role !== 'directeur') {
+          return { success: false, error: 'Accès refusé : rôle directeur requis' }
+        }
+
+        const supabase = createClient()
+        const { data: ecole } = await supabase
+          .from('ecoles')
+          .select('id, directeur_id, nom')
+          .eq('id', ecoleId)
+          .eq('directeur_id', currentUser.id)
+          .single()
+
+        if (!ecole) return { success: false, error: 'Établissement introuvable ou non autorisé.' }
+
+        // Récupérer le nombre d'élèves et d'enseignants pour l'audit avant de supprimer
+        const { count: countEleves } = await supabase.from('eleves').select('*', { count: 'exact', head: true }).eq('ecole_id', ecoleId)
+        const { count: countEnseignants } = await supabase.from('utilisateurs').select('*', { count: 'exact', head: true }).eq('ecole_id', ecoleId).eq('role', 'enseignant')
+        
+        await supabase.from('audit_suppressions').insert({
+          directeur_id: currentUser.id,
+          ecole_id: ecoleId,
+          ecole_nom: ecole.nom,
+          nb_eleves_supprimes: countEleves ?? 0,
+          nb_enseignants_supprimes: countEnseignants ?? 0,
+          nb_paiements_supprimes: 0
+        })
+
+        const { error } = await supabase
+          .from('ecoles')
+          .delete()
+          .eq('id', ecoleId)
+
+        if (error) return { success: false, error: error.message }
+        
+        // Si l'école supprimée est l'école active, réinitialiser
+        const state = get()
+        if (state.ecoleId === ecoleId) {
+          set({ ecoleId: null, currentUser: { ...currentUser, ecoleId: null } })
+        }
+
+        return { success: true }
+      },
+
+      setEcoleCourante: async (ecoleId) => {
+        const { currentUser } = get()
+        if (!currentUser) return
+
+        set({ 
+          ecoleId: ecoleId,
+          currentUser: { ...currentUser, ecoleId: ecoleId }
+        })
+
+        const supabase = createClient()
+        await supabase
+          .from('utilisateurs')
+          .update({ ecole_courante_id: ecoleId })
+          .eq('id', currentUser.id)
       },
       
       getInscriptions: () => get().inscriptions,
@@ -1092,17 +1641,25 @@ export const useSchoolStore = create<SchoolState>()(
         }
       },
       deleteInscription: async (id) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
-          await supabase.from('inscriptions').delete().eq('id', id)
-        } catch (e) {
+          const { error } = await supabase.from('inscriptions').delete().eq('id', id)
+          if (error) {
+            console.warn("Erreur deleteInscription:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            inscriptions: state.inscriptions.filter(i => i.id !== id),
+            paiements: state.paiements.filter(p => p.inscriptionId !== id)
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception deleteInscription:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          inscriptions: state.inscriptions.filter(i => i.id !== id),
-          paiements: state.paiements.filter(p => p.inscriptionId !== id)
-        }))
       },
       
       getEleves: (classeId) => {
@@ -1113,7 +1670,9 @@ export const useSchoolStore = create<SchoolState>()(
       getEleveById: (id) => get().eleves.find(e => e.id === id),
       
       addEleve: async (eleve) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('eleves').insert({
@@ -1128,23 +1687,30 @@ export const useSchoolStore = create<SchoolState>()(
             parent_telephone: eleve.parentTelephone,
             parent_email: eleve.parentEmail,
             statut: eleve.statut || 'actif',
-            date_inscription: eleve.dateInscription || new Date().toISOString().split('T')[0]
+            date_inscription: eleve.dateInscription || new Date().toISOString().split('T')[0],
+            photo_url: eleve.photoUrl || null
           }).select().single()
           
           if (error) {
             console.warn("Erreur addEleve:", error.message)
-            set((state) => ({ eleves: [...state.eleves, eleve] }))
-          } else if (data) {
+            return { success: false, error: error.message }
+          }
+          if (data) {
             const newEleve: Eleve = { ...eleve, id: data.id }
             set((state) => ({ eleves: [...state.eleves, newEleve] }))
+            return { success: true }
           }
-        } catch (e) {
+          return { success: false, error: "L'élève n'a pas pu être inséré." }
+        } catch (e: any) {
           console.warn("Exception addEleve:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
       
       updateEleve: async (id, data) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -1161,31 +1727,45 @@ export const useSchoolStore = create<SchoolState>()(
           if (data.parentUserId !== undefined) updateData.parent_user_id = data.parentUserId || null
           if (data.photoUrl !== undefined) updateData.photo_url = data.photoUrl
           
-          await supabase.from('eleves').update(updateData).eq('id', id)
-        } catch (e) {
+          const { error } = await supabase.from('eleves').update(updateData).eq('id', id)
+          if (error) {
+            console.warn("Erreur updateEleve:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            eleves: state.eleves.map(e => e.id === id ? { ...e, ...data } : e)
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception updateEleve:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          eleves: state.eleves.map(e => e.id === id ? { ...e, ...data } : e)
-        }))
       },
 
       deleteEleve: async (id) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
-          await supabase.from('eleves').delete().eq('id', id)
-        } catch (e) {
+          const { error } = await supabase.from('eleves').delete().eq('id', id)
+          if (error) {
+            console.warn("Erreur deleteEleve:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            eleves: state.eleves.filter(e => e.id !== id),
+            inscriptions: state.inscriptions.filter(i => i.eleveId !== id),
+            paiements: state.paiements.filter(p => p.eleveId !== id),
+            absences: state.absences.filter(a => a.eleveId !== id),
+            notes: state.notes.filter(n => n.eleveId !== id),
+            bulletins: state.bulletins.filter(b => b.eleveId !== id)
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception deleteEleve:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          eleves: state.eleves.filter(e => e.id !== id),
-          inscriptions: state.inscriptions.filter(i => i.eleveId !== id),
-          paiements: state.paiements.filter(p => p.eleveId !== id),
-          absences: state.absences.filter(a => a.eleveId !== id),
-          notes: state.notes.filter(n => n.eleveId !== id),
-          bulletins: state.bulletins.filter(b => b.eleveId !== id)
-        }))
       },
 
       getClasses: () => get().classes,
@@ -1193,7 +1773,9 @@ export const useSchoolStore = create<SchoolState>()(
       getClasseById: (id) => get().classes.find(c => c.id === id),
 
       addClasse: async (classe) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('classes').insert({
@@ -1205,16 +1787,24 @@ export const useSchoolStore = create<SchoolState>()(
             montant_inscription: classe.montantInscription
           }).select().single()
           if (error) {
-            console.warn("Erreur addClasse:", error)
-            set((state) => ({ classes: [...state.classes, classe] }))
-          } else if (data) {
+            console.warn("Erreur addClasse:", error.message)
+            return { success: false, error: error.message }
+          }
+          if (data) {
             const newClasse: Classe = { ...classe, id: data.id }
             set((state) => ({ classes: [...state.classes, newClasse] }))
+            return { success: true }
           }
-        } catch (e) { console.error(e) }
+          return { success: false, error: "La classe n'a pas pu être insérée." }
+        } catch (e: any) {
+          console.warn("Exception addClasse:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
       },
       updateClasse: async (id, data) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -1224,17 +1814,35 @@ export const useSchoolStore = create<SchoolState>()(
           if (data.montantScolarite !== undefined) updateData.montant_scolarite = data.montantScolarite
           if (data.montantInscription !== undefined) updateData.montant_inscription = data.montantInscription
 
-          await supabase.from('classes').update(updateData).eq('id', id)
-        } catch (e) { console.error(e) }
-        set((state) => ({ classes: state.classes.map(c => c.id === id ? { ...c, ...data } : c) }))
+          const { error } = await supabase.from('classes').update(updateData).eq('id', id)
+          if (error) {
+            console.warn("Erreur updateClasse:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({ classes: state.classes.map(c => c.id === id ? { ...c, ...data } : c) }))
+          return { success: true }
+        } catch (e: any) {
+          console.warn("Exception updateClasse:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
       },
       deleteClasse: async (id) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
-          await supabase.from('classes').delete().eq('id', id)
-        } catch (e) { console.error(e) }
-        set((state) => ({ classes: state.classes.filter(c => c.id !== id) }))
+          const { error } = await supabase.from('classes').delete().eq('id', id)
+          if (error) {
+            console.warn("Erreur deleteClasse:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({ classes: state.classes.filter(c => c.id !== id) }))
+          return { success: true }
+        } catch (e: any) {
+          console.warn("Exception deleteClasse:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
       },
 
       getNotesByEleve: (eleveId, trimestre) => {
@@ -1245,7 +1853,9 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       addNote: async (note) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('notes').insert({
@@ -1253,24 +1863,32 @@ export const useSchoolStore = create<SchoolState>()(
             matiere_id: note.matiereId,
             valeur: note.valeur,
             type: note.type,
+            numero: note.numero,
             date: note.date,
             trimestre: note.trimestre,
             annee_scolaire: note.anneeScolaire
           }).select().single()
+          
           if (error) {
             console.warn("Erreur addNote:", error.message)
-            set((state) => ({ notes: [...state.notes, note] }))
-          } else if (data) {
+            return { success: false, error: error.message }
+          }
+          if (data) {
             const newNote: Note = { ...note, id: data.id }
             set((state) => ({ notes: [...state.notes, newNote] }))
+            return { success: true }
           }
-        } catch (e) {
+          return { success: false, error: "La note n'a pas pu être insérée." }
+        } catch (e: any) {
           console.warn("Exception addNote:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
       
       updateNote: async (id, data) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const updateData: any = {}
@@ -1278,32 +1896,48 @@ export const useSchoolStore = create<SchoolState>()(
           if (data.type) updateData.type = data.type
           if (data.date) updateData.date = data.date
           
-          await supabase.from('notes').update(updateData).eq('id', id)
-        } catch (e) {
+          const { error } = await supabase.from('notes').update(updateData).eq('id', id)
+          if (error) {
+            console.warn("Erreur updateNote:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            notes: state.notes.map(n => n.id === id ? { ...n, ...data } : n)
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception updateNote:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          notes: state.notes.map(n => n.id === id ? { ...n, ...data } : n)
-        }))
       },
 
       deleteNote: async (id) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
-          await supabase.from('notes').delete().eq('id', id)
-        } catch (e) {
+          const { error } = await supabase.from('notes').delete().eq('id', id)
+          if (error) {
+            console.warn("Erreur deleteNote:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            notes: state.notes.filter(n => n.id !== id)
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception deleteNote:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          notes: state.notes.filter(n => n.id !== id)
-        }))
       },
 
       getPaiementsByEleve: (eleveId) => get().paiements.filter(p => p.eleveId === eleveId),
       
       addPaiement: async (paiement) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('paiements').insert({
@@ -1320,20 +1954,45 @@ export const useSchoolStore = create<SchoolState>()(
             historique_paiements: paiement.historiquePaiements,
             annee_scolaire: paiement.anneeScolaire
           }).select().single()
+          
           if (error) {
             console.warn("Erreur addPaiement:", error.message)
-            set((state) => ({ paiements: [...state.paiements, paiement] }))
-          } else if (data) {
+            return { success: false, error: error.message }
+          }
+          if (data) {
             const newPaiement: Paiement = { ...paiement, id: data.id }
             set((state) => ({ paiements: [...state.paiements, newPaiement] }))
+
+            try {
+              const el = get().eleves.find(e => e.id === paiement.eleveId)
+              if (el) {
+                const formattedMontant = new Intl.NumberFormat('fr-FR').format(paiement.montant) + ' FCFA'
+                await get().addNotification({
+                  titre: 'Paiement scolarité enregistré',
+                  description: `Le paiement de ${formattedMontant} pour ${el.prenom} ${el.nom} a été enregistré avec succès.`,
+                  type: 'paiement',
+                  eleveId: el.id,
+                  classeId: el.classeId,
+                  destinataireRole: 'directeur'
+                })
+              }
+            } catch (err) {
+              console.warn("Erreur lors de la notification paiement:", err)
+            }
+
+            return { success: true }
           }
-        } catch (e) {
+          return { success: false, error: "Le paiement n'a pas pu être inséré." }
+        } catch (e: any) {
           console.warn("Exception addPaiement:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
 
       updatePaiementStatut: async (id, statut, mode, reference) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         const updateData: any = { statut }
         if (mode) updateData.mode_paiement = mode
         if (reference) updateData.reference = reference
@@ -1341,28 +2000,75 @@ export const useSchoolStore = create<SchoolState>()(
         
         try {
           const supabase = createClient()
-          await supabase.from('paiements').update(updateData).eq('id', id)
-        } catch (e) {
-          console.warn("Exception updatePaiementStatut:", e)
-        }
+          const { error } = await supabase.from('paiements').update(updateData).eq('id', id)
+          if (error) {
+            console.warn("Erreur updatePaiementStatut:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            paiements: state.paiements.map(p => p.id === id ? { 
+              ...p, 
+              statut, 
+              modePaiement: mode || p.modePaiement,
+              reference: reference || p.reference,
+              datePaiement: updateData.date_paiement || p.datePaiement
+            } : p)
+          }))
 
-        set((state) => ({
-          paiements: state.paiements.map(p => p.id === id ? { 
-            ...p, 
-            statut, 
-            modePaiement: mode || p.modePaiement,
-            reference: reference || p.reference,
-            datePaiement: updateData.date_paiement || p.datePaiement
-          } : p)
-        }))
+          if (statut === 'paye') {
+            try {
+              const p = get().paiements.find(pmt => pmt.id === id)
+              if (p) {
+                const el = get().eleves.find(e => e.id === p.eleveId)
+                if (el) {
+                  const formatMode = mode === 'wave' ? 'Wave' : mode === 'orange_money' ? 'Orange Money' : mode === 'mtn_momo' ? 'MTN MoMo' : 'Espèces'
+                  const formattedMontant = new Intl.NumberFormat('fr-FR').format(p.montant) + ' FCFA'
+                  const classeName = get().classes.find(c => c.id === el.classeId)?.nom || 'Inconnue'
+                  const typeLabel = p.type === 'inscription' ? "d'inscription" : 'de scolarité'
+
+                  // 1. Notification Parent
+                  await get().addNotification({
+                    titre: 'Reçu de versement scolarité',
+                    description: `Le versement de ${formattedMontant} a été enregistré via ${formatMode} pour l'élève ${el.prenom} ${el.nom} (Classe: ${classeName}).`,
+                    type: 'paiement',
+                    eleveId: el.id,
+                    classeId: el.classeId,
+                    destinataireRole: 'parent'
+                  })
+
+                  // 2. Notification Directeur
+                  await get().addNotification({
+                    titre: 'Paiement scolarité/inscription validé',
+                    description: `Le paiement ${typeLabel} de ${formattedMontant} pour l'élève ${el.prenom} ${el.nom} (Classe: ${classeName}) a été validé via ${formatMode}.`,
+                    type: 'paiement',
+                    eleveId: el.id,
+                    classeId: el.classeId,
+                    destinataireRole: 'directeur'
+                  })
+                }
+              }
+            } catch (err) {
+              console.warn("Erreur lors de la notification automatique de paiement statut :", err)
+            }
+          }
+
+          return { success: true }
+        } catch (e: any) {
+          console.warn("Exception updatePaiementStatut:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
       },
 
       enregistrerPaiementInstallment: async (id, montantEncaisse, mode, reference) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         const state = get()
         const paiementsState = state.paiements
         const p = paiementsState.find(p => p.id === id)
-        if (!p) return
+        if (!p) {
+          return { success: false, error: "Paiement introuvable." }
+        }
 
         const newMontantPaye = (p.montantPaye || 0) + montantEncaisse
         const newStatut = newMontantPaye >= p.montant ? 'paye' : p.statut
@@ -1386,52 +2092,65 @@ export const useSchoolStore = create<SchoolState>()(
 
         try {
           const supabase = createClient()
-          await supabase.from('paiements').update(updateData).eq('id', id)
-        } catch (e) {
-          console.warn("Exception enregistrerPaiementInstallment:", e)
-        }
-
-        set((state) => ({
-          paiements: state.paiements.map(pmt => pmt.id === id ? {
-            ...pmt,
-            montantPaye: newMontantPaye,
-            statut: newStatut,
-            modePaiement: mode,
-            reference: reference || pmt.reference,
-            datePaiement: updateData.date_paiement || pmt.datePaiement,
-            historiquePaiements: newHistorique
-          } : pmt)
-        }))
-
-        // Génération automatique d'une notification système de paiement pour le parent
-        try {
-          const el = get().eleves.find(e => e.id === p.eleveId)
-          if (el) {
-            const formatMode = mode === 'wave' ? 'Wave' : mode === 'orange_money' ? 'Orange Money' : mode === 'mtn_momo' ? 'MTN MoMo' : 'Espèces'
-            const formattedMontant = new Intl.NumberFormat('fr-FR').format(montantEncaisse) + ' FCFA'
-            const classeName = get().classes.find(c => c.id === el.classeId)?.nom || 'Inconnue'
-            
-            await get().addNotification({
-              titre: 'Reçu de versement scolarité',
-              description: `Un versement de ${formattedMontant} a été enregistré via ${formatMode} pour l'élève ${el.prenom} ${el.nom} (Classe: ${classeName}).`,
-              type: 'paiement',
-              eleveId: el.id,
-              classeId: el.classeId,
-              destinataireRole: 'parent'
-            })
+          const { error } = await supabase.from('paiements').update(updateData).eq('id', id)
+          if (error) {
+            console.warn("Erreur enregistrerPaiementInstallment:", error.message)
+            return { success: false, error: error.message }
           }
-        } catch (err) {
-          console.warn("Erreur lors de la génération de notification automatique de paiement :", err)
+          
+          set((state) => ({
+            paiements: state.paiements.map(pmt => pmt.id === id ? {
+              ...pmt,
+              montantPaye: newMontantPaye,
+              statut: newStatut,
+              modePaiement: mode,
+              reference: reference || pmt.reference,
+              datePaiement: updateData.date_paiement || pmt.datePaiement,
+              historiquePaiements: newHistorique
+            } : pmt)
+          }))
+
+          // Génération automatique d'une notification système de paiement pour le parent
+          try {
+            const el = get().eleves.find(e => e.id === p.eleveId)
+            if (el) {
+              const formatMode = mode === 'wave' ? 'Wave' : mode === 'orange_money' ? 'Orange Money' : mode === 'mtn_momo' ? 'MTN MoMo' : 'Espèces'
+              const formattedMontant = new Intl.NumberFormat('fr-FR').format(montantEncaisse) + ' FCFA'
+              const classeName = get().classes.find(c => c.id === el.classeId)?.nom || 'Inconnue'
+              
+              await get().addNotification({
+                titre: 'Reçu de versement scolarité',
+                description: `Un versement de ${formattedMontant} a été enregistré via ${formatMode} pour l'élève ${el.prenom} ${el.nom} (Classe: ${classeName}).`,
+                type: 'paiement',
+                eleveId: el.id,
+                classeId: el.classeId,
+                destinataireRole: 'parent'
+              })
+            }
+          } catch (err) {
+            console.warn("Erreur lors de la génération de notification automatique de paiement :", err)
+          }
+
+          return { success: true }
+        } catch (e: any) {
+          console.warn("Exception enregistrerPaiementInstallment:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
 
       annulerVersement: async (id, versementIdx) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         const p = get().paiements.find(p => p.id === id)
-        if (!p) return
+        if (!p) {
+          return { success: false, error: "Paiement introuvable." }
+        }
         
         const historique = p.historiquePaiements || []
-        if (versementIdx < 0 || versementIdx >= historique.length) return
+        if (versementIdx < 0 || versementIdx >= historique.length) {
+          return { success: false, error: "Index de versement invalide." }
+        }
         
         const versementAAnnuler = historique[versementIdx]
         const newMontantPaye = Math.max(0, (p.montantPaye || 0) - versementAAnnuler.montant)
@@ -1447,44 +2166,61 @@ export const useSchoolStore = create<SchoolState>()(
 
         try {
           const supabase = createClient()
-          await supabase.from('paiements').update({
+          const { error } = await supabase.from('paiements').update({
             montant_paye: newMontantPaye,
             statut: newStatut,
             historique_paiements: newHistorique
           }).eq('id', id)
-        } catch (e) {
+          if (error) {
+            console.warn("Erreur annulerVersement:", error.message)
+            return { success: false, error: error.message }
+          }
+          
+          set((state) => ({
+            paiements: state.paiements.map(pmt => pmt.id === id ? {
+              ...pmt,
+              montantPaye: newMontantPaye,
+              statut: newStatut,
+              historiquePaiements: newHistorique
+            } : pmt)
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception annulerVersement:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-
-        set((state) => ({
-          paiements: state.paiements.map(pmt => pmt.id === id ? {
-            ...pmt,
-            montantPaye: newMontantPaye,
-            statut: newStatut,
-            historiquePaiements: newHistorique
-          } : pmt)
-        }))
       },
 
-
       updateClasseTarifs: async (classeId, montantScolarite, montantInscription) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
-          await supabase.from('classes').update({
+          const { error } = await supabase.from('classes').update({
             montant_scolarite: montantScolarite,
             montant_inscription: montantInscription
           }).eq('id', classeId)
-        } catch (e) { console.error(e) }
-        set((state) => ({
-          classes: state.classes.map(c => c.id === classeId ? { ...c, montantScolarite, montantInscription } : c)
-        }))
+          if (error) {
+            console.error("Erreur updateClasseTarifs:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            classes: state.classes.map(c => c.id === classeId ? { ...c, montantScolarite, montantInscription } : c)
+          }))
+          return { success: true }
+        } catch (e: any) {
+          console.error(e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
       },
 
       getAbsencesByEleve: (eleveId) => get().absences.filter(a => a.eleveId === eleveId),
       
       addAbsence: async (absence) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('absences').insert({
@@ -1497,25 +2233,67 @@ export const useSchoolStore = create<SchoolState>()(
           }).select().single()
           if (error) {
             console.warn("Erreur addAbsence:", error.message)
-            set((state) => ({ absences: [...state.absences, absence] }))
-          } else if (data) {
+            return { success: false, error: error.message }
+          }
+          if (data) {
             const newAbsence: Absence = { ...absence, id: data.id }
             set((state) => ({ absences: [...state.absences, newAbsence] }))
+
+            try {
+              const el = get().eleves.find(e => e.id === absence.eleveId)
+              if (el) {
+                const seanceLabel = absence.seance === 'matin' ? 'matin' : 'après-midi'
+                const motifLabel = absence.motif ? ` (Motif : ${absence.motif})` : ''
+                const justifLabel = absence.justifiee ? 'justifiée' : 'non justifiée'
+                
+                // 1. Notification Directeur
+                await get().addNotification({
+                  titre: 'Absence enregistrée',
+                  description: `${el.prenom} ${el.nom} a été marqué(e) absent(e) le ${absence.date} (${seanceLabel}).`,
+                  type: 'absence',
+                  eleveId: el.id,
+                  classeId: el.classeId,
+                  destinataireRole: 'directeur'
+                })
+
+                // 2. Notification Parent (Bug 11)
+                await get().addNotification({
+                  titre: 'Absence signalée',
+                  description: `L'absence de ${el.prenom} ${el.nom} pour la séance du ${seanceLabel} le ${absence.date} a été enregistrée (${justifLabel})${motifLabel}.`,
+                  type: 'absence',
+                  eleveId: el.id,
+                  classeId: el.classeId,
+                  destinataireRole: 'parent'
+                })
+              }
+            } catch (err) {
+              console.warn("Erreur notification absence:", err)
+            }
+
+            return { success: true }
           }
-        } catch (e) {
+          return { success: false, error: "L'absence n'a pas pu être insérée." }
+        } catch (e: any) {
           console.warn("Exception addAbsence:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
 
       enregistrerAbsences: async (date, seance, absencesAAjouter, eleveIds) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           if (eleveIds.length > 0) {
-            await supabase.from('absences').delete()
+            const { error: delErr } = await supabase.from('absences').delete()
               .eq('date', date)
               .eq('seance', seance)
               .in('eleve_id', eleveIds)
+            if (delErr) {
+              console.warn("Erreur de suppression des anciennes absences:", delErr.message)
+              return { success: false, error: delErr.message }
+            }
           }
 
           if (absencesAAjouter.length > 0) {
@@ -1531,7 +2309,9 @@ export const useSchoolStore = create<SchoolState>()(
             const { data, error } = await supabase.from('absences').insert(absencesToInsert).select()
             if (error) {
               console.warn("Erreur Supabase enregistrerAbsences:", error.message)
-            } else if (data) {
+              return { success: false, error: error.message }
+            }
+            if (data) {
               absencesAAjouter = data.map((d: any) => ({
                 id: d.id,
                 eleveId: d.eleve_id,
@@ -1539,70 +2319,83 @@ export const useSchoolStore = create<SchoolState>()(
                 seance: d.seance,
                 justifiee: d.justifiee,
                 motif: d.motif,
-                anneeScolaire: d.annee_scolaire
+                annee_scolaire: d.annee_scolaire
               })) as Absence[]
             }
           }
-        } catch (e) {
-          console.warn("Exception enregistrerAbsences:", e)
-        }
 
-        set((state) => {
-          const cleanAbsences = state.absences.filter(
-            a => !(a.date === date && a.seance === seance && eleveIds.includes(a.eleveId))
-          )
-          return {
-            absences: [...cleanAbsences, ...absencesAAjouter]
-          }
-        })
+          set((state) => {
+            const cleanAbsences = state.absences.filter(
+              a => !(a.date === date && a.seance === seance && eleveIds.includes(a.eleveId))
+            )
+            return {
+              absences: [...cleanAbsences, ...absencesAAjouter]
+            }
+          })
 
-        // Génération automatique des notifications système d'absence pour les parents
-        try {
-          if (absencesAAjouter.length > 0) {
-            for (const a of absencesAAjouter) {
-              const el = get().eleves.find(e => e.id === a.eleveId)
-              if (el) {
-                const formatSeance = a.seance === 'matin' ? 'matin' : 'après-midi'
-                const formatJustifiee = a.justifiee ? 'Justifiée' : 'Non justifiée'
-                const formatMotif = a.motif ? ` (Motif : ${a.motif})` : ''
-                
-                await get().addNotification({
-                  titre: 'Absence enregistrée',
-                  description: `L'absence de l'élève ${el.prenom} ${el.nom} (Classe: ${get().classes.find(c => c.id === el.classeId)?.nom || 'Inconnue'}) a été signalée pour la séance du ${formatSeance} le ${new Date(a.date).toLocaleDateString('fr-FR')}. Statut: ${formatJustifiee}${formatMotif}.`,
-                  type: 'absence',
-                  eleveId: el.id,
-                  classeId: el.classeId,
-                  destinataireRole: 'parent'
-                })
+          // Génération automatique des notifications système d'absence pour les parents
+          try {
+            if (absencesAAjouter.length > 0) {
+              for (const a of absencesAAjouter) {
+                const el = get().eleves.find(e => e.id === a.eleveId)
+                if (el) {
+                  const formatSeance = a.seance === 'matin' ? 'matin' : 'après-midi'
+                  const formatJustifiee = a.justifiee ? 'Justifiée' : 'Non justifiée'
+                  const formatMotif = a.motif ? ` (Motif : ${a.motif})` : ''
+                  
+                  await get().addNotification({
+                    titre: 'Absence enregistrée',
+                    description: `L'absence de l'élève ${el.prenom} ${el.nom} (Classe: ${get().classes.find(c => c.id === el.classeId)?.nom || 'Inconnue'}) a été signalée pour la séance du ${formatSeance} le ${new Date(a.date).toLocaleDateString('fr-FR')}. Statut: ${formatJustifiee}${formatMotif}.`,
+                    type: 'absence',
+                    eleveId: el.id,
+                    classeId: el.classeId,
+                    destinataireRole: 'parent'
+                  })
+                }
               }
             }
+          } catch (err) {
+            console.warn("Erreur lors de la génération de notification automatique d'absence :", err)
           }
-        } catch (err) {
-          console.warn("Erreur lors de la génération de notification automatique d'absence :", err)
+
+          return { success: true }
+        } catch (e: any) {
+          console.warn("Exception enregistrerAbsences:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
 
       justifierAbsence: async (absenceId, motif, justifiee = true) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
-          await supabase.from('absences').update({
+          const { error } = await supabase.from('absences').update({
             justifiee,
             motif: justifiee ? motif : null
           }).eq('id', absenceId)
-        } catch (e) {
+          if (error) {
+            console.warn("Erreur justifierAbsence:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            absences: state.absences.map(a => 
+              a.id === absenceId ? { ...a, justifiee, motif: justifiee ? motif : undefined } : a
+            )
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception justifierAbsence:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          absences: state.absences.map(a => 
-            a.id === absenceId ? { ...a, justifiee, motif: justifiee ? motif : undefined } : a
-          )
-        }))
       },
 
       addMatiere: async (matiere) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
-          if (checkAbonnement(get())) return
           const supabase = createClient()
           const { data, error } = await supabase.from('matieres').insert({
             nom: matiere.nom,
@@ -1610,10 +2403,12 @@ export const useSchoolStore = create<SchoolState>()(
             classe_id: matiere.classeId,
             enseignant_id: matiere.enseignantIds && matiere.enseignantIds.length > 0 ? matiere.enseignantIds[0] : null
           }).select().single()
+          
           if (error) {
             console.warn("Erreur addMatiere:", error.message)
-            set((state) => ({ matieres: [...state.matieres, matiere] }))
-          } else if (data) {
+            return { success: false, error: error.message }
+          }
+          if (data) {
             const newMatiere: Matiere = { ...matiere, id: data.id }
             
             if (matiere.enseignantIds && matiere.enseignantIds.length > 0) {
@@ -1625,21 +2420,30 @@ export const useSchoolStore = create<SchoolState>()(
             }
             
             set((state) => ({ matieres: [...state.matieres, newMatiere] }))
+            return { success: true }
           }
-        } catch (e) {
+          return { success: false, error: "La matière n'a pas pu être insérée." }
+        } catch (e: any) {
           console.warn("Exception addMatiere:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
       updateMatiere: async (id, data) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
-          if (checkAbonnement(get())) return
           const supabase = createClient()
           const updateData: any = {}
           if (data.nom) updateData.nom = data.nom
           if (data.coefficient) updateData.coefficient = data.coefficient
           
           if (Object.keys(updateData).length > 0) {
-            await supabase.from('matieres').update(updateData).eq('id', id)
+            const { error: uErr } = await supabase.from('matieres').update(updateData).eq('id', id)
+            if (uErr) {
+              console.warn("Erreur de mise à jour de la matière:", uErr.message)
+              return { success: false, error: uErr.message }
+            }
           }
 
           if (data.enseignantIds !== undefined) {
@@ -1650,28 +2454,44 @@ export const useSchoolStore = create<SchoolState>()(
                 matiere_id: id,
                 enseignant_id: ensId
               }))
-              await supabase.from('enseignants_matieres').insert(insertData)
+              const { error: insErr } = await supabase.from('enseignants_matieres').insert(insertData)
+              if (insErr) {
+                console.warn("Erreur d'association de l'enseignant:", insErr.message)
+                return { success: false, error: insErr.message }
+              }
             }
           }
           set((state) => ({ matieres: state.matieres.map(m => m.id === id ? { ...m, ...data } : m) }))
-        } catch (e) {
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception updateMatiere:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
       deleteMatiere: async (id) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
-          if (checkAbonnement(get())) return
           const supabase = createClient()
-          await supabase.from('matieres').delete().eq('id', id)
+          const { error } = await supabase.from('matieres').delete().eq('id', id)
+          if (error) {
+            console.warn("Erreur deleteMatiere:", error.message)
+            return { success: false, error: error.message }
+          }
           set((state) => ({ matieres: state.matieres.filter(m => m.id !== id) }))
-        } catch (e) {
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception deleteMatiere:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
  
       addEnseignant: async (ens) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
-          if (checkAbonnement(get())) return
           const supabase = createClient()
           const { data, error } = await supabase.from('utilisateurs').insert({
             nom: ens.nom,
@@ -1685,18 +2505,24 @@ export const useSchoolStore = create<SchoolState>()(
           
           if (error) {
             console.warn("Erreur addEnseignant:", error.message)
-            throw new Error(error.message)
-          } else if (data) {
+            return { success: false, error: error.message }
+          }
+          if (data) {
             const newEns: User = { ...ens, id: data.id }
             set((state) => ({ enseignants: [...state.enseignants, newEns] }))
+            return { success: true }
           }
-        } catch (e) {
+          return { success: false, error: "L'enseignant n'a pas pu être inséré." }
+        } catch (e: any) {
           console.warn("Exception addEnseignant:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
       updateEnseignant: async (id, data) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
-          if (checkAbonnement(get())) return
           const supabase = createClient()
           const updateData: any = {}
           if (data.nom) updateData.nom = data.nom
@@ -1708,22 +2534,257 @@ export const useSchoolStore = create<SchoolState>()(
           const { error } = await supabase.from('utilisateurs').update(updateData).eq('id', id)
           if (error) {
             console.warn("Erreur updateEnseignant:", error.message)
-            throw new Error(error.message)
+            return { success: false, error: error.message }
           }
           
           set((state) => ({ enseignants: state.enseignants.map(e => e.id === id ? { ...e, ...data } : e) }))
-        } catch (e) {
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception updateEnseignant:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
       deleteEnseignant: async (id) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
-          if (checkAbonnement(get())) return
           const supabase = createClient()
-          await supabase.from('utilisateurs').delete().eq('id', id)
+          const { error } = await supabase.from('utilisateurs').delete().eq('id', id)
+          if (error) {
+            console.warn("Erreur deleteEnseignant:", error.message)
+            return { success: false, error: error.message }
+          }
           set((state) => ({ enseignants: state.enseignants.filter(e => e.id !== id) }))
-        } catch (e) {
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception deleteEnseignant:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
+      },
+
+      annulerInvitationEnseignant: async (invitationId) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
+        try {
+          const supabase = createClient()
+          const { error } = await supabase
+            .from('invitations_enseignant')
+            .delete()
+            .eq('id', invitationId)
+
+          if (error) {
+            console.error("Erreur annulerInvitationEnseignant:", error.message)
+            return { success: false, error: error.message }
+          }
+          return { success: true }
+        } catch (e: any) {
+          console.error("Exception annulerInvitationEnseignant:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
+      },
+
+      gererAjoutEnseignant: async (emailEnseignant) => {
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
+        const state = get()
+        const currentUser = state.currentUser
+        if (!currentUser || !state.ecole?.id) {
+          return { success: false, error: "Non connecté ou établissement non défini." }
+        }
+
+        try {
+          const supabase = createClient()
+          
+          // 1. Rechercher si l'enseignant possède déjà un compte utilisateur
+          const { data: user, error: userError } = await supabase
+            .from('utilisateurs')
+            .select('*')
+            .eq('email', emailEnseignant)
+            .eq('role', 'enseignant')
+            .maybeSingle()
+
+          if (userError) {
+            console.error('[gererAjoutEnseignant] Erreur fetch utilisateur:', userError.message)
+            return { success: false, error: userError.message }
+          }
+
+          if (user) {
+            // Cas 1 : L'utilisateur existe déjà
+            // Vérifier s'il est déjà lié à cette école
+            const { data: jointure, error: jointureError } = await supabase
+              .from('enseignant_ecoles')
+              .select('*')
+              .eq('enseignant_id', user.id)
+              .eq('ecole_id', state.ecole.id)
+              .maybeSingle()
+
+            if (jointureError) {
+              console.error('[gererAjoutEnseignant] Erreur jointure:', jointureError.message)
+              return { success: false, error: jointureError.message }
+            }
+
+            if (!jointure) {
+              // Associer l'enseignant à l'école
+              const { error: insertError } = await supabase
+                .from('enseignant_ecoles')
+                .insert({
+                  enseignant_id: user.id,
+                  ecole_id: state.ecole.id,
+                  actif: true
+                })
+
+              if (insertError) {
+                console.error('[gererAjoutEnseignant] Erreur insert jointure:', insertError.message)
+                return { success: false, error: insertError.message }
+              }
+            }
+
+            // Mettre à jour l'état local du store s'il n'y est pas déjà
+            const mappedUser: User = {
+              id: user.id,
+              nom: user.nom,
+              prenom: user.prenom,
+              civilite: user.civilite,
+              email: user.email,
+              telephone: user.telephone,
+              role: user.role,
+              ecoleId: user.ecole_id,
+              photoUrl: user.photo_url
+            }
+
+            set((s) => {
+              const alreadyExists = s.enseignants.some((e) => e.id === user.id)
+              return {
+                enseignants: alreadyExists ? s.enseignants : [...s.enseignants, mappedUser]
+              }
+            })
+
+            return {
+              success: true,
+              cas: 'associe',
+              nomEnseignant: `${user.prenom} ${user.nom}`
+            }
+          } else {
+            // Cas 2 : L'enseignant n'existe pas en base
+            // Créer une invitation
+            const { error: inviteError } = await supabase
+              .from('invitations_enseignant')
+              .insert({
+                ecole_id: state.ecole.id,
+                directeur_id: currentUser.id,
+                email_cible: emailEnseignant,
+                utilise: false
+              })
+
+            if (inviteError) {
+              console.error('[gererAjoutEnseignant] Erreur insert invitation:', inviteError.message)
+              return { success: false, error: inviteError.message }
+            }
+
+            return {
+              success: true,
+              cas: 'invite'
+            }
+          }
+        } catch (e: any) {
+          console.error('[gererAjoutEnseignant] Exception:', e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
+        }
+      },
+
+      chargerEnseignants: async () => {
+        const state = get()
+        if (!state.ecole?.id) {
+          return { associes: [], invitationsEnAttente: [] }
+        }
+
+        try {
+          const supabase = createClient()
+
+          // 1. Charger les enseignants associés via enseignant_ecoles
+          // On fait un select avec jointure utilisateurs
+          const { data: jointures, error: jointuresError } = await supabase
+            .from('enseignant_ecoles')
+            .select(`
+              id,
+              enseignant_id,
+              ecole_id,
+              date_assignation,
+              actif,
+              utilisateurs:enseignant_id (*)
+            `)
+            .eq('ecole_id', state.ecole.id)
+
+          if (jointuresError) {
+            console.error('[chargerEnseignants] Erreur fetch jointures:', jointuresError.message)
+            throw jointuresError
+          }
+
+          // 2. Charger les invitations en attente (non utilisées et non expirées)
+          const { data: invites, error: invitesError } = await supabase
+            .from('invitations_enseignant')
+            .select('*')
+            .eq('ecole_id', state.ecole.id)
+            .eq('utilise', false)
+            .gt('expire_le', new Date().toISOString())
+
+          if (invitesError) {
+            console.error('[chargerEnseignants] Erreur fetch invitations:', invitesError.message)
+            throw invitesError
+          }
+
+          const associes = (jointures ?? [])
+            .map((j: any) => {
+              const u = j.utilisateurs
+              if (!u) return null
+              return {
+                id: u.id,
+                nom: u.nom,
+                prenom: u.prenom,
+                civilite: u.civilite,
+                email: u.email,
+                telephone: u.telephone,
+                role: u.role,
+                ecoleId: u.ecole_id,
+                photoUrl: u.photo_url,
+                dateAssignation: j.date_assignation,
+                actif: j.actif
+              }
+            })
+            .filter(Boolean)
+
+          const invitationsEnAttente = (invites ?? []).map((i: any) => ({
+            id: i.id,
+            emailCible: i.email_cible,
+            code: i.code,
+            expireLe: i.expire_le,
+            createdAt: i.created_at
+          }))
+
+          // Mettre également à jour l'état enseignants du store avec les enseignants actifs associés
+          const storeEnseignants: User[] = associes.map((a: any) => ({
+            id: a.id,
+            nom: a.nom,
+            prenom: a.prenom,
+            civilite: a.civilite,
+            email: a.email,
+            telephone: a.telephone,
+            role: a.role,
+            ecoleId: a.ecoleId,
+            photoUrl: a.photoUrl
+          }))
+          set({ enseignants: storeEnseignants })
+
+          return {
+            associes,
+            invitationsEnAttente
+          }
+        } catch (e) {
+          console.error('[chargerEnseignants] Exception:', e)
+          return { associes: [], invitationsEnAttente: [] }
         }
       },
 
@@ -1746,7 +2807,9 @@ export const useSchoolStore = create<SchoolState>()(
       },
 
       addBulletin: async (bulletin) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('bulletins').insert({
@@ -1761,47 +2824,115 @@ export const useSchoolStore = create<SchoolState>()(
             effectif_classe: bulletin.effectifClasse,
             appreciation: bulletin.appreciation,
             appreciation_directeur: bulletin.appreciationDirecteur,
-            date_generation: bulletin.dateGeneration
+            date_generation: bulletin.dateGeneration,
+            est_valide: bulletin.estValide || false
           }).select().single()
+          
           if (error) {
             console.warn("Erreur addBulletin:", error.message)
-            set((state) => ({ bulletins: [...state.bulletins, bulletin] }))
-          } else if (data) {
-            const newBulletin: Bulletin = { ...bulletin, id: data.id }
-            set((state) => ({ bulletins: [...state.bulletins, newBulletin] }))
+            return { success: false, error: error.message }
           }
-        } catch (e) {
+          if (data) {
+            const newBulletin: Bulletin = { ...bulletin, id: data.id, estValide: data.est_valide || false }
+            set((state) => ({ bulletins: [...state.bulletins, newBulletin] }))
+
+            if (newBulletin.estValide) {
+              try {
+                const el = get().eleves.find(e => e.id === newBulletin.eleveId)
+                if (el) {
+                  const trimestreLabel = newBulletin.trimestre === 1 ? '1er' : newBulletin.trimestre === 2 ? '2ème' : '3ème'
+                  await get().addNotification({
+                    titre: '🏆 Bulletin Trimestriel Disponible',
+                    description: `Le bulletin de notes du ${trimestreLabel} Trimestre de l'élève ${el.prenom} ${el.nom} a été validé par la direction. Vous pouvez le télécharger dans votre espace.`,
+                    type: 'bulletin',
+                    eleveId: el.id,
+                    classeId: el.classeId,
+                    destinataireRole: 'parent'
+                  })
+                }
+              } catch (nErr) {
+                console.warn("Erreur notification bulletin add:", nErr)
+              }
+            }
+
+            return { success: true }
+          }
+          return { success: false, error: "Le bulletin n'a pas pu être inséré." }
+        } catch (e: any) {
           console.warn("Exception addBulletin:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
       },
       
       updateBulletin: async (id, data) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
           const updateData: any = {}
           if (data.appreciationDirecteur !== undefined) updateData.appreciation_directeur = data.appreciationDirecteur
           if (data.dateGeneration) updateData.date_generation = data.dateGeneration
-          await supabase.from('bulletins').update(updateData).eq('id', id)
-        } catch (e) {
+          if (data.estValide !== undefined) updateData.est_valide = data.estValide
+          
+          const { error } = await supabase.from('bulletins').update(updateData).eq('id', id)
+          if (error) {
+            console.warn("Erreur updateBulletin:", error.message)
+            return { success: false, error: error.message }
+          }
+          
+          set((state) => ({
+            bulletins: state.bulletins.map(b => b.id === id ? { ...b, ...data } : b)
+          }))
+
+          if (data.estValide) {
+            try {
+              const bul = get().bulletins.find(b => b.id === id)
+              if (bul) {
+                const el = get().eleves.find(e => e.id === bul.eleveId)
+                if (el) {
+                  const trimestreLabel = bul.trimestre === 1 ? '1er' : bul.trimestre === 2 ? '2ème' : '3ème'
+                  await get().addNotification({
+                    titre: '🏆 Bulletin Trimestriel Disponible',
+                    description: `Le bulletin de notes du ${trimestreLabel} Trimestre de l'élève ${el.prenom} ${el.nom} a été validé par la direction. Vous pouvez le télécharger dans votre espace.`,
+                    type: 'bulletin',
+                    eleveId: el.id,
+                    classeId: el.classeId,
+                    destinataireRole: 'parent'
+                  })
+                }
+              }
+            } catch (nErr) {
+              console.warn("Erreur notification bulletin:", nErr)
+            }
+          }
+
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception updateBulletin:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          bulletins: state.bulletins.map(b => b.id === id ? { ...b, ...data } : b)
-        }))
       },
 
       deleteBulletin: async (id) => {
-        if (checkAbonnement(get())) return
+        if (checkAbonnement(get())) {
+          return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
         try {
           const supabase = createClient()
-          await supabase.from('bulletins').delete().eq('id', id)
-        } catch (e) {
+          const { error } = await supabase.from('bulletins').delete().eq('id', id)
+          if (error) {
+            console.warn("Erreur deleteBulletin:", error.message)
+            return { success: false, error: error.message }
+          }
+          set((state) => ({
+            bulletins: state.bulletins.filter(b => b.id !== id)
+          }))
+          return { success: true }
+        } catch (e: any) {
           console.warn("Exception deleteBulletin:", e)
+          return { success: false, error: e.message || "Une erreur inattendue est survenue." }
         }
-        set((state) => ({
-          bulletins: state.bulletins.filter(b => b.id !== id)
-        }))
       },
 
       getBulletinsByClasseAndTrimestre: (classeId, trimestre) => {
@@ -1891,7 +3022,8 @@ export const useSchoolStore = create<SchoolState>()(
             effectifClasse: elevesClasse.length,
             appreciation,
             appreciationDirecteur: bulletinExistant?.appreciationDirecteur || '',
-            dateGeneration: bulletinExistant?.dateGeneration || new Date().toISOString().split('T')[0]
+            dateGeneration: bulletinExistant?.dateGeneration || new Date().toISOString().split('T')[0],
+            estValide: bulletinExistant?.estValide || false
           }
         })
         

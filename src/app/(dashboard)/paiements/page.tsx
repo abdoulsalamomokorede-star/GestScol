@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { formatCFA, formatDate, getInitiales } from '@/lib/utils'
 import KpiCard from '@/components/dashboard/KpiCard'
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
@@ -67,6 +67,13 @@ export default function PaiementsPage() {
   const [classeSearchQuery, setClasseSearchQuery] = useState('')
   const [isClasseComboboxOpen, setIsClasseComboboxOpen] = useState(false)
   const [selectedAnneeId, setSelectedAnneeId] = useState<string>(activeAnneeScolaire?.id || 'all')
+
+  // Synchroniser l'année active locale avec celle du store (notamment après le chargement des données de Supabase)
+  useEffect(() => {
+    if (activeAnneeScolaire) {
+      setSelectedAnneeId(activeAnneeScolaire.id)
+    }
+  }, [activeAnneeScolaire])
 
   const getEleveClasse = (eleveId: string, anneeScolaire?: string) => {
     const annee = anneeScolaire || activeAnneeScolaire?.id;
@@ -625,6 +632,9 @@ export default function PaiementsPage() {
                             <div className="flex justify-between items-start">
                               <div className="flex items-center space-x-3">
                                 <Avatar className="h-9 w-9 border border-primary/20">
+                                  {eleve?.photoUrl ? (
+                                    <AvatarImage src={eleve.photoUrl} className="object-cover" />
+                                  ) : null}
                                   <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                                     {eleve ? getInitiales(eleve.nom, eleve.prenom) : '-'}
                                   </AvatarFallback>
@@ -703,6 +713,9 @@ export default function PaiementsPage() {
                                 <td className="p-4">
                                   <div className="flex items-center space-x-3">
                                     <Avatar className="h-10 w-10 border border-primary/20">
+                                      {eleve.photoUrl ? (
+                                        <AvatarImage src={eleve.photoUrl} className="object-cover" />
+                                      ) : null}
                                       <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                                         {getInitiales(eleve.nom, eleve.prenom)}
                                       </AvatarFallback>

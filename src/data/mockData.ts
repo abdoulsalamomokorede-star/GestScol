@@ -33,30 +33,30 @@ export const ecoleMock: Ecole = {
 
 export const usersMock: User[] = [
   // Directeur
-  { id: 'user-1', nom: 'Konan', prenom: 'Kouakou Bernard', email: 'directeur@flamboyants.ci', role: 'directeur', ecoleId: 'ecole-1' },
+  { id: 'user-1', nom: 'Konan', prenom: 'Kouakou Bernard', civilite: 'M', email: 'directeur@flamboyants.ci', role: 'directeur', ecoleId: 'ecole-1' },
 
   // Enseignants
-  { id: 'user-2', nom: 'Koné', prenom: 'Mariam', email: 'enseignant@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
-  { id: 'ens-2', nom: 'Diarrassouba', prenom: 'Amadou', email: 'a.diarrassouba@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
-  { id: 'ens-3', nom: 'Yapi', prenom: 'Théodore', email: 't.yapi@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
-  { id: 'ens-4', nom: 'Kouamé', prenom: 'Aya', email: 'a.kouame@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
+  { id: 'user-2', nom: 'Koné', prenom: 'Mariam', civilite: 'Mme', email: 'enseignant@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
+  { id: 'ens-2', nom: 'Diarrassouba', prenom: 'Amadou', civilite: 'M', email: 'a.diarrassouba@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
+  { id: 'ens-3', nom: 'Yapi', prenom: 'Théodore', civilite: 'M', email: 't.yapi@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
+  { id: 'ens-4', nom: 'Kouamé', prenom: 'Aya', civilite: 'Mme', email: 'a.kouame@flamboyants.ci', role: 'enseignant', ecoleId: 'ecole-1' },
 
   // Parents — chacun lié à ses enfants via Eleve.parentUserId
-  { id: 'parent-1', nom: 'Kouassi', prenom: 'Yao', email: 'parent@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-2', nom: 'Traoré', prenom: 'Seydou', email: 's.traore@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-3', nom: 'Bamba', prenom: 'Ali', email: 'bamba.ali@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-4', nom: "N'Guessan", prenom: 'Amoin', email: 'nguessan.amoin@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-5', nom: 'Ouattara', prenom: 'Drissa', email: 'd.ouattara@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-6', nom: 'Konan', prenom: 'Koffi', email: 'konan.koffi@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-11', nom: 'Aka', prenom: 'Jean-Pierre', email: 'aka.jp@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-12', nom: 'Diallo', prenom: 'Fatoumata', email: 'diallo.fat@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-13', nom: 'Yao', prenom: 'Marie Ange', email: 'yao.marie@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-14', nom: 'Coulibaly', prenom: 'Lamine', email: 'coulibaly.l@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-15', nom: 'Koffi', prenom: 'Edmond', email: 'koffi.edm@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-41', nom: 'Gogbé', prenom: 'Patrice', email: 'gogbe.p@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-42', nom: 'Sanogo', prenom: 'Ibrahima', email: 'sanogo.ib@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-43', nom: 'Zrobo', prenom: 'Désiré', email: 'zrobo.d@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
-  { id: 'parent-44', nom: 'Séka', prenom: 'Adjoua', email: 'seka.adj@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-1', nom: 'Kouassi', prenom: 'Yao', civilite: 'M', email: 'parent@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-2', nom: 'Traoré', prenom: 'Seydou', civilite: 'M', email: 's.traore@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-3', nom: 'Bamba', prenom: 'Ali', civilite: 'M', email: 'bamba.ali@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-4', nom: "N'Guessan", prenom: 'Amoin', civilite: 'Mme', email: 'nguessan.amoin@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-5', nom: 'Ouattara', prenom: 'Drissa', civilite: 'M', email: 'd.ouattara@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-6', nom: 'Konan', prenom: 'Koffi', civilite: 'M', email: 'konan.koffi@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-11', nom: 'Aka', prenom: 'Jean-Pierre', civilite: 'M', email: 'aka.jp@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-12', nom: 'Diallo', prenom: 'Fatoumata', civilite: 'Mme', email: 'diallo.fat@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-13', nom: 'Yao', prenom: 'Marie Ange', civilite: 'Mme', email: 'yao.marie@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-14', nom: 'Coulibaly', prenom: 'Lamine', civilite: 'M', email: 'coulibaly.l@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-15', nom: 'Koffi', prenom: 'Edmond', civilite: 'M', email: 'koffi.edm@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-41', nom: 'Gogbé', prenom: 'Patrice', civilite: 'M', email: 'gogbe.p@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-42', nom: 'Sanogo', prenom: 'Ibrahima', civilite: 'M', email: 'sanogo.ib@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-43', nom: 'Zrobo', prenom: 'Désiré', civilite: 'M', email: 'zrobo.d@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
+  { id: 'parent-44', nom: 'Séka', prenom: 'Adjoua', civilite: 'Mme', email: 'seka.adj@gmail.com', role: 'parent', ecoleId: 'ecole-1' },
 ]
 
 // ----------------------------------------------------------------

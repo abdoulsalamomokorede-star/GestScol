@@ -22,15 +22,17 @@ export type AnneeScolaire = {
 
 export type UserRole = 'directeur' | 'enseignant' | 'parent'
 
+export type Civilite = 'M' | 'Mme' | 'Mlle' | 'Dr' | 'Pr'
+
 export type User = {
   id: string
   nom: string
   prenom: string
-  civilite?: 'M.' | 'Mme' | 'Mlle'
+  civilite: Civilite
   email: string
   telephone?: string
   role: UserRole
-  ecoleId: string        // FK → Ecole.id
+  ecoleId: string | null        // FK → Ecole.id
   identifiant?: string   // Utilisé pour les comptes_connexion
   photoUrl?: string      // URL ou Base64 de la photo de profil
   // Note : pour role='enseignant', les classes/matières sont liées
@@ -239,6 +241,7 @@ export type Bulletin = {
   appreciation: string              // "Excellent", "Bien", "Assez Bien"…
   appreciationDirecteur?: string    // Observation libre du directeur
   dateGeneration: string            // ISO 8601
+  estValide?: boolean               // Indique si le bulletin a été validé par le Directeur et est visible par les parents
 }
 
 // =============================================================
@@ -288,10 +291,78 @@ export type NotificationItem = {
   titre: string
   description: string
   type: NotificationType
-  destinataireRole?: 'parent' | 'enseignant' | 'all'
+  destinataireRole?: 'parent' | 'enseignant' | 'directeur' | 'all'
   classeId?: string
   eleveId?: string
   creePar?: string
   createdAt: string
   lu: boolean
+}
+
+// ── Gestion multi-école ──────────────────────────────────────────
+
+export type EcoleAvecRole = {
+  id: string
+  nom: string
+  ville: string
+  adresse: string
+  telephone: string
+  logo?: string              // Base64
+  anneeScolaire: string
+  niveaux: ('prescolaire' | 'primaire' | 'secondaire')[]
+  directeurId: string        // FK → utilisateurs.id
+  // Champs calculés pour la page /ecoles
+  nbEleves?: number          // count des élèves actifs
+  nbClasses?: number         // count des classes
+  tauxRecouvrement?: number  // % paiements à jour
+  prenomsEnfants?: string[]  // prénoms des enfants du parent pour cette école
+}
+
+
+export type EnseignantEcole = {
+  id: string
+  enseignantId: string       // FK → utilisateurs.id
+  ecoleId: string            // FK → ecoles.id
+  dateAssignation: string    // ISO 8601
+  actif: boolean
+}
+
+// ── Création de compte ───────────────────────────────────────────
+
+export type RoleInscription = 'directeur' | 'enseignant' | 'parent'
+
+export type DonneesInscriptionDirecteur = {
+  civilite: Civilite
+  nom: string
+  prenom: string
+  email: string
+  telephone: string
+  motDePasse: string
+  confirmationMotDePasse: string
+  nomEcole?: string
+  villeEcole?: string
+  adresseEcole?: string
+  telephoneEcole?: string
+  niveauxEcole?: ('prescolaire' | 'primaire' | 'secondaire')[]
+}
+
+export type DonneesInscriptionEnseignant = {
+  civilite: Civilite
+  nom: string
+  prenom: string
+  email: string
+  telephone: string
+  motDePasse: string
+  confirmationMotDePasse: string
+  emailDirecteur: string
+}
+
+export type DonneesInscriptionParent = {
+  civilite: Civilite
+  nom: string
+  prenom: string
+  email: string
+  telephone: string
+  motDePasse: string
+  confirmationMotDePasse: string
 }

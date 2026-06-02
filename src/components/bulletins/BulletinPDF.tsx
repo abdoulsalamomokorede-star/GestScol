@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { Bulletin, Ecole, Eleve, Matiere, Note, User, Classe, AnneeScolaire } from '@/types'
 
 // Drapeau ivoirien stylisé sous forme de ligne fine
@@ -32,6 +32,15 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     width: '55%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 45,
+    height: 45,
+    borderRadius: 6,
+    objectFit: 'contain',
+    marginRight: 8,
   },
   headerRight: {
     width: '40%',
@@ -40,7 +49,6 @@ const styles = StyleSheet.create({
   orgTitle: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 9,
-    textTransform: 'uppercase',
   },
   orgSub: {
     fontSize: 8,
@@ -60,7 +68,7 @@ const styles = StyleSheet.create({
   },
   motto: {
     fontSize: 7,
-    fontStyle: 'italic',
+    fontFamily: 'Helvetica-Oblique',
     color: '#64748B',
     marginTop: 2,
   },
@@ -80,7 +88,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 3,
     color: '#F59E0B',
-    textTransform: 'uppercase',
   },
   // Infos élève
   infoContainer: {
@@ -96,7 +103,6 @@ const styles = StyleSheet.create({
   infoCol: {
     width: '48%',
     flexDirection: 'column',
-    gap: 4,
   },
   infoRow: {
     flexDirection: 'row',
@@ -183,7 +189,6 @@ const styles = StyleSheet.create({
   kpiLabel: {
     fontSize: 7,
     color: '#64748B',
-    textTransform: 'uppercase',
     marginBottom: 2,
     fontFamily: 'Helvetica-Bold',
   },
@@ -243,7 +248,7 @@ const styles = StyleSheet.create({
   },
   opinionText: {
     fontSize: 8.5,
-    fontStyle: 'italic',
+    fontFamily: 'Helvetica-Oblique',
     color: '#1E293B',
     lineHeight: 1.2,
   },
@@ -283,14 +288,14 @@ interface BulletinPDFProps {
 }
 
 export default function BulletinPDF({
-  bulletins,
+  bulletins = [],
   ecole,
-  eleves,
-  matieres,
-  classes,
-  enseignants,
-  absences,
-  anneesScolaires,
+  eleves = [],
+  matieres = [],
+  classes = [],
+  enseignants = [],
+  absences = [],
+  anneesScolaires = [],
 }: BulletinPDFProps) {
   
   // Remplacer les initiales ou retours d'appreciations
@@ -303,221 +308,272 @@ export default function BulletinPDF({
     return 'Insuffisant'
   }
 
+  // Vérifier si le logo est valide pour le rendu PDF (pas de SVG car non supporté par react-pdf)
+  const isLogoAffichablePDF = (logo: string | undefined): boolean => {
+    if (!logo || logo.trim() === '') return false
+    const lowerLogo = logo.toLowerCase()
+    
+    // Si c'est du Base64, vérifier le mime-type
+    if (lowerLogo.startsWith('data:')) {
+      return (
+        lowerLogo.startsWith('data:image/png') ||
+        lowerLogo.startsWith('data:image/jpeg') ||
+        lowerLogo.startsWith('data:image/jpg') ||
+        lowerLogo.startsWith('data:image/gif') ||
+        lowerLogo.startsWith('data:image/webp')
+      )
+    }
+    
+    // Si c'est un URL ou chemin
+    return (
+      lowerLogo.endsWith('.png') ||
+      lowerLogo.endsWith('.jpg') ||
+      lowerLogo.endsWith('.jpeg') ||
+      lowerLogo.endsWith('.gif') ||
+      lowerLogo.endsWith('.webp')
+    )
+  }
+
+  // Sécuriser l'affichage de la date de naissance pour éviter les RangeError de toLocaleDateString
+  const formatBirthDate = (dateStr: string | undefined): string => {
+    if (!dateStr) return 'Non renseignée'
+    try {
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return 'Non renseignée'
+      return d.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    } catch (e) {
+      return 'Non renseignée'
+    }
+  }
+
   return (
     <Document>
-      {bulletins.map((bulletin) => {
-        const eleve = eleves.find((e) => e.id === bulletin.eleveId)
-        const classe = classes.find((c) => c.id === bulletin.classeId)
-        const principal = enseignants.find((u) => u.id === classe?.enseignantPrincipalId)
-        
-        if (!eleve || !classe) return null
+      {bulletins
+        .filter((bulletin) => {
+          if (!bulletin) return false
+          const eleve = eleves.find((e) => e && e.id === bulletin.eleveId)
+          const classe = classes.find((c) => c && c.id === bulletin.classeId)
+          return !!eleve && !!classe
+        })
+        .map((bulletin) => {
+          const eleve = eleves.find((e) => e && e.id === bulletin.eleveId)!
+          const classe = classes.find((c) => c && c.id === bulletin.classeId)!
+          const principal = enseignants.find((u) => u && u.id === classe.enseignantPrincipalId)
 
-        // Résolution conviviale de l'année scolaire (nom au lieu de l'UUID/ID)
-        const anneeScolaireNom = anneesScolaires?.find(
-          a => a.id === bulletin.anneeScolaire || a.nom === bulletin.anneeScolaire
-        )?.nom || bulletin.anneeScolaire
+          // Résolution conviviale de l'année scolaire (nom au lieu de l'UUID/ID)
+          const anneeScolaireNom = anneesScolaires?.find(
+            a => a && (a.id === bulletin.anneeScolaire || a.nom === bulletin.anneeScolaire)
+          )?.nom || bulletin.anneeScolaire || ''
 
-        // Calcul des absences de l'élève
-        const absencesEleve = absences.filter((a) => a.eleveId === eleve.id)
-        const totalAbsences = absencesEleve.length
-        const absencesJustifiees = absencesEleve.filter((a) => a.justifiee).length
-        const absencesNonJustifiees = totalAbsences - absencesJustifiees
+          // Calcul des absences de l'élève
+          const absencesEleve = absences.filter((a) => a && a.eleveId === eleve.id)
+          const totalAbsences = absencesEleve.length
+          const absencesJustifiees = absencesEleve.filter((a) => a.justifiee).length
+          const absencesNonJustifiees = totalAbsences - absencesJustifiees
 
-        // Récupérer les matières de cette classe
-        const matieresClasse = matieres.filter((m) => m.classeId === classe.id)
+          // Récupérer les matières de cette classe
+          const matieresClasse = matieres.filter((m) => m && m.classeId === classe.id)
 
-        // Totaux
-        let totalCoefficients = 0
-        let totalPointsPonderes = 0
+          // Totaux
+          let totalCoefficients = 0
+          let totalPointsPonderes = 0
 
-        return (
-          <Page key={bulletin.id} size="A4" style={styles.page}>
-            <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                <Text style={styles.orgTitle}>Ministère de l'Éducation Nationale</Text>
-                <Text style={styles.orgTitle}>et de l'Alphabétisation</Text>
-                <Text style={styles.orgSub}>DREN de la Ville d'Abidjan</Text>
-                <Text style={styles.schoolName}>{ecole.nom}</Text>
-                <Text style={styles.orgSub}>Tél: {ecole.telephone} | Ville: {ecole.ville}</Text>
-              </View>
-              <View style={styles.headerRight}>
-                <Text style={styles.countryTitle}>RÉPUBLIQUE DE CÔTE D'IVOIRE</Text>
-                <Text style={styles.motto}>Union - Discipline - Travail</Text>
-                <DrapeauLine />
-                <Text style={styles.orgSub}>Année Scolaire : {anneeScolaireNom}</Text>
-              </View>
-            </View>
-
-            <View style={styles.titleContainer}>
-              <Text style={styles.mainTitle}>BULLETIN DE NOTES</Text>
-              <Text style={styles.subTitle}>
-                {bulletin.trimestre === 1 ? '1er Trimestre' : bulletin.trimestre === 2 ? '2ème Trimestre' : '3ème Trimestre'}
-              </Text>
-            </View>
-
-            <View style={styles.infoContainer}>
-              <View style={styles.infoCol}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Nom & Prénoms :</Text>
-                  <Text style={styles.infoValueBold}>
-                    {eleve.nom.toUpperCase()} {eleve.prenom}
-                  </Text>
+          return (
+            <Page key={bulletin.id} size="A4" style={styles.page}>
+              <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                  {isLogoAffichablePDF(ecole?.logo) ? (
+                    <Image src={ecole.logo!} style={styles.logo} />
+                  ) : null}
+                  <View style={{ flexDirection: 'column', flex: 1 }}>
+                    <Text style={styles.orgTitle}>{"Ministère de l'Éducation Nationale".toUpperCase()}</Text>
+                    <Text style={styles.orgTitle}>{"et de l'Alphabétisation".toUpperCase()}</Text>
+                    <Text style={styles.orgSub}>DREN de la Ville d'Abidjan</Text>
+                    <Text style={styles.schoolName}>{ecole?.nom || "Établissement Scolaire"}</Text>
+                    <Text style={styles.orgSub}>Tél: {ecole?.telephone || ''} | Ville: {ecole?.ville || ''}</Text>
+                  </View>
                 </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Matricule :</Text>
-                  <Text style={styles.infoValue}>{eleve.matricule}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Né(e) le :</Text>
-                  <Text style={styles.infoValue}>
-                    {new Date(eleve.dateNaissance).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Genre / Sexe :</Text>
-                  <Text style={styles.infoValue}>{eleve.sexe === 'M' ? 'Masculin (M)' : 'Féminin (F)'}</Text>
+                <View style={styles.headerRight}>
+                  <Text style={styles.countryTitle}>RÉPUBLIQUE DE CÔTE D'IVOIRE</Text>
+                  <Text style={styles.motto}>Union - Discipline - Travail</Text>
+                  <DrapeauLine />
+                  <Text style={styles.orgSub}>Année Scolaire : {anneeScolaireNom}</Text>
                 </View>
               </View>
-              <View style={styles.infoCol}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Classe :</Text>
-                  <Text style={styles.infoValueBold}>{classe.nom}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Effectif :</Text>
-                  <Text style={styles.infoValue}>{bulletin.effectifClasse} élèves</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Ens. Principal :</Text>
-                  <Text style={styles.infoValue}>
-                    {principal ? `${principal.nom} ${principal.prenom}` : 'Non assigné'}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Statut Éleve :</Text>
-                  <Text style={styles.infoValue}>{eleve.statut === 'actif' ? 'Actif / Inscrit' : eleve.statut}</Text>
-                </View>
-              </View>
-            </View>
 
-            <View style={styles.table}>
-              <View style={styles.tableHeader}>
-                <Text style={styles.colMatiere}>Disciplines</Text>
-                <Text style={styles.colDevoirs}>Notes Devoirs / Devoirs</Text>
-                <Text style={styles.colComp}>Composition</Text>
-                <Text style={styles.colMoy}>Moy. /20</Text>
-                <Text style={styles.colCoeff}>Coeff</Text>
-                <Text style={styles.colPond}>Moy. Coeff</Text>
-                <Text style={styles.colApprec}>Appréciations</Text>
+              <View style={styles.titleContainer}>
+                <Text style={styles.mainTitle}>BULLETIN DE NOTES</Text>
+                <Text style={styles.subTitle}>
+                  {bulletin.trimestre === 1 ? '1ER TRIMESTRE' : bulletin.trimestre === 2 ? '2ÈME TRIMESTRE' : '3ÈME TRIMESTRE'}
+                </Text>
               </View>
 
-              {matieresClasse.map((matiere, index) => {
-                const notesMatiere = bulletin.notes.filter((n) => n.matiereId === matiere.id)
-                const notesDevoirs = notesMatiere.filter((n) => n.type !== 'composition')
-                const notesComp = notesMatiere.filter((n) => n.type === 'composition')
-
-                // Calculs
-                let moyenneMatiere: number | null = null
-                if (notesMatiere.length > 0) {
-                  const somme = notesMatiere.reduce((acc, curr) => acc + curr.valeur, 0)
-                  moyenneMatiere = Number((somme / notesMatiere.length).toFixed(2))
-                  totalPointsPonderes += moyenneMatiere * matiere.coefficient
-                  totalCoefficients += matiere.coefficient
-                }
-
-                const devoirsStr = notesDevoirs.map((n) => n.valeur.toString()).join(' | ')
-                const compStr = notesComp.map((n) => n.valeur.toString()).join(' | ')
-
-                const rowStyle = index % 2 === 0 ? styles.tableRow : styles.tableRowAlternated
-
-                return (
-                  <View key={matiere.id} style={rowStyle}>
-                    <Text style={styles.colMatiere}>{matiere.nom}</Text>
-                    <Text style={styles.colDevoirs}>{devoirsStr || '-'}</Text>
-                    <Text style={styles.colComp}>{compStr || '-'}</Text>
-                    <Text style={styles.colMoy}>{moyenneMatiere !== null ? moyenneMatiere.toFixed(2) : '-'}</Text>
-                    <Text style={styles.colCoeff}>{matiere.coefficient}</Text>
-                    <Text style={styles.colPond}>
-                      {moyenneMatiere !== null ? (moyenneMatiere * matiere.coefficient).toFixed(2) : '-'}
-                    </Text>
-                    <Text style={styles.colApprec}>
-                      {moyenneMatiere !== null ? getAppreciationMatiere(moyenneMatiere) : '-'}
+              <View style={styles.infoContainer}>
+                <View style={styles.infoCol}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Nom & Prénoms :</Text>
+                    <Text style={styles.infoValueBold}>
+                      {(eleve.nom || '').toUpperCase()} {eleve.prenom || ''}
                     </Text>
                   </View>
-                )
-              })}
-
-              <View style={styles.tableTotal}>
-                <Text style={[styles.colMatiere, { textAlign: 'right', paddingRight: 10 }]}>Totaux</Text>
-                <Text style={styles.colDevoirs}>-</Text>
-                <Text style={styles.colComp}>-</Text>
-                <Text style={styles.colMoy}>-</Text>
-                <Text style={styles.colCoeff}>{totalCoefficients}</Text>
-                <Text style={styles.colPond}>{totalPointsPonderes.toFixed(2)}</Text>
-                <Text style={styles.colApprec}>-</Text>
-              </View>
-            </View>
-
-            <View style={styles.summaryBlock}>
-              <View style={styles.kpiBox}>
-                <Text style={styles.kpiLabel}>Moyenne Générale</Text>
-                <Text style={styles.kpiVal}>{bulletin.moyenneGenerale.toFixed(2)} /20</Text>
-                <Text style={styles.kpiSub}>Classement : {bulletin.rangClasse}e / {bulletin.effectifClasse}</Text>
-              </View>
-
-              <View style={styles.kpiBox}>
-                <Text style={styles.kpiLabel}>Moyenne Classe</Text>
-                <Text style={styles.kpiVal}>{bulletin.moyenneClasse.toFixed(2)} /20</Text>
-                <Text style={styles.kpiSub}>Mention : {bulletin.appreciation}</Text>
-              </View>
-
-              <View style={styles.conductBox}>
-                <Text style={styles.conductTitle}>Assiduité & Comportement</Text>
-                <View style={styles.conductRow}>
-                  <Text style={styles.conductLabel}>Total des Absences :</Text>
-                  <Text style={styles.conductVal}>{totalAbsences} séance(s)</Text>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Matricule :</Text>
+                    <Text style={styles.infoValue}>{eleve.matricule || ''}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Né(e) le :</Text>
+                    <Text style={styles.infoValue}>
+                      {formatBirthDate(eleve.dateNaissance)}
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Genre / Sexe :</Text>
+                    <Text style={styles.infoValue}>
+                      {eleve.sexe === 'M' ? 'Masculin (M)' : eleve.sexe === 'F' ? 'Féminin (F)' : 'Non renseigné'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.conductRow}>
-                  <Text style={styles.conductLabel}>Absences Justifiées :</Text>
-                  <Text style={[styles.conductVal, { color: '#059669' }]}>{absencesJustifiees} séance(s)</Text>
-                </View>
-                <View style={styles.conductRow}>
-                  <Text style={styles.conductLabel}>Absences Non Justifiées :</Text>
-                  <Text style={[styles.conductVal, { color: '#EF4444' }]}>{absencesNonJustifiees} séance(s)</Text>
+                <View style={styles.infoCol}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Classe :</Text>
+                    <Text style={styles.infoValueBold}>{classe.nom || ''}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Effectif :</Text>
+                    <Text style={styles.infoValue}>{bulletin.effectifClasse || 0} élèves</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Ens. Principal :</Text>
+                    <Text style={styles.infoValue}>
+                      {principal ? `${principal.nom || ''} ${principal.prenom || ''}`.trim() : 'Non assigné'}
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Statut Éleve :</Text>
+                    <Text style={styles.infoValue}>{eleve.statut === 'actif' ? 'Actif / Inscrit' : eleve.statut || ''}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <View style={styles.opinionBlock}>
-              <Text style={styles.opinionTitle}>Observations & Avis du Directeur de l'Établissement</Text>
-              <Text style={styles.opinionText}>
-                {bulletin.appreciationDirecteur ||
-                  "Aucune observation renseignée pour ce trimestre. Travail sérieux dans l'ensemble."}
-              </Text>
-            </View>
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.colMatiere}>Disciplines</Text>
+                  <Text style={styles.colDevoirs}>Notes Devoirs / Devoirs</Text>
+                  <Text style={styles.colComp}>Composition</Text>
+                  <Text style={styles.colMoy}>Moy. /20</Text>
+                  <Text style={styles.colCoeff}>Coeff</Text>
+                  <Text style={styles.colPond}>Moy. Coeff</Text>
+                  <Text style={styles.colApprec}>Appréciations</Text>
+                </View>
 
-            <View style={styles.signatureContainer}>
-              <View style={styles.sigBlock}>
-                <Text style={styles.sigTitle}>Signature du Parent</Text>
-                <View style={styles.sigLine} />
+                {matieresClasse.map((matiere, index) => {
+                  const bulletinNotes = bulletin.notes || []
+                  const notesMatiere = bulletinNotes.filter((n) => n && n.matiereId === matiere.id)
+                  const notesDevoirs = notesMatiere.filter((n) => n && n.type !== 'composition')
+                  const notesComp = notesMatiere.filter((n) => n && n.type === 'composition')
+
+                  // Calculs
+                  let moyenneMatiere: number | null = null
+                  if (notesMatiere.length > 0) {
+                    const somme = notesMatiere.reduce((acc, curr) => acc + (curr?.valeur || 0), 0)
+                    moyenneMatiere = Number((somme / notesMatiere.length).toFixed(2))
+                    totalPointsPonderes += moyenneMatiere * (matiere.coefficient || 0)
+                    totalCoefficients += (matiere.coefficient || 0)
+                  }
+
+                  const devoirsStr = notesDevoirs.map((n) => n?.valeur?.toString() || '').filter(Boolean).join(' | ')
+                  const compStr = notesComp.map((n) => n?.valeur?.toString() || '').filter(Boolean).join(' | ')
+
+                  const rowStyle = index % 2 === 0 ? styles.tableRow : styles.tableRowAlternated
+
+                  return (
+                    <View key={matiere.id} style={rowStyle}>
+                      <Text style={styles.colMatiere}>{matiere.nom || ''}</Text>
+                      <Text style={styles.colDevoirs}>{devoirsStr || '-'}</Text>
+                      <Text style={styles.colComp}>{compStr || '-'}</Text>
+                      <Text style={styles.colMoy}>{moyenneMatiere !== null ? moyenneMatiere.toFixed(2) : '-'}</Text>
+                      <Text style={styles.colCoeff}>{String(matiere.coefficient || 0)}</Text>
+                      <Text style={styles.colPond}>
+                        {moyenneMatiere !== null ? (moyenneMatiere * (matiere.coefficient || 0)).toFixed(2) : '-'}
+                      </Text>
+                      <Text style={styles.colApprec}>
+                        {moyenneMatiere !== null ? getAppreciationMatiere(moyenneMatiere) : '-'}
+                      </Text>
+                    </View>
+                  )
+                })}
+
+                <View style={styles.tableTotal}>
+                  <Text style={[styles.colMatiere, { textAlign: 'right', paddingRight: 10 }]}>Totaux</Text>
+                  <Text style={styles.colDevoirs}>-</Text>
+                  <Text style={styles.colComp}>-</Text>
+                  <Text style={styles.colMoy}>-</Text>
+                  <Text style={styles.colCoeff}>{String(totalCoefficients)}</Text>
+                  <Text style={styles.colPond}>{totalPointsPonderes.toFixed(2)}</Text>
+                  <Text style={styles.colApprec}>-</Text>
+                </View>
               </View>
-              <View style={styles.sigBlock}>
-                <Text style={styles.sigTitle}>Le Titulaire de la Classe</Text>
-                <View style={styles.sigLine} />
+
+              <View style={styles.summaryBlock}>
+                <View style={styles.kpiBox}>
+                  <Text style={styles.kpiLabel}>MOYENNE GÉNÉRALE</Text>
+                  <Text style={styles.kpiVal}>{(Number(bulletin.moyenneGenerale) || 0).toFixed(2)} /20</Text>
+                  <Text style={styles.kpiSub}>Classement : {bulletin.rangClasse || 0}e / {bulletin.effectifClasse || 0}</Text>
+                </View>
+
+                <View style={styles.kpiBox}>
+                  <Text style={styles.kpiLabel}>MOYENNE CLASSE</Text>
+                  <Text style={styles.kpiVal}>{(Number(bulletin.moyenneClasse) || 0).toFixed(2)} /20</Text>
+                  <Text style={styles.kpiSub}>Mention : {bulletin.appreciation || ''}</Text>
+                </View>
+
+                <View style={styles.conductBox}>
+                  <Text style={styles.conductTitle}>Assiduité & Comportement</Text>
+                  <View style={styles.conductRow}>
+                    <Text style={styles.conductLabel}>Total des Absences :</Text>
+                    <Text style={styles.conductVal}>{totalAbsences} séance(s)</Text>
+                  </View>
+                  <View style={styles.conductRow}>
+                    <Text style={styles.conductLabel}>Absences Justifiées :</Text>
+                    <Text style={[styles.conductVal, { color: '#059669' }]}>{absencesJustifiees} séance(s)</Text>
+                  </View>
+                  <View style={styles.conductRow}>
+                    <Text style={styles.conductLabel}>Absences Non Justifiées :</Text>
+                    <Text style={[styles.conductVal, { color: '#EF4444' }]}>{absencesNonJustifiees} séance(s)</Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.sigBlock}>
-                <Text style={styles.sigTitle}>Le Directeur d'Établissement</Text>
-                <Text style={{ fontSize: 7, color: '#64748B', marginTop: 10 }}>(Cachet officiel)</Text>
-                <View style={styles.sigLine} />
+
+              <View style={styles.opinionBlock}>
+                <Text style={styles.opinionTitle}>Observations & Avis du Directeur de l'Établissement</Text>
+                <Text style={styles.opinionText}>
+                  {bulletin.appreciationDirecteur ||
+                    "Aucune observation renseignée pour ce trimestre. Travail sérieux dans l'ensemble."}
+                </Text>
               </View>
-            </View>
-          </Page>
-        )
-      })}
+
+              <View style={styles.signatureContainer}>
+                <View style={styles.sigBlock}>
+                  <Text style={styles.sigTitle}>Signature du Parent</Text>
+                  <View style={styles.sigLine} />
+                </View>
+                <View style={styles.sigBlock}>
+                  <Text style={styles.sigTitle}>Le Titulaire de la Classe</Text>
+                  <View style={styles.sigLine} />
+                </View>
+                <View style={styles.sigBlock}>
+                  <Text style={styles.sigTitle}>Le Directeur d'Établissement</Text>
+                  <Text style={{ fontSize: 7, color: '#64748B', marginTop: 10 }}>(Cachet officiel)</Text>
+                  <View style={styles.sigLine} />
+                </View>
+              </View>
+            </Page>
+          )
+        })}
     </Document>
   )
 }

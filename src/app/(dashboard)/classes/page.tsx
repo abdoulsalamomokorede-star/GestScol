@@ -14,13 +14,14 @@ import { Label } from '@/components/ui/label'
 
 export default function ClassesPage() {
   const router = useRouter()
-  const { classes, eleves, inscriptions, activeAnneeScolaire, addClasse, updateClasse, deleteClasse, isAbonnementExpired } = useSchoolStore()
+  const { classes, eleves, inscriptions, activeAnneeScolaire, addClasse, updateClasse, deleteClasse, isAbonnementExpired, ecole } = useSchoolStore()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [niveauFilter, setNiveauFilter] = useState('tous')
   
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   
   const [formData, setFormData] = useState({ nom: '', niveau: '', montantScolarite: 0, montantInscription: 0 })
 
@@ -41,7 +42,7 @@ export default function ClassesPage() {
     setIsModalOpen(true)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isAbonnementExpired()) {
       toast({
         title: "Action impossible",
@@ -52,14 +53,35 @@ export default function ClassesPage() {
     }
     if (!formData.nom || !formData.niveau) return toast({ title: "Erreur", description: "Veuillez remplir les champs.", variant: "destructive" })
     
-    if (editingId) {
-      updateClasse(editingId, formData)
-      toast({ title: "Succès", description: "Classe modifiée avec succès." })
-    } else {
-      addClasse({ id: `c-${Date.now()}`, enseignantPrincipalId: '', ecoleId: 'ecole-1', ...formData })
-      toast({ title: "Succès", description: "Classe ajoutée avec succès." })
+    setIsLoading(true)
+    try {
+      if (editingId) {
+        const res = await updateClasse(editingId, formData)
+        if (res && !res.success) {
+          toast({ title: "Erreur", description: res.error || "La modification a échoué.", variant: "destructive" })
+        } else {
+          toast({ title: "Succès", description: "Classe modifiée avec succès." })
+          setIsModalOpen(false)
+        }
+      } else {
+        const res = await addClasse({ 
+          id: `c-${Date.now()}`, 
+          enseignantPrincipalId: '', 
+          ecoleId: ecole?.id || '', 
+          ...formData 
+        })
+        if (res && !res.success) {
+          toast({ title: "Erreur", description: res.error || "L'ajout a échoué.", variant: "destructive" })
+        } else {
+          toast({ title: "Succès", description: "Classe ajoutée avec succès." })
+          setIsModalOpen(false)
+        }
+      }
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message || "Une erreur est survenue.", variant: "destructive" })
+    } finally {
+      setIsLoading(false)
     }
-    setIsModalOpen(false)
   }
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -68,7 +90,7 @@ export default function ClassesPage() {
     setDeleteId(id)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (isAbonnementExpired()) {
       toast({
         title: "Action impossible",
@@ -78,9 +100,20 @@ export default function ClassesPage() {
       return
     }
     if (deleteId) {
-      deleteClasse(deleteId)
-      toast({ title: "Succès", description: "Classe supprimée." })
-      setDeleteId(null)
+      setIsLoading(true)
+      try {
+        const res = await deleteClasse(deleteId)
+        if (res && !res.success) {
+          toast({ title: "Erreur", description: res.error || "La suppression a échoué.", variant: "destructive" })
+        } else {
+          toast({ title: "Succès", description: "Classe supprimée." })
+          setDeleteId(null)
+        }
+      } catch (e: any) {
+        toast({ title: "Erreur", description: e.message || "Une erreur est survenue.", variant: "destructive" })
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -211,8 +244,10 @@ export default function ClassesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Annuler</Button>
-            <Button onClick={handleSave} className="bg-primary text-white">Enregistrer</Button>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isLoading}>Annuler</Button>
+            <Button onClick={handleSave} className="bg-primary text-white" disabled={isLoading}>
+              {isLoading ? "Enregistrement..." : "Enregistrer"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

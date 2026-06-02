@@ -11,7 +11,27 @@ import logoImg from '@/app/logo.png'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@/types'
 import Link from 'next/link'
-import { getSchoolAbonnement } from '@/app/actions/abonnement'
+
+const chargerProfilAvecRetry = async (supabase: any, userId: string, maxAttempts = 3, delay = 500) => {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const { data: profile, error } = await supabase
+      .from('utilisateurs')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (profile) {
+      return { profile, error: null }
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, delay * attempt))
+    } else {
+      return { profile: null, error: error || new Error("Profil introuvable après plusieurs tentatives.") }
+    }
+  }
+  return { profile: null, error: new Error("Profil introuvable.") }
+}
 
 export default function EnseignantLoginPage() {
   const [email, setEmail] = useState('')
@@ -35,7 +55,7 @@ export default function EnseignantLoginPage() {
       if (!hasCookie) {
         setCurrentUser(null)
       } else if (currentUser.role === 'enseignant') {
-        router.push('/enseignant/dashboard')
+        router.push('/ecoles')
       }
     }
   }, [currentUser, router, setCurrentUser])
@@ -134,15 +154,11 @@ export default function EnseignantLoginPage() {
         return
       }
 
-      // Fetch the profile from utilisateurs table
-      const { data: profile, error: profileError } = await supabase
-        .from('utilisateurs')
-        .select('*, ecoles(*)')
-        .eq('id', authData.user.id)
-        .single()
-
-      if (profileError || !profile) {
-        const msg = profileError?.message?.toLowerCase() || ""
+      // Fetch the profile from utilisateurs table with retry
+      const { profile, error: retryError } = await chargerProfilAvecRetry(supabase, authData.user.id)
+      
+      if (retryError || !profile) {
+        const msg = retryError?.message?.toLowerCase() || ""
         if (msg.includes("failed to fetch") || msg.includes("network error") || msg.includes("load failed")) {
           setError("Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer.")
         } else {
@@ -155,16 +171,6 @@ export default function EnseignantLoginPage() {
         setError("Accès refusé. Cet espace est réservé aux enseignants.")
         await supabase.auth.signOut()
         return
-      }
-
-      // Bloquer la connexion si l'établissement utilise la formule gratuite
-      if (profile.ecole_id) {
-        const abonnementRes = await getSchoolAbonnement(profile.ecole_id)
-        if (abonnementRes.success && abonnementRes.data?.plan === 'gratuit') {
-          setError("Votre établissement utilise la formule gratuite. L'accès à cet espace requiert un abonnement Standard ou Premium.")
-          await supabase.auth.signOut()
-          return
-        }
       }
 
       const userProfile: User = {
@@ -183,7 +189,7 @@ export default function EnseignantLoginPage() {
       sessionStorage.removeItem('failedAttempts')
 
       setCurrentUser(userProfile)
-      window.location.href = '/enseignant/dashboard'
+      window.location.href = '/ecoles'
       
     } catch (err: any) {
       console.error(err)

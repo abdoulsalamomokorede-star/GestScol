@@ -29,10 +29,20 @@ export default function DashboardPage() {
     }
   }, [currentUser, router])
 
+  // Synchroniser l'année active locale avec celle du store (notamment après le chargement des données de Supabase)
+  useEffect(() => {
+    if (activeAnneeScolaire) {
+      setAnneeScolaire(activeAnneeScolaire.id)
+    }
+  }, [activeAnneeScolaire])
+
   if (!currentUser || currentUser.role !== 'directeur') return null
 
   // 1. Filtrage global par Année Scolaire
-  const inscriptionsAnnee = inscriptions.filter(i => i.anneeScolaire === anneeScolaire && i.statut === 'validee')
+  // Résoudre le nom de l'année scolaire (ex: '2024-2025') à partir de son ID (ex: 'as-2024-2025')
+  const selectedAnneeNom = anneesScolaires.find(a => a.id === anneeScolaire)?.nom || anneeScolaire
+
+  const inscriptionsAnnee = inscriptions.filter(i => (i.anneeScolaire === anneeScolaire || i.anneeScolaire === selectedAnneeNom) && i.statut === 'validee')
   const elevesInscritsIds = inscriptionsAnnee.map(i => i.eleveId)
 
   const elevesActifs = eleves.filter(e => e.statut === 'actif' && elevesInscritsIds.includes(e.id))
@@ -44,7 +54,7 @@ export default function DashboardPage() {
 
   // 2. Filtrage des Paiements (Global)
   // Filtré par anneeScolaire et limité aux élèves actifs
-  const paiementsFiltres = paiements.filter(p => (p.anneeScolaire === anneeScolaire || !p.anneeScolaire) && elevesActifsIds.includes(p.eleveId))
+  const paiementsFiltres = paiements.filter(p => (p.anneeScolaire === anneeScolaire || p.anneeScolaire === selectedAnneeNom || !p.anneeScolaire) && elevesActifsIds.includes(p.eleveId))
 
   const totalCollecte = paiementsFiltres.reduce((acc, p) => acc + (p.statut === 'paye' ? Math.max(p.montant, p.montantPaye || 0) : (p.montantPaye || 0)), 0)
   const totalRetards = paiementsFiltres.filter(p => p.statut === 'retard').reduce((acc, p) => acc + Math.max(0, p.montant - (p.montantPaye || 0)), 0)
@@ -60,7 +70,7 @@ export default function DashboardPage() {
 
   // 3. Filtrage des Absences (par Mois et Année)
   const absencesFiltrees = absences.filter(a => {
-    if (a.anneeScolaire !== anneeScolaire) return false
+    if (a.anneeScolaire !== anneeScolaire && a.anneeScolaire !== selectedAnneeNom) return false
     if (!elevesActifsIds.includes(a.eleveId)) return false
     if (moisAbsences === 'tous') return true
     const month = new Date(a.date).getMonth() + 1 // 1-12
@@ -78,7 +88,7 @@ export default function DashboardPage() {
   const elevesAvecNotes = new Set(
     notes
       .filter(n =>
-        n.anneeScolaire === anneeScolaire &&
+        (n.anneeScolaire === anneeScolaire || n.anneeScolaire === selectedAnneeNom) &&
         elevesActifsIds.includes(n.eleveId) &&
         (trimestre === 'tous' ? true : n.trimestre === parseInt(trimestre))
       )
@@ -175,6 +185,7 @@ export default function DashboardPage() {
           value={totalEnseignants}
           icon={GraduationCap}
           subtitle="Enseignants actifs"
+          isLocked={ecole?.abonnement?.plan === 'gratuit'}
         />
         <KpiCard
           title="Classes de l'année scolaire"

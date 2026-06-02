@@ -195,7 +195,7 @@ export default function LandingPage() {
             >
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-primary-dark transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out" />
               <span className="relative z-10 flex items-center gap-1.5">
-                Inscrire mon École <ArrowRight className="h-4 w-4" />
+                Créer un compte <ArrowRight className="h-4 w-4" />
               </span>
             </Link>
           </div>
@@ -268,7 +268,7 @@ export default function LandingPage() {
                 className="w-full text-center font-semibold py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark shadow-md"
                 id="register-btn-mobile"
               >
-                Inscrire mon École
+                Créer un compte
               </Link>
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function LandingPage() {
                 className="w-full sm:w-auto inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-semibold text-base px-8 py-4 rounded-full shadow-xl shadow-slate-900/10 transition-all gap-2 group border border-slate-800"
                 id="hero-primary-cta"
               >
-                Inscrire mon École
+                Créer un compte
                 <ArrowRight className="h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
               </Link>
               <a 
@@ -315,6 +315,9 @@ export default function LandingPage() {
                 Découvrir la démo
               </a>
             </div>
+            <p className="text-xs text-slate-500 pt-2">
+              Déjà inscrit ? <Link href="/login" className="text-primary hover:underline font-bold transition-all">Se connecter</Link>
+            </p>
 
             {/* Avantages en 3 mots */}
             <div className="flex flex-wrap justify-center gap-6 pt-12 text-xs font-semibold text-slate-500 uppercase tracking-widest">

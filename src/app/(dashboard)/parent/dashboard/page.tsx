@@ -22,7 +22,9 @@ export default function ParentDashboardPage() {
   }
 
   const parentFullName = `${currentUser.nom} ${currentUser.prenom}`
-  const mesEnfants = eleves.filter(e => e.parentUserId === currentUser.id)
+  const mesEnfants = eleves.filter(
+    e => e.parentUserId === currentUser.id || e.parentNom === parentFullName || e.parentNom?.includes(currentUser.nom)
+  )
 
   const mesPaiements = paiements.filter(p => mesEnfants.some(e => e.id === p.eleveId))
   const mesAbsences = absences.filter(a => mesEnfants.some(e => e.id === a.eleveId))

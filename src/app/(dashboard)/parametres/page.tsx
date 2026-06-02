@@ -5,14 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Combobox } from '@/components/ui/combobox'
 import { useToast } from '@/hooks/use-toast'
 import { PremiumGuard } from '@/components/ui/PremiumGuard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getInitiales, translateDbError } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -26,8 +24,6 @@ import {
   ShieldCheck, 
   ShieldAlert,
   ArrowLeft,
-  Search,
-  Phone, 
   Mail, 
   UserCheck, 
   HelpCircle,
@@ -35,17 +31,31 @@ import {
   Check,
   Smartphone,
   Eye,
-  EyeOff,
-  Edit2,
   Trash2,
-  Camera
+  Camera,
+  Phone,
+  Edit2
 } from 'lucide-react'
 import { UserCompteSimule } from '@/types'
-import { createUtilisateurAuth, adminUpdatePassword } from '@/app/actions/admin'
+import { adminUpdatePassword } from '@/app/actions/admin'
 
 export default function ParametresPage() {
   const router = useRouter()
-  const { currentUser, eleves, updateEleve, addEnseignant, enseignants, ecole, updateEcole, deleteEnseignant, comptesSimules, addCompteConnexion, updateCompteConnexion, deleteCompteConnexion, inscriptions, absences, paiements, notes, bulletins, isAbonnementExpired } = useSchoolStore()
+  const { 
+    currentUser, 
+    ecole, 
+    updateEcole, 
+    deleteEnseignant, 
+    comptesSimules, 
+    updateCompteConnexion, 
+    deleteCompteConnexion, 
+    inscriptions, 
+    absences, 
+    paiements, 
+    notes, 
+    bulletins, 
+    isAbonnementExpired 
+  } = useSchoolStore()
   const { toast } = useToast()
 
   // Verrou d'accès pour les non-directeurs
@@ -155,17 +165,7 @@ export default function ParametresPage() {
   }
 
   // --- CRÉATION DE COMPTE ---
-  const [role, setRole] = useState<'enseignant' | 'parent'>('parent')
-  const [civilite, setCivilite] = useState<'M.' | 'Mme'>('M.')
-  const [prenom, setPrenom] = useState('')
-  const [nom, setNom] = useState('')
-  const [email, setEmail] = useState('')
-  const [telephone, setTelephone] = useState('+225 ')
-  const [selectedEleveIds, setSelectedEleveIds] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [selectedEnseignantId, setSelectedEnseignantId] = useState('')
-  const [editingCompteId, setEditingCompteId] = useState<string | null>(null)
   
   // États Modales
   const [deleteCompteId, setDeleteCompteId] = useState<string | null>(null)
@@ -182,24 +182,6 @@ export default function ParametresPage() {
       setLogoEcole(ecole.logo || '')
     }
   }, [ecole])
-
-  useEffect(() => {
-    if (role === 'enseignant' && selectedEnseignantId) {
-      const ens = enseignants.find(e => e.id === selectedEnseignantId)
-      if (ens) {
-        setNom(ens.nom || '')
-        setPrenom(ens.prenom || '')
-        setEmail(ens.email || '')
-        setTelephone(ens.telephone || '+225 ')
-        if (ens.civilite) setCivilite(ens.civilite as any)
-      }
-    } else if (role === 'enseignant' && !selectedEnseignantId) {
-      setNom('')
-      setPrenom('')
-      setEmail('')
-      setTelephone('+225 ')
-    }
-  }, [selectedEnseignantId, role, enseignants])
 
 
 
@@ -242,214 +224,7 @@ export default function ParametresPage() {
     }, 800)
   }
 
-  const handleCreateCompte = (e: React.FormEvent) => {
-    e.preventDefault()
 
-    if (isAbonnementExpired()) {
-      toast({
-        title: "Action impossible",
-        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (role === 'enseignant') {
-      if (!selectedEnseignantId) {
-        toast({
-          title: "Enseignant non sélectionné",
-          description: "Veuillez sélectionner un enseignant dans la liste.",
-          variant: "destructive"
-        })
-        return
-      }
-      
-      const ens = enseignants.find(e => e.id === selectedEnseignantId)
-      if (!ens?.email || ens.email.trim() === '' || ens.email.includes('@gestscol.local') || ens.email.includes('@ecole.ci')) {
-        toast({
-          title: "Adresse e-mail manquante ou invalide",
-          description: "L'enseignant sélectionné n'a pas de véritable adresse e-mail dans son profil (adresse temporaire détectée). Veuillez d'abord mettre à jour ses informations dans la gestion des enseignants avec un vrai e-mail.",
-          variant: "destructive"
-        })
-        return
-      }
-    } else {
-      if (!prenom.trim() || !nom.trim()) {
-        toast({
-          title: "Champs incomplets",
-          description: "Veuillez renseigner le nom et le prénom de l'utilisateur.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      if (email.trim() && !email.includes('@')) {
-        toast({
-          title: "Email invalide",
-          description: "L'adresse e-mail saisie n'est pas valide.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      // Validation téléphone ivoirien (10 chiffres)
-      const phoneDigits = telephone.replace(/[^0-9]/g, '')
-      const checkDigits = phoneDigits.startsWith('225') ? phoneDigits.slice(3) : phoneDigits
-      if (checkDigits.length !== 10) {
-        toast({
-          title: "Téléphone incorrect",
-          description: "Le numéro ivoirien doit contenir exactement 10 chiffres (Ex: +225 07 08 09 10 11).",
-          variant: "destructive"
-        })
-        return
-      }
-
-      if (role === 'parent' && selectedEleveIds.length === 0) {
-        toast({
-          title: "Élèves non rattachés",
-          description: "Veuillez sélectionner au moins un élève à rattacher à ce parent.",
-          variant: "destructive"
-        })
-        return
-      }
-    }
-
-    setLoading(true)
-    setTimeout(async () => {
-      // Vérification des doublons (Même email) en ignorant le compte en cours d'édition
-      const emailExists = comptesSimules.some(c => c.email && c.email.toLowerCase() === email.trim().toLowerCase() && c.id !== editingCompteId)
-      if (emailExists) {
-        setLoading(false)
-        toast({
-          title: "Doublon détecté",
-          description: "Un compte avec cette adresse e-mail existe déjà.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      // L'identifiant devient l'e-mail pour des raisons de sécurité et de professionnalisme
-      const identifiantGenere = email.toLowerCase().trim()
-      const cleanNom = nom.trim().replace(/[^a-zA-Z]/g, '') || "User"
-      const nomCapitalized = cleanNom.charAt(0).toUpperCase() + cleanNom.slice(1).toLowerCase()
-      // Générer un mot de passe temporaire d'au moins 8 caractères contenant Maj, Min, Chiffre et Symbole
-      const mdpGenere = `Gsc@${nomCapitalized}${Math.floor(Math.random() * 900) + 100}`
-
-      const associatedStudents = eleves.filter(el => selectedEleveIds.includes(el.id))
-      const elevesNoms = associatedStudents.map(el => `${el.prenom} ${el.nom}`)
-      
-        try {
-          if (editingCompteId) {
-            // Mode Édition
-            await updateCompteConnexion(editingCompteId, {
-              nom: nom.toUpperCase(),
-              prenom,
-              email,
-              telephone,
-              role,
-              elevesAssocies: role === 'parent' ? elevesNoms : undefined
-            })
-            
-            if (role === 'parent') {
-              // Unlink students who were deselected
-              eleves.filter(el => el.parentUserId === editingCompteId).forEach(el => {
-                if (!selectedEleveIds.includes(el.id)) {
-                  updateEleve(el.id, { parentUserId: '' })
-                }
-              })
-              // Link newly selected students
-              selectedEleveIds.forEach(id => {
-                updateEleve(id, { parentUserId: editingCompteId })
-              })
-            }
-          } else {
-            // Mode Création
-            const result = await createUtilisateurAuth({
-              email: email.trim(),
-              password: mdpGenere,
-              nom: nom.toUpperCase(),
-              prenom,
-              telephone: telephone.trim(),
-              role: role as 'enseignant' | 'parent',
-              ecoleId: currentUser.ecoleId,
-              civilite: civilite as 'M.' | 'Mme' | 'Mlle',
-              oldId: role === 'enseignant' ? enseignants.find(e => e.id === selectedEnseignantId)?.id : undefined
-            })
-
-            if (!result.success) {
-              throw new Error(result.error)
-            }
-
-            const newId = crypto.randomUUID()
-            const finalId = result.userId || newId
-
-            // Mettre à jour les élèves rattachés dans le store
-            if (role === 'parent') {
-              selectedEleveIds.forEach(id => {
-                updateEleve(id, { parentUserId: finalId })
-              })
-            } else if (role === 'enseignant' && !selectedEnseignantId) {
-              addEnseignant({
-                id: finalId,
-                nom: nom.toUpperCase(),
-                prenom,
-                email,
-                role: 'enseignant',
-                ecoleId: currentUser.ecoleId
-              })
-            }
-
-            // Simulation locale pour mise à jour de la vue sans recharger
-            const newCompte: UserCompteSimule = {
-              id: finalId,
-              nom: nom.toUpperCase(),
-              prenom,
-              email: email.trim(),
-              telephone: telephone.trim(),
-              role,
-              elevesAssocies: role === 'parent' ? elevesNoms : undefined,
-              enseignantId: role === 'enseignant' ? finalId : undefined,
-              dateCreation: new Date().toISOString().split('T')[0],
-              identifiant: email.trim(),
-              mdpTemporaire: mdpGenere
-            }
-
-            // Add to comptes_connexion database table so we know this account was officially created
-            await addCompteConnexion(newCompte)
-            
-            setCompteCreeApercu({
-              identifiant: identifiantGenere,
-              mdpTemporaire: mdpGenere,
-              nomComplet: `${civilite} ${prenom} ${nom.toUpperCase()}`,
-              role: role === 'enseignant' ? 'Enseignant' : 'Parent'
-            })
-          }
-
-          // Réinitialiser le formulaire
-          setEditingCompteId(null)
-          setPrenom('')
-          setNom('')
-          setEmail('')
-          setTelephone('+225 ')
-          setSelectedEleveIds([])
-          setSearchTerm('')
-          setLoading(false)
-
-          toast({
-            title: "Compte créé avec succès !",
-            description: `Le compte ${role === 'enseignant' ? 'Enseignant' : 'Parent'} a été configuré sur le serveur GestScol.`,
-            variant: "default"
-          })
-        } catch (error: any) {
-          setLoading(false)
-          toast({
-            title: "Erreur d'enregistrement",
-            description: translateDbError(error?.message || ""),
-            variant: "destructive"
-          })
-        }
-    }, 1000)
-  }
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
@@ -518,26 +293,7 @@ export default function ParametresPage() {
     }
   }
 
-  const handleEditCompte = (compte: UserCompteSimule) => {
-    setEditingCompteId(compte.id)
-    setRole(compte.role)
-    if (compte.role === 'enseignant') {
-      setSelectedEnseignantId(compte.enseignantId || compte.id)
-      setSelectedEleveIds([])
-    } else {
-      setSelectedEnseignantId('')
-      const linkedEleves = eleves.filter(el => el.parentUserId === compte.id)
-      setSelectedEleveIds(linkedEleves.map(el => el.id))
-    }
-    setPrenom(compte.prenom)
-    setNom(compte.nom)
-    setEmail(compte.email || '')
-    setTelephone(compte.telephone || '+225 ')
-    toast({
-      title: "Mode édition",
-      description: "Les informations du compte ont été chargées dans le formulaire.",
-    })
-  }
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -805,249 +561,126 @@ export default function ParametresPage() {
           )}
 
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-            {/* FORMULAIRE DE CRÉATION */}
+            {/* INVITATION & LIENS D'AUTO-INSCRIPTION */}
             <Card className="shadow-sm border-border/50 bg-card lg:col-span-2">
               <CardHeader className="pb-3 border-b border-border/40">
                 <CardTitle className="text-sm font-bold text-text flex items-center gap-2 uppercase tracking-wide">
                   <UserPlus className="h-4.5 w-4.5 text-primary" />
-                  Créer un compte académique
+                  Inviter des collaborateurs & parents
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
-                  Générez un profil d&apos;accès sécurisé (Enseignant ou Parent) pour votre établissement scolaire.
+                  Partagez ces liens uniques d&apos;inscription. Les enseignants et parents d&apos;élèves pourront créer eux-mêmes leur compte sécurisé en quelques secondes.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
-                <form onSubmit={handleCreateCompte} className="space-y-4">
-                  {/* Choix Rôle et Civilité */}
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="role-select" className="text-xs font-bold text-muted-foreground uppercase">Rôle académique</Label>
-                      <Select
-                        value={role}
-                        onValueChange={(value) => {
-                          setRole(value as any)
-                          setSelectedEleveIds([])
-                          setSelectedEnseignantId('')
-                          setPrenom('')
-                          setNom('')
-                          setEmail('')
-                          setTelephone('+225 ')
-                        }}
-                      >
-                        <SelectTrigger id="role-select" className="w-full text-xs h-9 border-border bg-background focus:ring-1 focus:ring-primary">
-                          <SelectValue placeholder="Sélectionnez un rôle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="parent">Parent d'Élève</SelectItem>
-                          <SelectItem value="enseignant">Enseignant</SelectItem>
-                        </SelectContent>
-                      </Select>
+              <CardContent className="pt-6 space-y-6">
+                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 text-xs text-slate-600 leading-relaxed flex items-start gap-3">
+                  <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-slate-800">Comment ça marche ?</span>
+                    <ul className="list-disc pl-4 mt-1 space-y-1">
+                      <li>Copiez le lien correspondant au rôle souhaité (Enseignant ou Parent).</li>
+                      <li>Envoyez-le par SMS, WhatsApp ou E-mail aux personnes concernées.</li>
+                      <li>Ils s&apos;inscrivent en ligne de manière autonome.</li>
+                      <li>Une fois leur compte créé, ils s&apos;afficheront instantanément dans votre liste ci-contre.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {/* LIEN ENSEIGNANT */}
+                  <div className="border border-border/60 rounded-2xl p-4 bg-background space-y-3 hover:border-primary/20 transition-all duration-300">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-xs font-bold text-text uppercase flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5 text-amber-500" />
+                          Lien d&apos;inscription Enseignant
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Permet aux enseignants de s&apos;inscrire et de s&apos;associer à votre établissement pour saisir les notes et faire l&apos;appel.
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="civilite-select" className="text-xs font-bold text-muted-foreground uppercase">Civilité</Label>
-                      <Select
-                        value={civilite}
-                        onValueChange={(value) => setCivilite(value as any)}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-slate-50 border border-border px-3 py-2 rounded-xl text-[11px] font-mono text-muted-foreground select-all truncate">
+                        {typeof window !== 'undefined' ? `${window.location.origin}/register/enseignant` : 'Chargement du lien...'}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const url = `${window.location.origin}/register/enseignant`
+                          navigator.clipboard.writeText(url)
+                          setCopiedId('url-enseignant')
+                          setTimeout(() => setCopiedId(null), 2000)
+                          toast({
+                            title: "Lien copié !",
+                            description: "Le lien d'inscription Enseignant a été copié.",
+                          })
+                        }}
+                        className="h-9 shrink-0 flex items-center gap-1.5 px-3 rounded-xl border-border bg-white text-text hover:bg-slate-50 font-semibold text-xs"
                       >
-                        <SelectTrigger id="civilite-select" className="w-full text-xs h-9 border-border bg-background focus:ring-1 focus:ring-primary">
-                          <SelectValue placeholder="Sélectionnez la civilité" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="M.">Monsieur (M.)</SelectItem>
-                          <SelectItem value="Mme">Madame (Mme)</SelectItem>
-                          <SelectItem value="Mlle">Mademoiselle (Mlle)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        {copiedId === 'url-enseignant' ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-primary" />
+                            <span>Copié</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>Copier</span>
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
 
-                  {role === 'enseignant' ? (
-                    <div className="space-y-1">
-                      <Label className="text-xs font-bold text-muted-foreground uppercase">Sélectionner un enseignant existant</Label>
-                      <Combobox
-                        options={enseignants.map(ens => ({
-                          label: `${ens.prenom} ${ens.nom}`,
-                          value: ens.id
-                        }))}
-                        value={selectedEnseignantId}
-                        onChange={setSelectedEnseignantId}
-                        placeholder="Rechercher un enseignant..."
-                      />
+                  {/* LIEN PARENT */}
+                  <div className="border border-border/60 rounded-2xl p-4 bg-background space-y-3 hover:border-primary/20 transition-all duration-300">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-xs font-bold text-text uppercase flex items-center gap-1.5">
+                          <Smartphone className="h-3.5 w-3.5 text-primary" />
+                          Lien d&apos;inscription Parent
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Permet aux parents de s&apos;inscrire pour suivre en temps réel la scolarité, les notes et les absences de leurs enfants.
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <>
-                      {/* Prénom et Nom */}
-                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                        <div className="space-y-1">
-                          <Label htmlFor="user-firstname" className="text-xs font-bold text-muted-foreground uppercase">Prénom</Label>
-                          <Input 
-                            id="user-firstname" 
-                            placeholder="Ex: Kouassi Jean"
-                            value={prenom} 
-                            onChange={(e) => setPrenom(e.target.value)} 
-                            className="text-xs h-9 border-border bg-background" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="user-lastname" className="text-xs font-bold text-muted-foreground uppercase">Nom de famille</Label>
-                          <Input 
-                            id="user-lastname" 
-                            placeholder="Ex: Koffi"
-                            value={nom} 
-                            onChange={(e) => setNom(e.target.value)} 
-                            className="text-xs h-9 border-border bg-background" 
-                            required 
-                          />
-                        </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-slate-50 border border-border px-3 py-2 rounded-xl text-[11px] font-mono text-muted-foreground select-all truncate">
+                        {typeof window !== 'undefined' ? `${window.location.origin}/register/parent` : 'Chargement du lien...'}
                       </div>
-
-                      {/* E-mail et Téléphone portable */}
-                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                        <div className="space-y-1">
-                          <Label htmlFor="user-email" className="text-xs font-bold text-muted-foreground uppercase">Adresse e-mail</Label>
-                          <Input 
-                            id="user-email" 
-                            type="email"
-                            placeholder="Ex: jkoffi@gmail.com"
-                            value={email} 
-                            onChange={(e) => setEmail(e.target.value)} 
-                            className="text-xs h-9 border-border bg-background" 
-                            required
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="user-phone" className="text-xs font-bold text-muted-foreground uppercase">Téléphone portable (+225)</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-3 h-3.5 w-3.5 text-muted-foreground/60" />
-                            <Input 
-                               id="user-phone" 
-                               placeholder="+225 07 00 00 00 00"
-                               value={telephone} 
-                               onChange={(e) => setTelephone(e.target.value)} 
-                               className="pl-9 text-xs h-9 border-border bg-background font-semibold" 
-                               required 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Rattachement multiple d'élèves si Parent */}
-                  {role === 'parent' && (
-                    <div className="space-y-3 border-t border-border/40 pt-4 animate-in fade-in duration-200">
-                      <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5 text-primary" />
-                        Associer les élèves (Rattachement multiple d&apos;enfants)
-                      </Label>
-                      
-                      {/* Barre de recherche rapide */}
-                      <div className="relative">
-                        <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground/75" />
-                        <Input
-                          placeholder="Rechercher un élève par nom, prénom, classe, matricule..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-9 text-xs h-9 border-border bg-background"
-                        />
-                      </div>
-
-                      {/* Cadre scrollable avec les cases à cocher */}
-                      <div className="max-h-48 overflow-y-auto border border-border p-3 rounded-xl bg-slate-50 space-y-2">
-                        {eleves
-                          .filter(el => {
-                            const isEnrolled = inscriptions.some(i => i.eleveId === el.id && i.anneeScolaire === activeAnneeScolaire?.id && i.statut === 'validee')
-                            if (!isEnrolled) return false
-                            
-                            const query = searchTerm.toLowerCase().trim()
-                            if (!query) return true
-                            return (
-                              el.nom.toLowerCase().includes(query) ||
-                              el.prenom.toLowerCase().includes(query) ||
-                              el.matricule.toLowerCase().includes(query) ||
-                              el.classeId.toLowerCase().includes(query)
-                            )
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const url = `${window.location.origin}/register/parent`
+                          navigator.clipboard.writeText(url)
+                          setCopiedId('url-parent')
+                          setTimeout(() => setCopiedId(null), 2000)
+                          toast({
+                            title: "Lien copié !",
+                            description: "Le lien d'inscription Parent a été copié.",
                           })
-                          .map(el => {
-                            const isChecked = selectedEleveIds.includes(el.id)
-                            return (
-                              <label
-                                key={el.id}
-                                className={`flex items-center gap-3 p-2.5 rounded-lg border text-xs cursor-pointer transition-all duration-200 ${
-                                  isChecked
-                                    ? 'bg-primary/5 border-primary text-text font-semibold'
-                                    : 'bg-card border-border hover:bg-muted/30 text-muted-foreground'
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => {
-                                    if (isChecked) {
-                                      setSelectedEleveIds(selectedEleveIds.filter(id => id !== el.id))
-                                    } else {
-                                      setSelectedEleveIds([...selectedEleveIds, el.id])
-                                    }
-                                  }}
-                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
-                                />
-                                <div className="flex-1 flex items-center justify-between">
-                                  <span>{el.prenom} {el.nom}</span>
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-slate-200 uppercase bg-slate-100 text-slate-600">
-                                      {el.classeId}
-                                    </Badge>
-                                    <span className="text-[10px] font-mono text-muted-foreground">{el.matricule}</span>
-                                  </div>
-                                </div>
-                              </label>
-                            )
-                          })}
-                        {eleves.filter(el => {
-                          const isEnrolled = inscriptions.some(i => i.eleveId === el.id && i.anneeScolaire === activeAnneeScolaire?.id && i.statut === 'validee')
-                          if (!isEnrolled) return false
-                          
-                          const query = searchTerm.toLowerCase().trim()
-                          if (!query) return true
-                          return (
-                            el.nom.toLowerCase().includes(query) ||
-                            el.prenom.toLowerCase().includes(query) ||
-                            el.matricule.toLowerCase().includes(query) ||
-                            el.classeId.toLowerCase().includes(query)
-                          )
-                        }).length === 0 && (
-                          <div className="text-center py-4 text-xs text-muted-foreground">
-                            Aucun élève ne correspond à votre recherche.
-                          </div>
+                        }}
+                        className="h-9 shrink-0 flex items-center gap-1.5 px-3 rounded-xl border-border bg-white text-text hover:bg-slate-50 font-semibold text-xs"
+                      >
+                        {copiedId === 'url-parent' ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-primary" />
+                            <span>Copié</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>Copier</span>
+                          </>
                         )}
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                        <span>{selectedEleveIds.length} enfant(s) sélectionné(s)</span>
-                        {selectedEleveIds.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedEleveIds([])}
-                            className="text-primary hover:underline font-bold"
-                          >
-                            Réinitialiser la sélection
-                          </button>
-                        )}
-                      </div>
+                      </Button>
                     </div>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    disabled={loading}
-                    size="sm"
-                    className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shrink-0 ml-auto"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    {loading ? 'Création en cours...' : 'Générer le compte sécurisé'}
-                  </Button>
-                </form>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -1127,17 +760,7 @@ export default function ParametresPage() {
                           <KeyRound className="h-3.5 w-3.5 mr-1" />
                           <span className="hidden sm:inline">Mot de passe</span>
                         </Button>
-                        {c.role !== 'enseignant' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditCompte(c)}
-                            className="h-7 px-2 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10"
-                          >
-                            <Edit2 className="h-3.5 w-3.5 mr-1" />
-                            <span className="hidden sm:inline">Modifier</span>
-                          </Button>
-                        )}
+
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1214,9 +837,14 @@ export default function ParametresPage() {
                       dateDebut: `${startYear}-09-01`,
                       dateFin: `${startYear + 1}-07-31`,
                       statut: 'archivee'
+                    }).then((res: any) => {
+                      if (res?.success) {
+                        setNouvelleAnneeNom('')
+                        toast({ title: "Succès", description: "Année scolaire ajoutée." })
+                      } else {
+                        toast({ title: "Erreur", description: res?.error || "Impossible d'ajouter l'année scolaire.", variant: "destructive" })
+                      }
                     })
-                    setNouvelleAnneeNom('')
-                    toast({ title: "Succès", description: "Année scolaire ajoutée." })
                   }}
                   className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md h-9"
                 >

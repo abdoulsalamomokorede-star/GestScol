@@ -7,7 +7,7 @@ import { formatDate, getInitiales } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -58,7 +58,8 @@ export default function AbsencesPage() {
     addNotification,
     anneesScolaires,
     activeAnneeScolaire,
-    ecole
+    ecole,
+    fetchSupabaseData
   } = useSchoolStore()
   
   const { toast } = useToast()
@@ -109,6 +110,13 @@ export default function AbsencesPage() {
       setSelectedClasseId(classesDisponibles[0].id)
     }
   }, [classesDisponibles, selectedClasseId])
+
+  // Recharger les absences de Supabase lors du clic sur l'onglet historique (Bug 10)
+  useEffect(() => {
+    if (activeTab === 'historique') {
+      fetchSupabaseData()
+    }
+  }, [activeTab, fetchSupabaseData])
 
   // --- REDIRECTION SI NON CONNECTÉ (SÉCURITÉ APRÈS DÉCLARATION DES HOOKS) ---
   if (!currentUser) return null
@@ -641,6 +649,9 @@ export default function AbsencesPage() {
                               <td className="py-3.5 px-4">
                                 <div className="flex items-center space-x-3">
                                   <Avatar className="h-8 w-8 shrink-0">
+                                    {abs.eleve?.photoUrl ? (
+                                      <AvatarImage src={abs.eleve.photoUrl} className="object-cover" />
+                                    ) : null}
                                     <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">
                                       {abs.eleve ? getInitiales(abs.eleve.nom, abs.eleve.prenom) : '??'}
                                     </AvatarFallback>

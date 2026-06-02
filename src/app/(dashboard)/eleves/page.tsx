@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitiales } from '@/lib/utils'
 import EleveModal from '@/components/eleves/EleveModal'
 import { Eleve } from '@/types'
@@ -20,6 +20,7 @@ export default function ElevesPage() {
   const router = useRouter()
   const { eleves, classes, inscriptions, activeAnneeScolaire, deleteEleve, ecole } = useSchoolStore()
   const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
   
   const [searchTerm, setSearchTerm] = useState('')
   const [classFilter, setClassFilter] = useState('toutes')
@@ -51,14 +52,33 @@ export default function ElevesPage() {
     setEleveToDelete(id)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (eleveToDelete) {
-      deleteEleve(eleveToDelete)
-      toast({
-        title: "Élève supprimé",
-        description: "L'élève a été retiré de la base avec succès.",
-      })
-      setEleveToDelete(null)
+      setIsLoading(true)
+      try {
+        const res = await deleteEleve(eleveToDelete)
+        if (res && !res.success) {
+          toast({
+            title: "Erreur",
+            description: res.error || "La suppression de l'élève a échoué.",
+            variant: "destructive"
+          })
+        } else {
+          toast({
+            title: "Élève supprimé",
+            description: "L'élève a été retiré de la base avec succès.",
+          })
+          setEleveToDelete(null)
+        }
+      } catch (e: any) {
+        toast({
+          title: "Erreur",
+          description: e.message || "Une erreur est survenue.",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -226,6 +246,9 @@ export default function ElevesPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-9 w-9 border border-primary/20">
+                        {eleve.photoUrl ? (
+                          <AvatarImage src={eleve.photoUrl} className="object-cover" />
+                        ) : null}
                         <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
                           {getInitiales(eleve.nom, eleve.prenom)}
                         </AvatarFallback>

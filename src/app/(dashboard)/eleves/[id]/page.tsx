@@ -4,10 +4,10 @@ import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useSchoolStore } from '@/store/useSchoolStore'
-import { getInitiales, formatDate, formatCFA } from '@/lib/utils'
-import { ArrowLeft, User, BookOpen, CreditCard, CalendarOff, Phone, Mail, Loader2, Download, Lock } from 'lucide-react'
+import { getInitiales, formatDate, formatCFA, getSafeFilename } from '@/lib/utils'
+import { ArrowLeft, User, BookOpen, CreditCard, CalendarOff, Phone, Mail, Loader2, Download, Lock, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -199,7 +199,7 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
                             anneesScolaires={anneesScolaires}
                           />
                         }
-                        fileName={`Bulletin_${eleve.nom}_${eleve.prenom}_T${selectedTrimestre}.pdf`}
+                        fileName={`${getSafeFilename(`Bulletin_${eleve.nom}_${eleve.prenom}_T${selectedTrimestre}`)}.pdf`}
                       >
                         {/* @ts-ignore */}
                         {({ loading }) => (
@@ -308,6 +308,15 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
           <TabsTrigger value="absences" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <CalendarOff className="w-4 h-4 mr-2 shrink-0" />
             <span>Absences</span>
+            {ecole?.abonnement?.plan === 'gratuit' && (
+              <span className="ml-1.5 text-[8px] bg-amber-500/20 text-amber-700 font-extrabold px-1 rounded uppercase tracking-wider shrink-0">
+                Premium
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="bulletins" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <FileText className="w-4 h-4 mr-2 shrink-0" />
+            <span>Bulletins</span>
             {ecole?.abonnement?.plan === 'gratuit' && (
               <span className="ml-1.5 text-[8px] bg-amber-500/20 text-amber-700 font-extrabold px-1 rounded uppercase tracking-wider shrink-0">
                 Premium
@@ -536,6 +545,165 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
                       ))}
                     </div>
                   )
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="bulletins" className="mt-0">
+            <Card className="border-border/50 shadow-sm bg-card">
+              <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 pb-4">
+                <div>
+                  <CardTitle className="text-lg font-bold font-display text-text">Bulletins Scolaires</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground mt-1">
+                    Visualisez et téléchargez les relevés de notes officiels de l&apos;année scolaire active.
+                  </CardDescription>
+                </div>
+                {ecole?.abonnement?.plan === 'gratuit' && (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 flex items-center gap-1">
+                    👑 Premium
+                  </span>
+                )}
+              </CardHeader>
+              <CardContent className="pt-6">
+                {ecole?.abonnement?.plan === 'gratuit' ? (
+                  <div className="text-center py-12 space-y-3">
+                    <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-sm font-bold text-text">Bulletins Trimestriels Verrouillés</h4>
+                    <p className="text-xs text-muted-foreground max-w-[320px] mx-auto leading-relaxed">
+                      La génération de bulletins officiels et leur accès en téléchargement nécessitent un abonnement payant.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((t) => {
+                      // Calculer le bulletin de ce trimestre pour l'élève
+                      const currentAnneeId = activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
+                      const bulletinsCalculesT = eleve.classeId
+                        ? calculerBulletinsClasse(eleve.classeId, t as 1|2|3, currentAnneeId)
+                        : []
+                      const bEleve = bulletinsCalculesT.find(b => b.eleveId === eleve.id)
+
+                      // Vérifier s'il est enregistré et validé dans la base
+                      const bulletinExistant = useSchoolStore.getState().bulletins.find(
+                        x => x.eleveId === eleve.id && x.trimestre === t && x.anneeScolaire === currentAnneeId
+                      )
+                      const isValide = bulletinExistant?.estValide === true
+                      const hasNotes = bEleve && bEleve.notes.length > 0
+
+                      return (
+                        <div key={`trim-${t}`} className="border border-border/50 p-5 rounded-xl bg-card space-y-4 flex flex-col justify-between shadow-sm hover:border-primary/20 transition-all">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center pb-2 border-b border-border/40">
+                              <h4 className="font-bold text-text">{t}er Trimestre</h4>
+                              {isValide ? (
+                                <Badge className="bg-emerald-500 text-white border-none font-bold text-[9px] px-1.5 py-0 rounded">
+                                  ✓ Validé
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200 font-bold text-[9px] px-1.5 py-0 rounded">
+                                  En attente
+                                </Badge>
+                              )}
+                            </div>
+
+                            {isValide || !isParent ? (
+                              hasNotes && bEleve ? (
+                                <div className="space-y-2.5 text-xs">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">Moyenne Générale</span>
+                                    <span className={`font-bold font-display px-2 py-0.5 rounded ${
+                                      bEleve.moyenneGenerale >= 10 ? 'text-emerald-600 bg-emerald-50' : 'text-danger bg-red-50'
+                                    }`}>
+                                      {bEleve.moyenneGenerale.toFixed(2)} / 20
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">Rang</span>
+                                    <span className="font-bold text-text bg-slate-100 px-2 py-0.5 rounded">
+                                      {bEleve.rangClasse}e sur {bEleve.effectifClasse}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground font-medium">Appréciation</span>
+                                    <span className={`font-bold px-2 py-0.5 rounded ${
+                                      bEleve.moyenneGenerale >= 10 ? 'bg-primary-light text-primary' : 'bg-red-50 text-danger'
+                                    }`}>
+                                      {bEleve.appreciation}
+                                    </span>
+                                  </div>
+                                  {bulletinExistant?.appreciationDirecteur && (
+                                    <div className="mt-2 pt-2 border-t border-border/30">
+                                      <span className="text-muted-foreground font-semibold block text-[10px] uppercase">Remarques de la Direction</span>
+                                      <p className="italic text-slate-600 text-[11px] leading-relaxed mt-1">
+                                        &ldquo;{bulletinExistant.appreciationDirecteur}&rdquo;
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground text-center py-6 italic">Relevé incomplet ou aucune note disponible.</p>
+                              )
+                            ) : (
+                              <div className="bg-slate-50 border border-border/40 p-4 rounded-lg text-center text-xs text-slate-500 py-8 leading-relaxed">
+                                Le bulletin de ce trimestre n&apos;a pas encore été validé par la direction.
+                              </div>
+                            )}
+                          </div>
+
+                          {(isValide || !isParent) && hasNotes && bEleve ? (
+                            isMounted ? (
+                              <PDFDownloadLink
+                                document={
+                                  <BulletinPDF
+                                    bulletins={[bEleve]}
+                                    ecole={ecole}
+                                    eleves={[eleve]}
+                                    matieres={matieres}
+                                    classes={classes}
+                                    enseignants={enseignants}
+                                    absences={absences}
+                                    anneesScolaires={anneesScolaires}
+                                  />
+                                }
+                                fileName={`${getSafeFilename(`Bulletin_${eleve.nom}_${eleve.prenom}_T${t}`)}.pdf`}
+                              >
+                                {/* @ts-ignore */}
+                                {({ loading }) => (
+                                  <Button
+                                    className="w-full bg-primary hover:bg-primary-dark text-white font-bold text-xs flex items-center justify-center gap-1.5 h-9 rounded-lg"
+                                    disabled={loading}
+                                  >
+                                    {loading ? (
+                                      <>
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        Génération...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Download className="h-3.5 w-3.5" />
+                                        Télécharger le PDF
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                              </PDFDownloadLink>
+                            ) : (
+                              <Button size="sm" disabled className="w-full text-xs">
+                                Chargement...
+                              </Button>
+                            )
+                          ) : (
+                            <Button size="sm" disabled className="w-full text-xs bg-slate-100 border border-border text-slate-400 font-semibold shadow-none">
+                              Non disponible
+                            </Button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 )}
               </CardContent>
             </Card>

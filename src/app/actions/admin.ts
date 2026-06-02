@@ -7,7 +7,7 @@ import { z } from 'zod'
 const UtilisateurSchema = z.object({
   email: z.string().email("Format d'email invalide"),
   password: z.string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+    .min(12, "Le mot de passe doit contenir au moins 12 caractères (NIST 800-63B)")
     .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
     .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
@@ -18,7 +18,7 @@ const UtilisateurSchema = z.object({
   telephone: z.string().optional(),
   role: z.enum(['directeur', 'enseignant', 'parent']),
   ecoleId: z.string().uuid("ID école invalide"),
-  civilite: z.enum(['M.', 'Mme', 'Mlle']).optional(),
+  civilite: z.enum(['M', 'Mme', 'Mlle', 'Dr', 'Pr']).optional(),
   oldId: z.string().uuid().optional()
 })
 
@@ -177,9 +177,9 @@ export async function adminUpdatePassword(userId: string, newPassword: string) {
       return { success: false, error: "Non autorisé. L'utilisateur ciblé n'appartient pas à votre établissement." }
     }
 
-    // Valider la longueur minimale de mot de passe fort
-    if (newPassword.length < 8) {
-      return { success: false, error: "Le mot de passe doit contenir au moins 8 caractères." }
+    // Valider la longueur minimale de mot de passe fort (NIST 800-63B)
+    if (newPassword.length < 12) {
+      return { success: false, error: "Le mot de passe doit contenir au moins 12 caractères." }
     }
 
     const adminAuthClient = getAdminClient()

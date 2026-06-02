@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
@@ -15,7 +15,8 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { currentUser, setCurrentUser, ecole, initializeAnneesScolaires, fetchSupabaseData } = useSchoolStore()
+  const pathname = usePathname()
+  const { currentUser, setCurrentUser, ecole, ecoleId, initializeAnneesScolaires, fetchSupabaseData } = useSchoolStore()
   const [hasHydrated, setHasHydrated] = useState(false)
   const [isInitialFetchDone, setIsInitialFetchDone] = useState(false)
   const supabase = createClient()
@@ -32,12 +33,24 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (hasHydrated) {
+      if (pathname.startsWith('/ecoles')) {
+        setIsInitialFetchDone(true)
+        return
+      }
+      setIsInitialFetchDone(false)
       initializeAnneesScolaires()
       fetchSupabaseData().then(() => {
         setIsInitialFetchDone(true)
       })
     }
-  }, [hasHydrated, initializeAnneesScolaires, fetchSupabaseData])
+  }, [hasHydrated, initializeAnneesScolaires, fetchSupabaseData, currentUser?.ecoleId, pathname])
+
+  // Synchroniser lastRole dans sessionStorage dès que l'utilisateur est chargé
+  useEffect(() => {
+    if (hasHydrated && currentUser) {
+      sessionStorage.setItem('lastRole', currentUser.role)
+    }
+  }, [hasHydrated, currentUser])
 
   useEffect(() => {
     // Si l'hydratation est terminée et que le state est toujours vide
@@ -46,32 +59,41 @@ export default function DashboardLayout({
       setCurrentUser(null)
       // On efface le cookie et on retourne au login
       supabase.auth.signOut().then(() => {
-        const path = window.location.pathname
-        if (path.startsWith('/login')) return // Already redirecting
+        if (pathname.startsWith('/login')) return // Already redirecting
         
-        if (path.startsWith('/enseignant')) {
+        const lastRole = typeof window !== 'undefined' ? sessionStorage.getItem('lastRole') : null
+        
+        if (lastRole === 'enseignant') {
           router.push('/login/enseignant')
-        } else if (path.startsWith('/parent')) {
+        } else if (lastRole === 'parent') {
           router.push('/login/parent')
         } else {
           router.push('/login')
         }
       })
     }
-  }, [currentUser, hasHydrated, router, supabase, setCurrentUser])
+  }, [currentUser, hasHydrated, router, supabase, setCurrentUser, pathname])
+
+  useEffect(() => {
+    if (hasHydrated && currentUser && isInitialFetchDone && !ecoleId && !pathname.startsWith('/ecoles')) {
+      router.push('/ecoles')
+    }
+  }, [hasHydrated, currentUser, isInitialFetchDone, ecoleId, router, pathname])
 
   // Évite les erreurs d'hydratation et le rendu d'une page vide sans redirection
-  if (!hasHydrated || !currentUser || !isInitialFetchDone) {
+  // Si nous sommes sur la page de choix des écoles, nous ne bloquons pas l'affichage par fetchSupabaseData
+  const shouldWaitFetch = !pathname.startsWith('/ecoles')
+  if (!hasHydrated || !currentUser || (shouldWaitFetch && !isInitialFetchDone)) {
+    const isEcolesPath = pathname.startsWith('/ecoles')
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className={`h-screen w-full flex items-center justify-center ${isEcolesPath ? 'bg-slate-900 text-slate-400' : 'bg-background'}`}>
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${isEcolesPath ? 'border-emerald-500' : 'border-primary'}`}></div>
       </div>
     )
   }
 
   // --- SUBSCRIPTION GUARD ---
   // On vérifie le statut de l'abonnement et la date de fin temporelle d'expiration
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
   const isAbonnementInvalide = ecole?.abonnement && (
     ['expire', 'suspendu'].includes(ecole.abonnement.statut) ||
     (ecole.abonnement.dateFin && new Date(ecole.abonnement.dateFin) < new Date())
@@ -107,12 +129,12 @@ export default function DashboardLayout({
               <p className="text-xs text-slate-500 mb-3">Veuillez contacter la direction de l'établissement pour plus d'informations.</p>
               <button 
                 onClick={() => {
+                  const role = currentUser?.role
                   supabase.auth.signOut().then(() => {
                     setCurrentUser(null) // Nettoyer l'état Zustand et le cookie currentUser
-                    const path = window.location.pathname
-                    if (path.startsWith('/enseignant')) {
+                    if (role === 'enseignant') {
                       router.push('/login/enseignant')
-                    } else if (path.startsWith('/parent')) {
+                    } else if (role === 'parent') {
                       router.push('/login/parent')
                     } else {
                       router.push('/login')
@@ -128,6 +150,10 @@ export default function DashboardLayout({
         </div>
       </div>
     )
+  }
+
+  if (pathname.startsWith('/ecoles')) {
+    return <>{children}</>
   }
 
   return (

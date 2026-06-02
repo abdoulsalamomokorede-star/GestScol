@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Combobox } from '@/components/ui/combobox'
@@ -19,6 +19,31 @@ export default function NotesPage() {
   const [selectedMatiereId, setSelectedMatiereId] = useState<string>('')
   const [selectedAnneeScolaire, setSelectedAnneeScolaire] = useState<string>(activeAnneeScolaire?.id || '')
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Filtrer les classes selon le rôle pour la synchronisation
+  const matieresEnseignees = currentUser?.role === 'enseignant' ? matieres.filter(m => m.enseignantIds?.includes(currentUser.id)) : []
+  const classesIdsEnseignees = Array.from(new Set([
+    ...classes.filter(c => c.enseignantPrincipalId === currentUser?.id).map(c => c.id),
+    ...matieresEnseignees.map(m => m.classeId)
+  ]))
+  const filteredClasses = currentUser?.role === 'enseignant' 
+    ? classes.filter(c => classesIdsEnseignees.includes(c.id))
+    : classes
+
+  // Synchroniser l'année scolaire et la classe active au montage ou lors des mises à jour du store
+  useEffect(() => {
+    if (activeAnneeScolaire) {
+      setSelectedAnneeScolaire(activeAnneeScolaire.id)
+    } else if (anneesScolaires.length > 0 && !selectedAnneeScolaire) {
+      setSelectedAnneeScolaire(anneesScolaires[0].id)
+    }
+  }, [activeAnneeScolaire, anneesScolaires])
+
+  useEffect(() => {
+    if (filteredClasses.length > 0 && !selectedClasseId) {
+      setSelectedClasseId(filteredClasses[0].id)
+    }
+  }, [filteredClasses, selectedClasseId])
 
   // Bloquer l'accès si l'établissement utilise la formule gratuite
   if (ecole?.abonnement?.plan === 'gratuit') {
@@ -40,16 +65,7 @@ export default function NotesPage() {
     )
   }
   
-  // Filtrer les classes selon le rôle
-  const matieresEnseignees = currentUser?.role === 'enseignant' ? matieres.filter(m => m.enseignantIds?.includes(currentUser.id)) : []
-  const classesIdsEnseignees = Array.from(new Set([
-    ...classes.filter(c => c.enseignantPrincipalId === currentUser?.id).map(c => c.id),
-    ...matieresEnseignees.map(m => m.classeId)
-  ]))
 
-  const filteredClasses = currentUser?.role === 'enseignant' 
-    ? classes.filter(c => classesIdsEnseignees.includes(c.id))
-    : classes
 
   const currentClasseEleves = useMemo(() => {
     // Récupérer les élèves qui ont une inscription validée pour cette classe et cette année

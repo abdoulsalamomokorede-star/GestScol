@@ -65,7 +65,9 @@ export default function Header() {
         .filter(el => el.parentUserId === currentUser.id)
         .map(el => el.id)
       
-      if (notif.eleveId && parentKidsIds.includes(notif.eleveId)) return true
+      if (notif.eleveId) {
+        return parentKidsIds.includes(notif.eleveId)
+      }
 
       const parentKidsClasses = eleves
         .filter(el => el.parentUserId === currentUser.id)

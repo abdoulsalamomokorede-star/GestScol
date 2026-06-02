@@ -14,7 +14,7 @@ export async function createNotification(data: {
   titre: string
   description: string
   type: NotificationType
-  destinataireRole?: 'parent' | 'enseignant' | 'all'
+  destinataireRole?: 'parent' | 'enseignant' | 'directeur' | 'all'
   classeId?: string
   eleveId?: string
   creePar?: string
@@ -35,7 +35,7 @@ export async function createNotification(data: {
     // 2. Récupérer son profil en base
     const { data: profile, error: profileError } = await serverSupabase
       .from('utilisateurs')
-      .select('role, ecole_id')
+      .select('role, ecole_id, ecole_courante_id')
       .eq('id', user.id)
       .single()
 
@@ -44,7 +44,11 @@ export async function createNotification(data: {
     }
 
     // 3. Seul un Directeur ou un Enseignant de la même école peut émettre des notifications
-    if ((profile.role !== 'directeur' && profile.role !== 'enseignant') || profile.ecole_id !== data.ecoleId) {
+    const isDirecteur = profile.role === 'directeur';
+    const isEnseignant = profile.role === 'enseignant';
+    const isLinkedToSchool = profile.ecole_id === data.ecoleId || profile.ecole_courante_id === data.ecoleId;
+
+    if ((!isDirecteur && !isEnseignant) || !isLinkedToSchool) {
       return { success: false, error: "Accès refusé. Privilèges insuffisants pour cet établissement." }
     }
 
@@ -186,7 +190,7 @@ export async function deleteNotificationDb(notificationId: string) {
     // 2. Récupérer son profil en base
     const { data: profile, error: profileError } = await serverSupabase
       .from('utilisateurs')
-      .select('role, ecole_id')
+      .select('role, ecole_id, ecole_courante_id')
       .eq('id', user.id)
       .single()
 
@@ -206,7 +210,10 @@ export async function deleteNotificationDb(notificationId: string) {
       return { success: false, error: "Notification introuvable." }
     }
 
-    if (profile.role !== 'directeur' || profile.ecole_id !== notif.ecole_id) {
+    const isDirecteur = profile.role === 'directeur';
+    const isLinkedToSchool = profile.ecole_id === notif.ecole_id || profile.ecole_courante_id === notif.ecole_id;
+
+    if (!isDirecteur || !isLinkedToSchool) {
       return { success: false, error: "Accès refusé. Privilèges de Directeur requis pour cet établissement." }
     }
 

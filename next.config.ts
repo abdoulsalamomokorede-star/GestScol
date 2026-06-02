@@ -7,6 +7,8 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'Cross-Origin-Resource-Policy', value: 'same-site' },
   {
     key: 'Content-Security-Policy',
     value: [
@@ -16,6 +18,9 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https://*.supabase.co",
       "connect-src 'self' https://*.supabase.co https://api.wave.com https://api.cinetpay.com",
+      "frame-src 'self' blob:",
+      "worker-src 'self' blob:",
+      "child-src 'self' blob:",
       "frame-ancestors 'none'",
     ].join('; ')
   }

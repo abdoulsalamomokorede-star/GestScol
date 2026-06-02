@@ -85,9 +85,11 @@ export default function NotificationsPage() {
         .filter(el => el.parentUserId === currentUser.id)
         .map(el => el.id)
       
-      if (notif.eleveId && parentKidsIds.includes(notif.eleveId)) return true
+      if (notif.eleveId) {
+        return parentKidsIds.includes(notif.eleveId)
+      }
 
-      // 4. Notifications ciblées sur la classe de ses enfants
+      // 4. Notifications ciblées sur la classe de ses enfants (seulement si non ciblée sur un élève spécifique)
       const parentKidsClasses = eleves
         .filter(el => el.parentUserId === currentUser.id)
         .map(el => el.classeId)

@@ -7,7 +7,7 @@ import { getInitiales } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { 
   Check, 
@@ -365,6 +365,9 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10 border border-primary/20">
+                      {e.photoUrl ? (
+                        <AvatarImage src={e.photoUrl} alt={`${e.prenom} ${e.nom}`} className="object-cover" />
+                      ) : null}
                       <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                         {getInitiales(e.nom, e.prenom)}
                       </AvatarFallback>

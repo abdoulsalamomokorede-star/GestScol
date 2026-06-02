@@ -22,10 +22,12 @@ import {
   HelpCircle,
   LifeBuoy,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Building2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
+import { cn, getInitiales } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface SidebarProps {
   className?: string
@@ -88,7 +90,7 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
       {
         title: 'Établissement',
         items: [
-          { name: 'Enseignants', href: '/enseignants', icon: Briefcase, roles: ['directeur'] },
+          { name: 'Enseignants', href: '/enseignants', icon: Briefcase, roles: ['directeur'], premium: true },
           { name: 'Élèves', href: '/eleves', icon: Users, roles: ['directeur'] },
           { name: 'Classes', href: '/classes', icon: GraduationCap, roles: ['directeur'] },
         ]
@@ -107,6 +109,8 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
           { name: 'Paiements', href: '/paiements', icon: CreditCard, roles: ['directeur', 'parent'] },
           { name: 'Support', href: '/support', icon: LifeBuoy, roles: ['directeur'], premium: true },
           { name: 'Mon Abonnement', href: '/abonnement', icon: Zap, roles: ['directeur'] },
+          { name: 'Paramètres', href: '/parametres', icon: Settings, roles: ['directeur'] },
+          { name: "Guide d'Aide", href: '/aide', icon: HelpCircle, roles: ['directeur', 'enseignant', 'parent'] },
         ]
       }
     ]
@@ -218,34 +222,15 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
 
       {/* Footer Sidebar */}
       <div className="p-4 border-t border-white/10 space-y-2 shrink-0">
-        <Link 
-          href="/aide"
+        <Link
+          href="/ecoles"
           onClick={onNavigate}
-          className={cn(
-            "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
-            pathname.startsWith('/aide')
-              ? 'bg-primary text-white'
-              : 'text-white/70 hover:bg-white/10 hover:text-white'
-          )}
+          className="flex items-center w-full px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white rounded-lg transition-colors"
         >
-          <HelpCircle className="mr-3 h-5 w-5" />
-          Guide d'Aide
+          <Building2 className="mr-3 h-5 w-5 text-white/60" />
+          {currentUser.role === 'directeur' ? 'Mes écoles' : 'Écoles'}
         </Link>
-        {currentUser.role === 'directeur' && (
-          <Link 
-            href="/parametres"
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
-              pathname.startsWith('/parametres')
-                ? 'bg-primary text-white'
-                : 'text-white/70 hover:bg-white/10 hover:text-white'
-            )}
-          >
-            <Settings className="mr-3 h-5 w-5" />
-            Paramètres
-          </Link>
-        )}
+
         <button 
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-sm font-medium text-danger hover:bg-danger/10 rounded-md transition-colors"
@@ -254,6 +239,26 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
           Déconnexion
         </button>
 
+        {currentUser && (
+          <div className="flex items-center space-x-2.5 px-3 pt-3 mt-1 border-t border-white/5 select-none min-w-0">
+            <Avatar className="h-7 w-7 border border-white/10 shrink-0">
+              {currentUser.photoUrl ? (
+                <AvatarImage src={currentUser.photoUrl} className="object-cover" />
+              ) : null}
+              <AvatarFallback className="bg-white/10 text-white font-semibold text-[10px]">
+                {getInitiales(currentUser.nom, currentUser.prenom)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex flex-col">
+              <span className="text-[10px] font-bold text-white/80 truncate leading-none">
+                {currentUser.prenom} {currentUser.nom}
+              </span>
+              <span className="text-[8.5px] text-white/40 truncate font-mono mt-0.5 leading-none">
+                {currentUser.email}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

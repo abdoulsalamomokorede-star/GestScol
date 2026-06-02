@@ -12,6 +12,27 @@ import logoImg from '@/app/logo.png'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
+const chargerProfilAvecRetry = async (supabase: any, userId: string, maxAttempts = 3, delay = 500) => {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const { data: profile, error } = await supabase
+      .from('utilisateurs')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (profile) {
+      return { profile, error: null }
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, delay * attempt))
+    } else {
+      return { profile: null, error: error || new Error("Profil introuvable après plusieurs tentatives.") }
+    }
+  }
+  return { profile: null, error: new Error("Profil introuvable.") }
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -40,14 +61,8 @@ export default function LoginPage() {
         // We must log them out locally to break the loop.
         setCurrentUser(null)
       } else {
-        // Both exist, safe to redirect
-        if (currentUser.role === 'enseignant') {
-          router.push('/enseignant/dashboard')
-        } else if (currentUser.role === 'parent') {
-          router.push('/parent/dashboard')
-        } else {
-          router.push('/dashboard')
-        }
+        // Both exist, safe to redirect to the new ecoles management page
+        router.push('/ecoles')
       }
     }
   }, [currentUser, router, setCurrentUser])
@@ -145,15 +160,11 @@ export default function LoginPage() {
         return
       }
 
-      // Récupérer le profil utilisateur et son école
-      const { data: profile, error: profileError } = await supabase
-        .from('utilisateurs')
-        .select('*, ecoles(*)')
-        .eq('id', data.user.id)
-        .single()
+      // Récupérer le profil utilisateur avec retry
+      const { profile, error: retryError } = await chargerProfilAvecRetry(supabase, data.user.id)
 
-      if (profileError || !profile) {
-        const msg = profileError?.message?.toLowerCase() || ""
+      if (retryError || !profile) {
+        const msg = retryError?.message?.toLowerCase() || ""
         if (msg.includes("failed to fetch") || msg.includes("network error") || msg.includes("load failed")) {
           setError("Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer.")
         } else {
@@ -179,18 +190,28 @@ export default function LoginPage() {
         civilite: profile.civilite
       }
 
+      // Charger l'école séparément si elle existe
+      let ecoleData = null
+      if (profile.ecole_id) {
+        const { data: ecole } = await supabase
+          .from('ecoles')
+          .select('*')
+          .eq('id', profile.ecole_id)
+          .maybeSingle()
+        ecoleData = ecole
+      }
+
       // Si l'utilisateur se connecte pour une autre école, on vide le cache local
-      // pour ne pas afficher les données du précédent directeur
-      if (profile.ecole_id !== currentEcoleId && profile.ecoles) {
+      if (profile.ecole_id !== currentEcoleId && ecoleData) {
         clearSchoolData({
-          id: profile.ecoles.id,
-          nom: profile.ecoles.nom,
-          identifiant: profile.ecoles.identifiant,
-          ville: profile.ecoles.ville,
-          adresse: profile.ecoles.adresse,
-          telephone: profile.ecoles.telephone,
-          logo: profile.ecoles.logo,
-          anneeScolaire: profile.ecoles.annee_scolaire
+          id: ecoleData.id,
+          nom: ecoleData.nom,
+          identifiant: ecoleData.identifiant,
+          ville: ecoleData.ville,
+          adresse: ecoleData.adresse,
+          telephone: ecoleData.telephone,
+          logo: ecoleData.logo,
+          anneeScolaire: ecoleData.annee_scolaire
         })
       }
 
@@ -201,13 +222,8 @@ export default function LoginPage() {
       // Sauvegarde session locale pour le middleware MVP
       setCurrentUser(userProfile)
       
-      if (userProfile.role === 'enseignant') {
-        window.location.href = '/enseignant/dashboard'
-      } else if (userProfile.role === 'parent') {
-        window.location.href = '/parent/dashboard'
-      } else {
-        window.location.href = '/dashboard'
-      }
+      // Rediriger vers l'espace de gestion d'école
+      window.location.href = '/ecoles'
     } catch (err: any) {
       console.error(err)
       const msg = err?.message?.toLowerCase() || ""

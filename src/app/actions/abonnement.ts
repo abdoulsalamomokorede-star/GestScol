@@ -26,7 +26,7 @@ export async function updateSchoolAbonnement(ecoleId: string, data: Partial<Abon
     // 2. Récupérer son rôle et son établissement en base
     const { data: profile, error: profileError } = await serverSupabase
       .from('utilisateurs')
-      .select('role, ecole_id')
+      .select('role, ecole_id, ecole_courante_id')
       .eq('id', user.id)
       .single()
 
@@ -35,7 +35,10 @@ export async function updateSchoolAbonnement(ecoleId: string, data: Partial<Abon
     }
 
     // 3. Valider que l'utilisateur est Directeur de cette école spécifique
-    if (profile.role !== 'directeur' || profile.ecole_id !== ecoleId) {
+    const isDirecteur = profile.role === 'directeur';
+    const isLinkedToSchool = profile.ecole_id === ecoleId || profile.ecole_courante_id === ecoleId;
+
+    if (!isDirecteur || !isLinkedToSchool) {
       return { success: false, error: "Accès refusé. Privilèges de Directeur requis pour cet établissement." }
     }
 

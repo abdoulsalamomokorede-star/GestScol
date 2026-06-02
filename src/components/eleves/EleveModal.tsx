@@ -39,6 +39,7 @@ const generateMatricule = () => {
 export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalProps) {
   const { classes, eleves, addEleve, updateEleve, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
   // For shadcn, usually it's `useToast` hook that returns `{ toast }`.
   // Wait, shadcn toaster might not be fully configured, but I will use the standard hook if available.
   // Actually, I'll just skip complex validation for MVP and use basic state.
@@ -161,7 +162,7 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (isAbonnementExpired()) {
@@ -175,7 +176,11 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     
     // Validation basique
     if (!formData.matricule || !formData.prenom || !formData.nom || !formData.classeId || !formData.parentTelephone) {
-      alert("Veuillez remplir les champs obligatoires (Matricule, Prénom, Nom, Classe, Téléphone parent)")
+      toast({
+        title: "Erreur de validation",
+        description: "Veuillez remplir les champs obligatoires (Matricule, Prénom, Nom, Classe, Téléphone parent)",
+        variant: "destructive"
+      })
       return
     }
 
@@ -190,18 +195,34 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
       return
     }
 
-    if (eleveToEdit) {
-      updateEleve(eleveToEdit.id, formData)
-      toast({ title: "Succès", description: "Les informations de l'élève ont été mises à jour." })
-    } else {
-      addEleve({
-        ...formData,
-        id: `eleve-${Date.now()}`,
-        dateInscription: new Date().toISOString().split('T')[0]
-      } as Eleve)
-      toast({ title: "Succès", description: "Le nouvel élève a été ajouté." })
+    setIsLoading(true)
+    try {
+      if (eleveToEdit) {
+        const res = await updateEleve(eleveToEdit.id, formData)
+        if (res && !res.success) {
+          toast({ title: "Erreur", description: res.error || "La modification a échoué.", variant: "destructive" })
+        } else {
+          toast({ title: "Succès", description: "Les informations de l'élève ont été mises à jour." })
+          onClose()
+        }
+      } else {
+        const res = await addEleve({
+          ...formData,
+          id: `eleve-${Date.now()}`,
+          dateInscription: new Date().toISOString().split('T')[0]
+        } as Eleve)
+        if (res && !res.success) {
+          toast({ title: "Erreur", description: res.error || "L'ajout a échoué.", variant: "destructive" })
+        } else {
+          toast({ title: "Succès", description: "Le nouvel élève a été ajouté." })
+          onClose()
+        }
+      }
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message || "Une erreur est survenue.", variant: "destructive" })
+    } finally {
+      setIsLoading(false)
     }
-    onClose()
   }
 
   return (
@@ -390,13 +411,13 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Annuler</Button>
             <Button 
               type="submit" 
               className="bg-primary text-white hover:bg-primary-dark"
-              disabled={isEmailInvalid}
+              disabled={isEmailInvalid || isLoading}
             >
-              {eleveToEdit ? "Enregistrer les modifications" : "Ajouter l'élève"}
+              {isLoading ? "Enregistrement..." : eleveToEdit ? "Enregistrer les modifications" : "Ajouter l'élève"}
             </Button>
           </DialogFooter>
         </form>

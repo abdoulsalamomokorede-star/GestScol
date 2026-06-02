@@ -74,3 +74,23 @@ export function translateDbError(errorMsg: string): string {
   
   return errorMsg
 }
+
+export function getSafeFilename(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Enlever les accents
+    .replace(/[^a-zA-Z0-9_-]/g, "_") // Remplacer le reste par des underscores
+    .replace(/_+/g, "_") // Fusionner les underscores consécutifs
+}
+
+export function getAnneeScolaireActuelle(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() // 0 = Janvier, 8 = Septembre
+  if (month >= 8) {
+    return `${year}-${year + 1}`
+  } else {
+    return `${year - 1}-${year}`
+  }
+}
+

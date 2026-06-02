@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
 import { useToast } from '@/hooks/use-toast'
 import InscriptionModal from '@/components/inscriptions/InscriptionModal'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getInitiales } from '@/lib/utils'
 import { Inscription } from '@/types'
 import { Check, ChevronsUpDown } from 'lucide-react'
 
@@ -45,6 +47,13 @@ function InscriptionsPageContent() {
       window.history.replaceState({}, '', newUrl)
     }
   }, [eleveIdParam])
+
+  // Synchroniser l'année active locale avec celle du store (notamment après le chargement des données de Supabase)
+  useEffect(() => {
+    if (activeAnneeScolaire) {
+      setAnneeFilter(activeAnneeScolaire.id)
+    }
+  }, [activeAnneeScolaire])
 
 
 
@@ -224,8 +233,20 @@ function InscriptionsPageContent() {
                 return (
                   <tr key={ins.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-medium text-text">{eleve?.prenom} {eleve?.nom}</p>
-                      <p className="text-xs text-muted-foreground">{eleve?.matricule}</p>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-9 w-9 border border-primary/20">
+                          {eleve?.photoUrl ? (
+                            <AvatarImage src={eleve.photoUrl} className="object-cover" />
+                          ) : null}
+                          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                            {eleve ? getInitiales(eleve.nom, eleve.prenom) : '??'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-text">{eleve?.prenom} {eleve?.nom}</p>
+                          <p className="text-xs text-muted-foreground">{eleve?.matricule}</p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-text">{getClasseName(ins.classeId)}</p>
