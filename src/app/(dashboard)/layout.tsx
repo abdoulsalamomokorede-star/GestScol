@@ -31,12 +31,12 @@ export default function DashboardLayout({
     }
   }, [])
 
-  // Réinitialiser le chargement uniquement si l'utilisateur ou l'école active change
+  // Réinitialiser le chargement uniquement si l'utilisateur, l'école active change ou si on quitte la page des écoles
   useEffect(() => {
     if (hasHydrated) {
       setIsInitialFetchDone(false)
     }
-  }, [hasHydrated, currentUser?.id, ecoleId])
+  }, [hasHydrated, currentUser?.id, ecoleId, pathname.startsWith('/ecoles')])
 
   useEffect(() => {
     if (hasHydrated && !isInitialFetchDone) {
