@@ -42,9 +42,6 @@ function InscriptionsPageContent() {
     if (eleveIdParam) {
       setEleveIdInitial(eleveIdParam)
       setIsModalOpen(true)
-      // Optional: Clean URL
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, '', newUrl)
     }
   }, [eleveIdParam])
 
@@ -321,6 +318,7 @@ function InscriptionsPageContent() {
           setIsModalOpen(false)
           setEleveIdInitial(undefined)
           setInscriptionToEdit(undefined)
+          router.replace('/inscriptions')
         }}
         inscriptionToEdit={inscriptionToEdit}
         eleveIdInitial={eleveIdInitial}

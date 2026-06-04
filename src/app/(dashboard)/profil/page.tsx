@@ -24,6 +24,7 @@ import {
   Lock
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { uploadProfilePhoto } from '@/app/actions/upload'
 
 export default function ProfilPage() {
   const { currentUser, setCurrentUser } = useSchoolStore()
@@ -153,17 +154,13 @@ export default function ProfilPage() {
 
           setLoading(true)
           try {
-            const supabase = createClient()
+            // Appeler la Server Action sécurisée pour la validation des magic bytes et de la session
+            const res = await uploadProfilePhoto(base64Photo)
+            if (!res.success) {
+              throw new Error(res.error)
+            }
 
-            // 1. Sauvegarder dans la table utilisateurs
-            const { error: dbError } = await supabase
-              .from('utilisateurs')
-              .update({ photo_url: base64Photo })
-              .eq('id', currentUser.id)
-
-            if (dbError) throw dbError
-
-            // 2. Mettre à jour le state global
+            // Mettre à jour le state global
             setCurrentUser({
               ...currentUser,
               photoUrl: base64Photo
@@ -208,10 +205,10 @@ export default function ProfilPage() {
     const hasNumber = /[0-9]/.test(newPassword)
     const hasSpecialChar = /[^A-Za-z0-9]/.test(newPassword)
 
-    if (newPassword.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
+    if (newPassword.length < 12 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
       toast({
         title: "Sécurité insuffisante",
-        description: "Le nouveau mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.",
+        description: "Le nouveau mot de passe doit contenir au moins 12 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.",
         variant: "destructive"
       })
       return
@@ -434,7 +431,7 @@ export default function ProfilPage() {
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min. 8 caractères"
+                      placeholder="Min. 12 caractères"
                       className="text-xs h-9 border-border bg-background"
                       required
                     />

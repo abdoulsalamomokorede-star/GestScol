@@ -42,6 +42,17 @@ export async function updateSchoolAbonnement(ecoleId: string, data: Partial<Abon
       return { success: false, error: "Accès refusé. Privilèges de Directeur requis pour cet établissement." }
     }
 
+    // Sécurisation AppSec : Validation des paiements simulés en mode démo/prototype
+    if (data.plan && data.plan !== 'gratuit') {
+      if (!data.transactionRef || !data.transactionRef.startsWith('CP-')) {
+        return { success: false, error: "Signature de paiement CinetPay manquante ou invalide (CP- attendu)." }
+      }
+      const attendu = data.plan === 'standard' ? 150000 : 250000;
+      if (data.montantPaye !== undefined && data.montantPaye < attendu) {
+        return { success: false, error: `Le montant payé ne correspond pas au tarif annuel du forfait ${data.plan}.` }
+      }
+    }
+
     const supabase = createAdminClient()
 
     // Préparation des données en snake_case pour Supabase

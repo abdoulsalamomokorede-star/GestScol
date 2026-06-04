@@ -166,8 +166,11 @@ L'isolation multi-tenant a été renforcée au niveau de PostgreSQL :
 
 ### 5. Gestion des Fichiers Médias par Validateur Base64 (Magic Bytes)
 La persistance des logos et photos s'effectue via encodage Base64 dans PostgreSQL (colonnes `TEXT`). Afin de parer aux failles d'injection de scripts malveillants dans les images ou de saturation de la base de données :
-* **Limitation stricte** : Fichiers plafonnés à 1 Mo maximum sur le serveur.
+* **Limitation stricte** : Fichiers plafonnés à 1 Mo maximum sur le client (`validateBase64ImageClient` dans `useSchoolStore.ts`) et validés de manière renforcée sur le serveur.
 * **Validation de signature réelle (Magic Bytes)** : Le serveur décode l'entête binaire pour autoriser exclusivement les formats d'images légitimes : JPEG (`ffd8ff`), PNG (`89504e47`), et WebP (`52494646`). Les fichiers suspects ou corrompus sont rejetés immédiatement.
+* **Actions d'upload unifiées** : Les photos sont envoyées via des Server Actions dédiées et sécurisées :
+  * `uploadProfilePhoto(base64Photo)` : Met à jour la photo de l'utilisateur connecté après vérification de sa session.
+  * `uploadStudentPhoto(studentId, base64Photo)` : Met à jour la photo de l'élève ciblé uniquement si l'appelant est authentifié avec le rôle de **Directeur** et que l'élève appartient bien à son établissement actif.
 
 ### 6. Sanitisation de Téléchargements PDF (@react-pdf/renderer)
 Pour prévenir les injections de caractères spéciaux ou directory traversal via les variables dynamiques (noms d'élèves, trimestres) dans les téléchargements de bulletins générés côté client :
@@ -180,6 +183,11 @@ Pour prévenir les injections de caractères spéciaux ou directory traversal vi
   * Un trigger `tr_delete_school_on_director_delete` rattaché à `utilisateurs` exécute la fonction de sécurité `delete_school_on_director_delete()`.
   * Dès que le profil d'un **Directeur** est supprimé (ex: suppression de son compte dans Auth), le trigger extrait son `ecole_id` et supprime l'école correspondante dans `public.ecoles`.
   * Grâce aux clés étrangères **`ON DELETE CASCADE`** reliant `ecoles(id)` à toutes les autres tables de la base de données, la suppression de l'école déclenche instantanément une purge complète en cascade de tout l'établissement (élèves, inscriptions, notes, absences, paiements, bulletins, matières, classes et enseignants).
+
+### 8. Sécurisation des Actions Serveur (Server Actions Anti-Spoofing)
+Afin d'éviter tout contournement des règles de cloisonnement et d'injection de requêtes arbitraires depuis le client :
+* **Vérification d'identité systématique** : Toutes les actions serveurs critiques valident cryptographiquement la session de l'appelant via `supabase.auth.getUser()`. Le paramètre `utilisateurId` fourni par le client n'est jamais cru sur parole ; le serveur vérifie obligatoirement que `user.id === utilisateurId` avant de procéder à toute action (par ex. `markAsRead` et `fetchUserLectures` dans `notifications.ts`).
+* **Cloisonnement multi-tenant des écritures** : Les mutations sur l'abonnement (`updateSchoolAbonnement` dans `abonnement.ts`) s'assurent de la validité de la transaction (comme la présence du préfixe `CP-` pour le simulateur de paiement) et consignent des traces d'audit en base pour parer aux fraudes. Les téléchargements ou modifications de photos d'élèves (`uploadStudentPhoto`) font l'objet d'un double contrôle côté serveur (authentification + vérification que l'élève appartient à l'école du directeur).
 
 ---
 

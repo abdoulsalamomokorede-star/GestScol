@@ -13,12 +13,9 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon, Search, Check, ChevronsUpDown, Camera } from "lucide-react"
 import { cn, getInitiales } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { DatePicker } from '@/components/ui/date-picker'
+import { uploadStudentPhoto } from '@/app/actions/upload'
 
 interface EleveModalProps {
   isOpen: boolean
@@ -58,7 +55,6 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     photoUrl: ''
   })
 
-  const [typedDate, setTypedDate] = useState('')
   const [classeSearchQuery, setClasseSearchQuery] = useState('')
   const [isClasseComboboxOpen, setIsClasseComboboxOpen] = useState(false)
 
@@ -86,51 +82,6 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
       })
     }
   }, [eleveToEdit, isOpen])
-
-  // Synchroniser le champ texte avec la date du state (format JJ/MM/AAAA)
-  useEffect(() => {
-    if (formData.dateNaissance) {
-      const parts = formData.dateNaissance.split('-')
-      if (parts.length === 3) {
-        setTypedDate(`${parts[2]}/${parts[1]}/${parts[0]}`)
-      }
-    } else {
-      setTypedDate('')
-    }
-  }, [formData.dateNaissance])
-
-  const handleTypedDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-
-    // Permettre l'effacement normal avec Backspace
-    if (val.length < typedDate.length) {
-      setTypedDate(val)
-      if (val === '') handleSelectChange('dateNaissance', '')
-      return
-    }
-
-    // Extraire uniquement les chiffres
-    const digits = val.replace(/\D/g, '')
-    
-    // Appliquer le masque DD/MM/YYYY
-    let formatted = digits
-    if (digits.length > 2) {
-      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`
-    }
-    if (digits.length > 4) {
-      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`
-    }
-
-    setTypedDate(formatted)
-    
-    // Si le format est valide (JJ/MM/AAAA), on met à jour le store
-    const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/
-    const match = formatted.match(regex)
-    if (match) {
-      const [, d, m, y] = match
-      handleSelectChange('dateNaissance', `${y}-${m}-${d}`)
-    }
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -198,6 +149,18 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     setIsLoading(true)
     try {
       if (eleveToEdit) {
+        if (formData.photoUrl && formData.photoUrl !== eleveToEdit.photoUrl) {
+          const uploadRes = await uploadStudentPhoto(eleveToEdit.id, formData.photoUrl)
+          if (!uploadRes.success) {
+            toast({
+              title: "Erreur de photo",
+              description: uploadRes.error || "La validation ou le transfert de la photo a échoué.",
+              variant: "destructive"
+            })
+            setIsLoading(false)
+            return
+          }
+        }
         const res = await updateEleve(eleveToEdit.id, formData)
         if (res && !res.success) {
           toast({ title: "Erreur", description: res.error || "La modification a échoué.", variant: "destructive" })
@@ -271,37 +234,20 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dateNaissance">Date de naissance</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="dateNaissance"
-                    placeholder="JJ/MM/AAAA" 
-                    value={typedDate} 
-                    onChange={handleTypedDateChange}
-                    className="flex-1"
-                  />
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="icon" className="shrink-0" type="button">
-                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar
-                        mode="single"
-                        selected={formData.dateNaissance ? new Date(formData.dateNaissance) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            const offset = date.getTimezoneOffset()
-                            const adjustedDate = new Date(date.getTime() - (offset*60*1000))
-                            handleSelectChange('dateNaissance', adjustedDate.toISOString().split('T')[0])
-                          } else {
-                            handleSelectChange('dateNaissance', '')
-                          }
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <DatePicker
+                  id="dateNaissance"
+                  date={formData.dateNaissance ? new Date(formData.dateNaissance) : undefined}
+                  setDate={(date) => {
+                    if (date) {
+                      const offset = date.getTimezoneOffset()
+                      const adjustedDate = new Date(date.getTime() - (offset*60*1000))
+                      handleSelectChange('dateNaissance', adjustedDate.toISOString().split('T')[0])
+                    } else {
+                      handleSelectChange('dateNaissance', '')
+                    }
+                  }}
+                  className="w-full bg-background"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Sexe</Label>

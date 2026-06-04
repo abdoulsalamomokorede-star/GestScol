@@ -10,10 +10,10 @@ import { Badge } from '@/components/ui/badge'
 import { getInitiales, formatDate } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { Calendar as CalendarIcon } from 'lucide-react'
+import { DatePicker } from '@/components/ui/date-picker'
+import { format } from 'date-fns'
 
 export default function EnseignantDashboardPage() {
   const router = useRouter()
@@ -69,21 +69,19 @@ export default function EnseignantDashboardPage() {
           <p className="text-sm text-muted-foreground">Bienvenue, {currentUser.prenom} {currentUser.nom}.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[240px] justify-start text-left font-normal bg-card">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {filterDate ? formatDate(filterDate) : <span>Sélectionner une date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={new Date(filterDate)}
-                onSelect={(date) => date && setFilterDate(date.toISOString().split('T')[0])}
-              />
-            </PopoverContent>
-          </Popover>
+          <DatePicker
+            date={filterDate ? new Date(filterDate) : undefined}
+            setDate={(date) => {
+              if (date) {
+                const offset = date.getTimezoneOffset()
+                const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000))
+                setFilterDate(adjustedDate.toISOString().split('T')[0])
+              } else {
+                setFilterDate('')
+              }
+            }}
+            className="w-[240px] bg-card"
+          />
         </div>
       </div>
 

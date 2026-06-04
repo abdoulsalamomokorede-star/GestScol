@@ -72,6 +72,7 @@ export default function NotificationsPage() {
     
     // Parent : Communiqués généraux, communiqués parents, et dossiers de ses propres enfants
     if (currentUser.role === 'parent') {
+      if (notif.creePar === currentUser.id) return true
       // 1. Communiqués globaux et communiqués parents
       if (notif.type === 'communique') {
         return notif.destinataireRole === 'all' || notif.destinataireRole === 'parent'

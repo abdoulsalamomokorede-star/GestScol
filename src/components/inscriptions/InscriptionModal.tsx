@@ -167,7 +167,7 @@ export default function InscriptionModal({ isOpen, onClose, inscriptionToEdit, e
         }
       }
     }
-  }, [eleveId, inscriptionToEdit, anneeScolaire])
+  }, [eleveId, inscriptionToEdit, anneeScolaire, eleves])
 
 
 

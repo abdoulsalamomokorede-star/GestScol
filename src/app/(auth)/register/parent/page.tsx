@@ -210,7 +210,8 @@ export default function RegisterParentPage() {
         telephone: profile.telephone || '',
         role: 'parent',
         ecoleId: profile.ecole_id,
-        civilite: profile.civilite || 'M.'
+        civilite: profile.civilite || 'M.',
+        photoUrl: profile.photo_url || undefined
       }
 
       setCurrentUser(userProfile)

@@ -1,7 +1,7 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { use, useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { getInitiales, formatDate, formatCFA, getSafeFilename } from '@/lib/utils'
@@ -23,8 +23,11 @@ const PDFDownloadLink = dynamic(
   { ssr: false, loading: () => <Button variant="outline" size="sm" disabled><Loader2 className="h-4 w-4 animate-spin mr-2" /> Préparation...</Button> }
 )
 
-export default function EleveDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlAnneeId = searchParams.get('anneeId')
+  
   // React 19 / Next 15 "params" must be unwrapped using `use()`
   const resolvedParams = use(params)
   const { id } = resolvedParams
@@ -43,7 +46,8 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
     enseignants,
     ecole,
     activeAnneeScolaire,
-    anneesScolaires
+    anneesScolaires,
+    inscriptions
   } = useSchoolStore()
 
   const eleve = getEleveById(id)
@@ -51,10 +55,23 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
   const [selectedTrimestre, setSelectedTrimestre] = useState<'1' | '2' | '3'>('1')
   const [isMounted, setIsMounted] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  
+  const [selectedAnneeId, setSelectedAnneeId] = useState<string>(() => {
+    return urlAnneeId || activeAnneeScolaire?.id || (anneesScolaires.find(as => as.statut === 'active')?.id) || (anneesScolaires[0]?.id) || ''
+  })
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  // Mettre à jour l'année sélectionnée si le paramètre ou l'année active change
+  useEffect(() => {
+    if (urlAnneeId) {
+      setSelectedAnneeId(urlAnneeId)
+    } else if (activeAnneeScolaire) {
+      setSelectedAnneeId(activeAnneeScolaire.id)
+    }
+  }, [urlAnneeId, activeAnneeScolaire])
 
   const trimestreNum = Number(selectedTrimestre) as 1 | 2 | 3
   
@@ -78,13 +95,36 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
     )
   }
 
-  const classe = getClasseById(eleve.classeId)
-  const notes = getNotesByEleve(eleve.id)
-  const paiements = getPaiementsByEleve(eleve.id)
-  const absences = getAbsencesByEleve(eleve.id)
+  // Résoudre la classe pour l'année scolaire sélectionnée
+  const studentInscription = inscriptions.find(
+    ins => ins.eleveId === eleve.id && ins.anneeScolaire === selectedAnneeId && ins.statut === 'validee'
+  )
+  const classeId = studentInscription?.classeId || eleve.classeId
+  const classe = getClasseById(classeId)
+
+  // Filtrer les données en fonction de l'année scolaire sélectionnée
+  const rawNotes = getNotesByEleve(eleve.id)
+  const notes = rawNotes.filter(n => n.anneeScolaire === selectedAnneeId)
+  const paiements = getPaiementsByEleve(eleve.id).filter(p => p.anneeScolaire === selectedAnneeId)
+  const absences = getAbsencesByEleve(eleve.id).filter(a => a.anneeScolaire === selectedAnneeId)
+
+  // Calculer la moyenne du T1 pour l'année scolaire sélectionnée
+  const getMoyenneElevePourAnnee = (trimestre: 1 | 2 | 3) => {
+    const notesTrimestre = notes.filter(n => n.trimestre === trimestre)
+    let totalCoeff = 0
+    let totalNotes = 0
+    notesTrimestre.forEach(note => {
+      const matiere = matieres.find(m => m.id === note.matiereId)
+      if (matiere) {
+        totalNotes += note.valeur * matiere.coefficient
+        totalCoeff += matiere.coefficient
+      }
+    })
+    return totalCoeff > 0 ? Number((totalNotes / totalCoeff).toFixed(2)) : 0
+  }
 
   // Statistiques pour les badges
-  const moyenneT1 = getMoyenneEleve(eleve.id, 1)
+  const moyenneT1 = getMoyenneElevePourAnnee(1)
   const paiementsEnRetard = paiements.filter(p => p.statut === 'retard').length
   const totalAbsencesNJ = absences.filter(a => !a.justifiee).length
 
@@ -102,6 +142,23 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
           <ArrowLeft className="mr-2 h-4 w-4" />
           {isParent ? "Retour au tableau de bord" : "Retour"}
         </Button>
+
+        {/* Sélecteur d'Année Scolaire */}
+        <div className="flex items-center space-x-2">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Année :</span>
+          <Select value={selectedAnneeId} onValueChange={setSelectedAnneeId}>
+            <SelectTrigger className="w-[150px] bg-card border-border">
+              <SelectValue placeholder="Année Scolaire" />
+            </SelectTrigger>
+            <SelectContent>
+              {anneesScolaires.map(annee => (
+                <SelectItem key={annee.id} value={annee.id}>
+                  {annee.nom} {annee.statut === 'active' ? '(Courante)' : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {!isParent && (
           <div className="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center gap-2">
             <Button 
@@ -580,16 +637,23 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {[1, 2, 3].map((t) => {
                       // Calculer le bulletin de ce trimestre pour l'élève
-                      const currentAnneeId = activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
-                      const bulletinsCalculesT = eleve.classeId
-                        ? calculerBulletinsClasse(eleve.classeId, t as 1|2|3, currentAnneeId)
-                        : []
-                      const bEleve = bulletinsCalculesT.find(b => b.eleveId === eleve.id)
-
+                      const currentAnneeId = selectedAnneeId || activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
+                      
                       // Vérifier s'il est enregistré et validé dans la base
                       const bulletinExistant = useSchoolStore.getState().bulletins.find(
                         x => x.eleveId === eleve.id && x.trimestre === t && x.anneeScolaire === currentAnneeId
                       )
+
+                      const studentInscription = useSchoolStore.getState().inscriptions.find(
+                        ins => ins.eleveId === eleve.id && ins.anneeScolaire === currentAnneeId && ins.statut === 'validee'
+                      )
+                      const targetClasseId = studentInscription?.classeId || eleve.classeId
+
+                      const bulletinsCalculesT = (isParent && bulletinExistant)
+                        ? [bulletinExistant]
+                        : (targetClasseId ? calculerBulletinsClasse(targetClasseId, t as 1|2|3, currentAnneeId) : [])
+
+                      const bEleve = bulletinExistant || bulletinsCalculesT.find(b => b.eleveId === eleve.id)
                       const isValide = bulletinExistant?.estValide === true
                       const hasNotes = bEleve && bEleve.notes.length > 0
 
@@ -720,5 +784,13 @@ export default function EleveDetailsPage({ params }: { params: Promise<{ id: str
         />
       )}
     </div>
+  )
+}
+
+export default function EleveDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>}>
+      <EleveDetailsPageContent params={params} />
+    </Suspense>
   )
 }

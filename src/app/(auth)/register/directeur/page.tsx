@@ -296,7 +296,8 @@ export default function RegisterDirecteurPage() {
         telephone: profile.telephone,
         role: profile.role,
         ecoleId: profile.ecole_id,
-        civilite: profile.civilite
+        civilite: profile.civilite,
+        photoUrl: profile.photo_url || undefined
       }
 
       setCurrentUser(userProfile)

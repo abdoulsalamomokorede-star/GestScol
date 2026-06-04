@@ -341,7 +341,7 @@ export default function EnseignantsPage() {
       </div>
 
       <Tabs defaultValue="actifs" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 border border-border/40 rounded-xl inline-flex">
+        <TabsList className="bg-muted/50 p-1 border border-border/40 rounded-xl w-full sm:w-auto grid grid-cols-2 sm:inline-flex h-auto">
           <TabsTrigger value="actifs" className="rounded-lg font-semibold px-5 py-2 text-xs sm:text-sm flex items-center gap-2">
             <UserCheck className="h-4 w-4" />
             Enseignants Actifs

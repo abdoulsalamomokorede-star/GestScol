@@ -8,6 +8,33 @@ import { updateSchoolDetails } from '../app/actions/ecole'
 import { createNotification, markAsRead, fetchUserLectures, deleteNotificationDb } from '../app/actions/notifications'
 import { toast } from '../hooks/use-toast'
 
+function validateBase64ImageClient(base64DataString: string | undefined): { success: boolean; error?: string } {
+  if (!base64DataString) return { success: true }
+  if (base64DataString.length > 1370000) {
+    return { success: false, error: "La taille de l'image ne doit pas dépasser 1 Mo." }
+  }
+  const parts = base64DataString.split(';base64,')
+  if (parts.length !== 2) {
+    return { success: false, error: "Format d'image non supporté ou corrompu." }
+  }
+  const mimeType = parts[0].replace('data:', '')
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedMimes.includes(mimeType)) {
+    return { success: false, error: "Type d'image non autorisé. Seuls JPEG, PNG et WebP sont acceptés." }
+  }
+
+  const base64Data = parts[1]
+  const header = base64Data.substring(0, 15)
+  const isJpeg = header.startsWith('/9j/')
+  const isPng = header.startsWith('iVBORw0KGgo')
+  const isWebp = header.startsWith('UklGR')
+
+  if (!isJpeg && !isPng && !isWebp) {
+    return { success: false, error: "Signature de fichier invalide (tentative d'injection bloquée)." }
+  }
+  return { success: true }
+}
+
 interface SchoolState {
   ecole: Ecole
   currentUser: User | null
@@ -204,7 +231,7 @@ export const useSchoolStore = create<SchoolState>()(
             .eq('ecole_id', state.ecole.id)
 
           if (currentUser.role !== 'directeur') {
-            query = query.or(`destinataire_role.eq.${currentUser.role},destinataire_role.eq.tous,destinataire_role.eq.all`)
+            query = query.or(`destinataire_role.eq.${currentUser.role},destinataire_role.eq.tous,destinataire_role.eq.all,cree_par.eq.${currentUser.id}`)
           }
 
           const { data, error } = await query
@@ -1673,6 +1700,12 @@ export const useSchoolStore = create<SchoolState>()(
         if (checkAbonnement(get())) {
           return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
         }
+        if (eleve.photoUrl) {
+          const check = validateBase64ImageClient(eleve.photoUrl)
+          if (!check.success) {
+            return { success: false, error: check.error }
+          }
+        }
         try {
           const supabase = createClient()
           const { data, error } = await supabase.from('eleves').insert({
@@ -1710,6 +1743,12 @@ export const useSchoolStore = create<SchoolState>()(
       updateEleve: async (id, data) => {
         if (checkAbonnement(get())) {
           return { success: false, error: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action." }
+        }
+        if (data.photoUrl) {
+          const check = validateBase64ImageClient(data.photoUrl)
+          if (!check.success) {
+            return { success: false, error: check.error }
+          }
         }
         try {
           const supabase = createClient()

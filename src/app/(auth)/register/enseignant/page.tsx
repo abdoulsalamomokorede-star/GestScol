@@ -213,7 +213,8 @@ export default function RegisterEnseignantPage() {
         telephone: profile.telephone || '',
         role: 'enseignant',
         ecoleId: profile.ecole_id,
-        civilite: profile.civilite || 'M.'
+        civilite: profile.civilite || 'M.',
+        photoUrl: profile.photo_url || undefined
       }
 
       setCurrentUser(userProfile)

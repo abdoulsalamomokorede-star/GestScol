@@ -43,12 +43,15 @@ export async function createNotification(data: {
       return { success: false, error: "Profil utilisateur introuvable." }
     }
 
-    // 3. Seul un Directeur ou un Enseignant de la même école peut émettre des notifications
+    // 3. Seul un Directeur, un Enseignant de la même école, ou un Parent (uniquement pour signaler une absence) peut émettre des notifications
     const isDirecteur = profile.role === 'directeur';
     const isEnseignant = profile.role === 'enseignant';
+    const isParent = profile.role === 'parent';
     const isLinkedToSchool = profile.ecole_id === data.ecoleId || profile.ecole_courante_id === data.ecoleId;
 
-    if ((!isDirecteur && !isEnseignant) || !isLinkedToSchool) {
+    const canCreate = (isDirecteur || isEnseignant || (isParent && data.type === 'absence')) && isLinkedToSchool;
+
+    if (!canCreate) {
       return { success: false, error: "Accès refusé. Privilèges insuffisants pour cet établissement." }
     }
 
@@ -114,6 +117,13 @@ export async function markAsRead(notificationId: string, utilisateurId: string) 
       return { success: false, error: "Identifiants requis manquants." }
     }
 
+    // Sécurisation : Vérifier la session de l'utilisateur connecté sur le serveur
+    const serverSupabase = await createServerClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+    if (authError || !user || user.id !== utilisateurId) {
+      return { success: false, error: "Non autorisé. Action interdite pour cet utilisateur." }
+    }
+
     const supabase = createAdminClient()
 
     const { error } = await supabase
@@ -145,6 +155,13 @@ export async function markAsRead(notificationId: string, utilisateurId: string) 
 export async function fetchUserLectures(utilisateurId: string) {
   try {
     if (!utilisateurId) return { success: false, error: "Identifiant utilisateur manquant." }
+
+    // Sécurisation : Vérifier la session de l'utilisateur connecté sur le serveur
+    const serverSupabase = await createServerClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+    if (authError || !user || user.id !== utilisateurId) {
+      return { success: false, error: "Non autorisé. Action interdite pour cet utilisateur." }
+    }
 
     const supabase = createAdminClient()
 

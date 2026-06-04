@@ -81,8 +81,13 @@ export default function AbsencesPage() {
   const [selectedAbsenceId, setSelectedAbsenceId] = useState<string | null>(null)
   const [justificationMotif, setJustificationMotif] = useState('')
 
-  // Logique enfants / parent réorganisée en toute sécurité
-  const enfants = currentUser ? eleves.filter(e => e.parentUserId === currentUser.id) : []
+  // Logique enfants / parent réorganisée en toute sécurité avec filtrage par inscription active
+  const enfants = currentUser
+    ? eleves.filter(e => 
+        e.parentUserId === currentUser.id &&
+        inscriptions.some(ins => ins.eleveId === e.id && ins.anneeScolaire === activeAnneeScolaire?.id && ins.statut === 'validee')
+      )
+    : []
   const [selectedEnfantId, setSelectedEnfantId] = useState<string>('')
   
   // Formulaire Signalement Parent
@@ -91,10 +96,14 @@ export default function AbsencesPage() {
   const [signalMotif, setSignalMotif] = useState('')
   const [signalLoading, setSignalLoading] = useState(false)
 
-  // Initialisation de selectedEnfantId
+  // Initialisation de selectedEnfantId de manière sécurisée
   useEffect(() => {
-    if (enfants.length > 0 && !selectedEnfantId) {
-      setSelectedEnfantId(enfants[0].id)
+    if (enfants.length > 0) {
+      if (!selectedEnfantId || !enfants.some(e => e.id === selectedEnfantId)) {
+        setSelectedEnfantId(enfants[0].id)
+      }
+    } else {
+      setSelectedEnfantId('')
     }
   }, [enfants, selectedEnfantId])
 
@@ -340,7 +349,8 @@ export default function AbsencesPage() {
         description: `Le parent de l'élève ${enfantActif.prenom} ${enfantActif.nom} (Classe : ${classeEnfant?.nom || 'N/A'}) signale son absence pour la séance du ${seanceLabel} le ${dateLabel}. Motif : ${signalMotif}`,
         type: 'absence',
         eleveId: selectedEnfantId,
-        classeId: enfantActif.classeId
+        classeId: enfantActif.classeId,
+        destinataireRole: 'directeur'
       })
 
       toast({
@@ -944,28 +954,31 @@ export default function AbsencesPage() {
                       {/* Choix Enfant */}
                       <div className="space-y-1">
                         <Label htmlFor="signal-enfant" className="text-[10px] font-bold text-muted-foreground uppercase">Enfant concerné</Label>
-                        <select
-                          id="signal-enfant"
+                        <Select
                           value={selectedEnfantId}
-                          onChange={(e) => setSelectedEnfantId(e.target.value)}
-                          className="w-full bg-background border border-border text-text rounded-xl px-3 py-2 font-semibold text-xs focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                          onValueChange={setSelectedEnfantId}
                         >
-                          {enfants.map(enf => (
-                            <option key={enf.id} value={enf.id}>{enf.prenom} {enf.nom}</option>
-                          ))}
-                        </select>
+                          <SelectTrigger id="signal-enfant" className="w-full bg-background border-border text-text rounded-xl font-semibold text-xs h-9 focus:ring-1 focus:ring-primary focus:border-primary">
+                            <SelectValue placeholder="Sélectionner l'enfant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {enfants.map(enf => (
+                              <SelectItem key={enf.id} value={enf.id} className="text-xs font-semibold">
+                                {enf.prenom} {enf.nom}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       {/* Date de l'absence */}
                       <div className="space-y-1">
                         <Label htmlFor="signal-date" className="text-[10px] font-bold text-muted-foreground uppercase">Date de l&apos;absence</Label>
-                        <Input
+                        <DatePicker
                           id="signal-date"
-                          type="date"
-                          value={signalDate}
-                          onChange={(e) => setSignalDate(e.target.value)}
-                          className="text-xs h-9 border-border bg-background"
-                          required
+                          date={signalDate ? new Date(signalDate) : undefined}
+                          setDate={(d) => setSignalDate(d ? format(d, 'yyyy-MM-dd') : '')}
+                          className="h-9 pr-3 rounded-xl text-xs font-semibold w-full"
                         />
                       </div>
 
@@ -1040,7 +1053,7 @@ export default function AbsencesPage() {
                     <div className="space-y-1">
                       <h4 className="text-xs font-bold text-text uppercase">Justificatif officiel</h4>
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        Conformément au règlement du <strong>Groupe Scolaire Les Flamboyants</strong>, tout signalement numérique doit être appuyé par un justificatif papier signé (certificat médical, dispense) remis au directeur ou à l&apos;enseignant lors du retour de l&apos;élève en classe.
+                        Conformément au règlement de <strong>{ecole?.nom || "l'établissement"}</strong>, tout signalement numérique doit être appuyé par un justificatif papier signé (certificat médical, dispense) remis au directeur ou à l&apos;enseignant lors du retour de l&apos;élève en classe.
                       </p>
                     </div>
                   </div>

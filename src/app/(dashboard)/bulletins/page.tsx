@@ -220,11 +220,14 @@ export default function BulletinsPage() {
 
       if (isCurrentlyValide) {
         // Supprimer la notification correspondante
+        const trimestreLabel = bData.trimestre === 1 ? '1er' : bData.trimestre === 2 ? '2ème' : '3ème';
         const targetNotif = storeState.notifications.find(
-          n => n.type === 'bulletin' && n.eleveId === bData.eleveId && n.description.includes(`trimestre ${bData.trimestre}`)
+          n => n.type === 'bulletin' && 
+               n.eleveId === bData.eleveId && 
+               (n.description.includes(`trimestre ${bData.trimestre}`) || n.description.includes(`${trimestreLabel} Trimestre`))
         )
         if (targetNotif) {
-          await storeState.deleteNotification(targetNotif.id)
+          await storeState.deleteNotification(targetNotif.id);
         }
       }
 
@@ -317,11 +320,14 @@ export default function BulletinsPage() {
             unvalidatedCount++
 
             // Supprimer la notification correspondante
+            const trimestreLabel = selectedTrimestre === '1' ? '1er' : selectedTrimestre === '2' ? '2ème' : '3ème';
             const targetNotif = storeState.notifications.find(
-              n => n.type === 'bulletin' && n.eleveId === b.eleveId && n.description.includes(`trimestre ${selectedTrimestre}`)
+              n => n.type === 'bulletin' && 
+                   n.eleveId === b.eleveId && 
+                   (n.description.includes(`trimestre ${selectedTrimestre}`) || n.description.includes(`${trimestreLabel} Trimestre`))
             )
             if (targetNotif) {
-              await storeState.deleteNotification(targetNotif.id)
+              await storeState.deleteNotification(targetNotif.id);
             }
           }
         }

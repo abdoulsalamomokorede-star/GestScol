@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { GraduationCap, FileText, CreditCard, CalendarOff } from 'lucide-react'
 import KpiCard from '@/components/dashboard/KpiCard'
@@ -8,10 +9,38 @@ import { Badge } from '@/components/ui/badge'
 import { getInitiales, formatDate, formatCFA, cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function ParentDashboardPage() {
   const router = useRouter()
-  const { eleves, classes, notes, paiements, absences, currentUser, getMoyenneEleve } = useSchoolStore()
+  const { 
+    eleves, 
+    classes, 
+    notes, 
+    paiements, 
+    absences, 
+    currentUser, 
+    inscriptions, 
+    anneesScolaires, 
+    activeAnneeScolaire,
+    fetchSupabaseData
+  } = useSchoolStore()
+  
+  const [selectedAnneeId, setSelectedAnneeId] = useState<string>(() => {
+    return activeAnneeScolaire?.id || (anneesScolaires.find(as => as.statut === 'active')?.id) || (anneesScolaires[0]?.id) || ''
+  })
+
+  // Charger les données fraîches depuis Supabase au montage
+  useEffect(() => {
+    fetchSupabaseData()
+  }, [fetchSupabaseData])
+
+  // S'assurer de mettre à jour l'année sélectionnée si l'année active dans le store change
+  useEffect(() => {
+    if (activeAnneeScolaire) {
+      setSelectedAnneeId(activeAnneeScolaire.id)
+    }
+  }, [activeAnneeScolaire])
   
   if (!currentUser || currentUser.role !== 'parent') {
     return (
@@ -22,15 +51,40 @@ export default function ParentDashboardPage() {
   }
 
   const parentFullName = `${currentUser.nom} ${currentUser.prenom}`
-  const mesEnfants = eleves.filter(
+  
+  // 1. Filtrer les enfants liés à ce parent
+  const mesEnfantsBase = eleves.filter(
     e => e.parentUserId === currentUser.id || e.parentNom === parentFullName || e.parentNom?.includes(currentUser.nom)
   )
 
-  const mesPaiements = paiements.filter(p => mesEnfants.some(e => e.id === p.eleveId))
-  const mesAbsences = absences.filter(a => mesEnfants.some(e => e.id === a.eleveId))
+  // 2. Filtrer uniquement les enfants qui ont une inscription ACTIVE/VALIDÉE pour l'année scolaire sélectionnée
+  const mesEnfants = mesEnfantsBase.filter(e =>
+    inscriptions.some(ins => ins.eleveId === e.id && ins.anneeScolaire === selectedAnneeId && ins.statut === 'validee')
+  )
+
+  const mesPaiements = paiements.filter(p => mesEnfants.some(e => e.id === p.eleveId) && p.anneeScolaire === selectedAnneeId)
+  const mesAbsences = absences.filter(a => mesEnfants.some(e => e.id === a.eleveId) && a.anneeScolaire === selectedAnneeId)
 
   const paiementsEnRetard = mesPaiements.filter(p => p.statut === 'retard').length
   const absencesNonJustifiees = mesAbsences.filter(a => !a.justifiee).length
+
+  // Calcul de la moyenne T1 pour le trimestre et l'année sélectionnés
+  const getMoyenneElevePourAnnee = (eleveId: string, trimestre: 1 | 2 | 3) => {
+    const notesTrimestre = notes.filter(n => n.eleveId === eleveId && n.trimestre === trimestre && n.anneeScolaire === selectedAnneeId)
+    const matieresStore = useSchoolStore.getState().matieres
+    let totalCoeff = 0
+    let totalNotes = 0
+
+    notesTrimestre.forEach(note => {
+      const matiere = matieresStore.find(m => m.id === note.matiereId)
+      if (matiere) {
+        totalNotes += note.valeur * matiere.coefficient
+        totalCoeff += matiere.coefficient
+      }
+    })
+
+    return totalCoeff > 0 ? Number((totalNotes / totalCoeff).toFixed(2)) : 0
+  }
 
   return (
     <div className="space-y-6">
@@ -38,6 +92,23 @@ export default function ParentDashboardPage() {
         <div>
           <h2 className="text-2xl font-display font-bold text-text">Espace Parent</h2>
           <p className="text-sm text-muted-foreground">Bienvenue, {currentUser.prenom} {currentUser.nom}.</p>
+        </div>
+        
+        {/* Sélecteur d'Année Scolaire */}
+        <div className="flex items-center space-x-2">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Année Scolaire :</span>
+          <Select value={selectedAnneeId} onValueChange={setSelectedAnneeId}>
+            <SelectTrigger className="w-[180px] bg-card border-border">
+              <SelectValue placeholder="Année Scolaire" />
+            </SelectTrigger>
+            <SelectContent>
+              {anneesScolaires.map(annee => (
+                <SelectItem key={annee.id} value={annee.id}>
+                  {annee.nom} {annee.statut === 'active' ? '(Courante)' : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -70,24 +141,28 @@ export default function ParentDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {mesEnfants.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun enfant trouvé pour ce compte.</p>
+              <p className="text-sm text-muted-foreground">Aucun enfant trouvé pour ce compte ou non inscrit pour cette année.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {mesEnfants.map(enfant => {
-                  const classe = classes.find(c => c.id === enfant.classeId)
-                  const moyenneT1 = getMoyenneEleve(enfant.id, 1)
+                  const studentInscription = inscriptions.find(
+                    ins => ins.eleveId === enfant.id && ins.anneeScolaire === selectedAnneeId && ins.statut === 'validee'
+                  )
+                  const classeId = studentInscription?.classeId || enfant.classeId
+                  const classe = classes.find(c => c.id === classeId)
+                  const moyenneT1 = getMoyenneElevePourAnnee(enfant.id, 1)
 
                   return (
-                    <div key={enfant.id} onClick={() => router.push(`/eleves/${enfant.id}`)} className="flex items-center justify-between border border-border/50 p-4 rounded-lg hover:border-primary/50 cursor-pointer transition-colors bg-muted/5">
+                    <div key={enfant.id} onClick={() => router.push(`/eleves/${enfant.id}?anneeId=${selectedAnneeId}`)} className="flex items-center justify-between border border-border/50 p-4 rounded-lg hover:border-primary/50 cursor-pointer transition-colors bg-muted/5">
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12 border border-primary/20">
-                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                           <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
                             {getInitiales(enfant.nom, enfant.prenom)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-bold text-text">{enfant.prenom} {enfant.nom}</p>
-                          <p className="text-sm text-muted-foreground">Classe: <span className="font-medium text-text">{classe?.nom}</span></p>
+                          <p className="text-sm text-muted-foreground">Classe: <span className="font-medium text-text">{classe?.nom || 'N/A'}</span></p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -109,7 +184,7 @@ export default function ParentDashboardPage() {
           </CardHeader>
           <CardContent>
             {mesPaiements.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Aucun paiement enregistré.</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Aucun paiement enregistré pour cette année.</p>
             ) : (
               <div className="space-y-4">
                 {mesPaiements.slice(0, 5).map(paiement => {
@@ -152,7 +227,7 @@ export default function ParentDashboardPage() {
                 <div className="bg-success/10 p-3 rounded-full text-success mb-3">
                   <CalendarOff className="h-6 w-6" />
                 </div>
-                <p>Aucune absence enregistrée.</p>
+                <p>Aucune absence enregistrée pour cette année.</p>
               </div>
             ) : (
               <div className="space-y-4">

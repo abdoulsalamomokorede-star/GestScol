@@ -31,19 +31,25 @@ export default function DashboardLayout({
     }
   }, [])
 
+  // Réinitialiser le chargement uniquement si l'utilisateur ou l'école active change
   useEffect(() => {
     if (hasHydrated) {
+      setIsInitialFetchDone(false)
+    }
+  }, [hasHydrated, currentUser?.id, ecoleId])
+
+  useEffect(() => {
+    if (hasHydrated && !isInitialFetchDone) {
       if (pathname.startsWith('/ecoles')) {
         setIsInitialFetchDone(true)
         return
       }
-      setIsInitialFetchDone(false)
       initializeAnneesScolaires()
       fetchSupabaseData().then(() => {
         setIsInitialFetchDone(true)
       })
     }
-  }, [hasHydrated, initializeAnneesScolaires, fetchSupabaseData, currentUser?.ecoleId, pathname])
+  }, [hasHydrated, isInitialFetchDone, pathname, initializeAnneesScolaires, fetchSupabaseData])
 
   // Synchroniser lastRole dans sessionStorage dès que l'utilisateur est chargé
   useEffect(() => {

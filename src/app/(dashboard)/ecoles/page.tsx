@@ -84,16 +84,43 @@ export default function EcolesPage() {
       if (currentUser?.role === 'parent' && currentUser?.email) {
         const { data: eleves } = await supabase
           .from('eleves')
-          .select('prenom, ecole_id')
+          .select('id, prenom, ecole_id')
           .or(`parent_email.ilike.${currentUser.email},parent_user_id.eq.${currentUser.id}`)
 
-        if (eleves) {
+        if (eleves && eleves.length > 0) {
+          const eleveIds = eleves.map(e => e.id)
+          
+          // Récupérer les inscriptions pour ces élèves
+          const { data: inscriptions } = await supabase
+            .from('inscriptions')
+            .select('eleve_id, annee_scolaire, statut')
+            .in('eleve_id', eleveIds)
+            .eq('statut', 'validee')
+            
+          // Récupérer les années scolaires actives
+          const { data: anneesScolaires } = await supabase
+            .from('annees_scolaires')
+            .select('id, statut, ecole_id')
+            .eq('statut', 'active')
+            
           const mapping: Record<string, string[]> = {}
+          
           eleves.forEach((el) => {
-            if (!mapping[el.ecole_id]) {
-              mapping[el.ecole_id] = []
+            const activeAnnee = anneesScolaires?.find(a => a.ecole_id === el.ecole_id)
+            if (!activeAnnee) return
+            
+            const hasInscription = inscriptions?.some(
+              ins => ins.eleve_id === el.id && 
+                     ins.annee_scolaire === activeAnnee.id && 
+                     ins.statut === 'validee'
+            )
+            
+            if (hasInscription) {
+              if (!mapping[el.ecole_id]) {
+                mapping[el.ecole_id] = []
+              }
+              mapping[el.ecole_id].push(el.prenom)
             }
-            mapping[el.ecole_id].push(el.prenom)
           })
           setEnfantsParEcole(mapping)
         }
