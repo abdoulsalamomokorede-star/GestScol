@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { formatCFA } from "@/lib/utils"
@@ -14,6 +15,12 @@ interface PaiementsParClasseChartProps {
 }
 
 export default function PaiementsParClasseChart({ classes, eleves, paiements, inscriptions, anneeScolaire }: PaiementsParClasseChartProps) {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   // Calculer les données par classe
   const data = classes.map(c => {
     // Filtrer les paiements qui appartiennent à cette classe via l'inscription de l'élève
@@ -60,33 +67,35 @@ export default function PaiementsParClasseChart({ classes, eleves, paiements, in
           </div>
         ) : (
           <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#64748B' }} 
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#64748B' }}
-                  tickFormatter={(value) => value === 0 ? '0' : `${value / 1000}k`}
-                />
-                <Tooltip 
-                  cursor={{ fill: '#F8FAFC' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: any) => formatCFA(value as number)}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
-                <Bar dataKey="Payé" stackId="a" fill="#10B981" radius={[0, 0, 4, 4]} maxBarSize={50} />
-                <Bar dataKey="En attente" stackId="a" fill="#F59E0B" maxBarSize={50} />
-                <Bar dataKey="En retard" stackId="a" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={50} />
-              </BarChart>
-            </ResponsiveContainer>
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#64748B' }} 
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#64748B' }}
+                    tickFormatter={(value) => value === 0 ? '0' : `${value / 1000}k`}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: '#F8FAFC' }}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: any) => formatCFA(value as number)}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                  <Bar dataKey="Payé" stackId="a" fill="#10B981" radius={[0, 0, 4, 4]} maxBarSize={50} />
+                  <Bar dataKey="En attente" stackId="a" fill="#F59E0B" maxBarSize={50} />
+                  <Bar dataKey="En retard" stackId="a" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         )}
       </CardContent>
