@@ -172,7 +172,13 @@ export default function EcolesPage() {
       description: "Chargement de votre espace de travail...",
       variant: "default"
     })
-    router.push('/dashboard')
+    if (currentUser?.role === 'parent') {
+      router.push('/parent/dashboard')
+    } else if (currentUser?.role === 'enseignant') {
+      router.push('/enseignant/dashboard')
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   // Ajouter une école

@@ -253,3 +253,60 @@ export async function deleteNotificationDb(notificationId: string) {
     return { success: false, error: err.message }
   }
 }
+
+/**
+ * Supprime plusieurs notifications en lot (réservé au Directeur de l'école).
+ */
+export async function deleteNotificationsDb(notificationIds: string[]) {
+  try {
+    if (!notificationIds || notificationIds.length === 0) {
+      return { success: false, error: "Identifiants notifications manquants." }
+    }
+
+    const serverSupabase = await createServerClient()
+    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { success: false, error: "Non autorisé. Veuillez vous connecter." }
+    }
+
+    const { data: profile, error: profileError } = await serverSupabase
+      .from('utilisateurs')
+      .select('role, ecole_id, ecole_courante_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return { success: false, error: "Profil utilisateur introuvable." }
+    }
+
+    const isDirecteur = profile.role === 'directeur';
+    if (!isDirecteur) {
+      return { success: false, error: "Accès refusé. Privilèges de Directeur requis." }
+    }
+
+    const activeSchoolId = profile.ecole_courante_id || profile.ecole_id
+    if (!activeSchoolId) {
+      return { success: false, error: "Aucun établissement actif configuré." }
+    }
+
+    const supabase = createAdminClient()
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .in('id', notificationIds)
+      .eq('ecole_id', activeSchoolId)
+
+    if (error) {
+      console.error("Erreur Supabase suppression notifications en lot:", error.message)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+
+  } catch (err: any) {
+    console.error("Exception dans deleteNotificationsDb:", err)
+    return { success: false, error: err.message }
+  }
+}

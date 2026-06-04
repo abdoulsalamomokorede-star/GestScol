@@ -23,7 +23,8 @@ export default function ParentDashboardPage() {
     inscriptions, 
     anneesScolaires, 
     activeAnneeScolaire,
-    fetchSupabaseData
+    fetchSupabaseData,
+    ecoleId
   } = useSchoolStore()
   
   const [selectedAnneeId, setSelectedAnneeId] = useState<string>(() => {
@@ -52,9 +53,9 @@ export default function ParentDashboardPage() {
 
   const parentFullName = `${currentUser.nom} ${currentUser.prenom}`
   
-  // 1. Filtrer les enfants liés à ce parent
+  // 1. Filtrer les enfants liés à ce parent et à l'école active
   const mesEnfantsBase = eleves.filter(
-    e => e.parentUserId === currentUser.id || e.parentNom === parentFullName || e.parentNom?.includes(currentUser.nom)
+    e => (e.parentUserId === currentUser.id || e.parentNom === parentFullName || e.parentNom?.includes(currentUser.nom)) && e.ecoleId === ecoleId
   )
 
   // 2. Filtrer uniquement les enfants qui ont une inscription ACTIVE/VALIDÉE pour l'année scolaire sélectionnée

@@ -53,7 +53,8 @@ export default function PaiementsPage() {
     updateClasseTarifs,
     anneesScolaires,
     activeAnneeScolaire,
-    inscriptions
+    inscriptions,
+    ecoleId
   } = useSchoolStore()
 
   const { toast } = useToast()
@@ -195,7 +196,7 @@ export default function PaiementsPage() {
   const renderParentView = () => {
     const parentFullName = `${currentUser.nom} ${currentUser.prenom}`
     const mesEnfants = eleves.filter(
-      e => e.parentNom === parentFullName || e.parentNom?.includes(currentUser.nom) || e.parentUserId === currentUser.id
+      e => (e.parentNom === parentFullName || e.parentNom?.includes(currentUser.nom) || e.parentUserId === currentUser.id) && e.ecoleId === ecoleId
     )
 
     const mesPaiements = paiements.filter(p => mesEnfants.some(e => e.id === p.eleveId))

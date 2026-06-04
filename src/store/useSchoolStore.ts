@@ -5,7 +5,7 @@ import { classesMock, elevesMock, notesMock, paiementsMock, absencesMock, matier
 import { createClient } from '../lib/supabase/client'
 import { updateSchoolAbonnement, getSchoolAbonnement } from '../app/actions/abonnement'
 import { updateSchoolDetails } from '../app/actions/ecole'
-import { createNotification, markAsRead, fetchUserLectures, deleteNotificationDb } from '../app/actions/notifications'
+import { createNotification, markAsRead, fetchUserLectures, deleteNotificationDb, deleteNotificationsDb } from '../app/actions/notifications'
 import { toast } from '../hooks/use-toast'
 
 function validateBase64ImageClient(base64DataString: string | undefined): { success: boolean; error?: string } {
@@ -67,6 +67,7 @@ interface SchoolState {
   }) => Promise<void>
   markNotificationAsRead: (id: string) => Promise<void>
   deleteNotification: (id: string) => Promise<void>
+  deleteNotifications: (ids: string[]) => Promise<void>
   
   fetchSupabaseData: () => Promise<void>
   
@@ -354,6 +355,35 @@ export const useSchoolStore = create<SchoolState>()(
           }))
         }
       },
+
+      deleteNotifications: async (ids) => {
+        const state = get()
+        const currentUser = state.currentUser
+        if (!currentUser || !ids || ids.length === 0) return
+
+        if (currentUser.role === 'directeur') {
+          const dbIds = ids.filter(id => !id.startsWith('mock-temp-') && !id.startsWith('mock-'))
+          if (dbIds.length > 0) {
+            const res = await deleteNotificationsDb(dbIds)
+            if (!res.success) {
+              toast({
+                title: "Erreur de suppression",
+                description: res.error || "Impossible de supprimer les notifications de la base de données.",
+                variant: "destructive"
+              })
+              return
+            }
+          }
+          set(state => ({
+            notifications: state.notifications.filter(n => !ids.includes(n.id))
+          }))
+        } else {
+          const newSuppressed = ids.map(id => `${currentUser.id}_${id}`)
+          set(state => ({
+            suppressedNotificationIds: Array.from(new Set([...(state.suppressedNotificationIds || []), ...newSuppressed]))
+          }))
+        }
+      },
       ecoleId: null,
       currentUser: null,
       eleves: elevesMock,
@@ -565,10 +595,10 @@ export const useSchoolStore = create<SchoolState>()(
               supabase.from('paiements').select('*').in('eleve_id', eleveIds),
               supabase.from('bulletins').select('*').in('eleve_id', eleveIds),
               classIds.length > 0 ? supabase.from('classes').select('*').in('id', classIds) : Promise.resolve({ data: [] }),
-              ecoleIds.length > 0 ? supabase.from('ecoles').select('*').in('id', ecoleIds) : Promise.resolve({ data: [] }),
+              activeEcoleId ? supabase.from('ecoles').select('*').eq('id', activeEcoleId) : Promise.resolve({ data: [] }),
               classIds.length > 0 ? supabase.from('matieres').select('*').in('classe_id', classIds) : Promise.resolve({ data: [] }),
               supabase.from('inscriptions').select('*').in('eleve_id', eleveIds),
-              ecoleIds.length > 0 ? supabase.from('annees_scolaires').select('*').in('ecole_id', ecoleIds) : Promise.resolve({ data: [] }),
+              activeEcoleId ? supabase.from('annees_scolaires').select('*').eq('ecole_id', activeEcoleId) : Promise.resolve({ data: [] }),
               activeEcoleId ? getSchoolAbonnement(activeEcoleId) : Promise.resolve({ success: false, data: null })
             ])
 

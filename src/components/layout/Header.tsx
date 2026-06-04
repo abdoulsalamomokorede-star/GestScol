@@ -32,7 +32,7 @@ const getPageTitle = (pathname: string) => {
 
 export default function Header() {
   const pathname = usePathname()
-  const { currentUser, notifications, eleves, classes, fetchNotifications, suppressedNotificationIds } = useSchoolStore()
+  const { currentUser, notifications, eleves, classes, fetchNotifications, suppressedNotificationIds, ecoleId } = useSchoolStore()
   const [open, setOpen] = useState(false)
 
   // Actualiser les notifications au montage
@@ -63,7 +63,7 @@ export default function Header() {
       if (notif.type === 'systeme' && !notif.eleveId && !notif.classeId) return true
 
       const parentKidsIds = eleves
-        .filter(el => el.parentUserId === currentUser.id)
+        .filter(el => el.parentUserId === currentUser.id && el.ecoleId === ecoleId)
         .map(el => el.id)
       
       if (notif.eleveId) {
@@ -71,7 +71,7 @@ export default function Header() {
       }
 
       const parentKidsClasses = eleves
-        .filter(el => el.parentUserId === currentUser.id)
+        .filter(el => el.parentUserId === currentUser.id && el.ecoleId === ecoleId)
         .map(el => el.classeId)
 
       if (notif.classeId && parentKidsClasses.includes(notif.classeId)) return true

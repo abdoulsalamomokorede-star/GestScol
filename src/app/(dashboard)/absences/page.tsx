@@ -59,7 +59,8 @@ export default function AbsencesPage() {
     anneesScolaires,
     activeAnneeScolaire,
     ecole,
-    fetchSupabaseData
+    fetchSupabaseData,
+    ecoleId
   } = useSchoolStore()
   
   const { toast } = useToast()
@@ -81,10 +82,11 @@ export default function AbsencesPage() {
   const [selectedAbsenceId, setSelectedAbsenceId] = useState<string | null>(null)
   const [justificationMotif, setJustificationMotif] = useState('')
 
-  // Logique enfants / parent réorganisée en toute sécurité avec filtrage par inscription active
+  // Logique enfants / parent réorganisée en toute sécurité avec filtrage par inscription active et école active
   const enfants = currentUser
     ? eleves.filter(e => 
         e.parentUserId === currentUser.id &&
+        e.ecoleId === ecoleId &&
         inscriptions.some(ins => ins.eleveId === e.id && ins.anneeScolaire === activeAnneeScolaire?.id && ins.statut === 'validee')
       )
     : []

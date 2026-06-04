@@ -40,8 +40,10 @@ export default function NotificationsPage() {
     addNotification, 
     markNotificationAsRead, 
     deleteNotification,
+    deleteNotifications,
     suppressedNotificationIds,
-    ecole
+    ecole,
+    ecoleId
   } = useSchoolStore()
   
   const { toast } = useToast()
@@ -53,6 +55,7 @@ export default function NotificationsPage() {
   const [targetType, setTargetType] = useState<'all' | 'parent' | 'enseignant' | 'classe'>('all')
   const [selectedClasseId, setSelectedClasseId] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false)
 
   // Charger les notifications réelles de Supabase au montage
   useEffect(() => {
@@ -83,7 +86,7 @@ export default function NotificationsPage() {
 
       // 3. Notifications ciblées sur ses enfants
       const parentKidsIds = eleves
-        .filter(el => el.parentUserId === currentUser.id)
+        .filter(el => el.parentUserId === currentUser.id && el.ecoleId === ecoleId)
         .map(el => el.id)
       
       if (notif.eleveId) {
@@ -92,7 +95,7 @@ export default function NotificationsPage() {
 
       // 4. Notifications ciblées sur la classe de ses enfants (seulement si non ciblée sur un élève spécifique)
       const parentKidsClasses = eleves
-        .filter(el => el.parentUserId === currentUser.id)
+        .filter(el => el.parentUserId === currentUser.id && el.ecoleId === ecoleId)
         .map(el => el.classeId)
 
       if (notif.classeId && parentKidsClasses.includes(notif.classeId)) return true
@@ -156,6 +159,19 @@ export default function NotificationsPage() {
     toast({
       title: "Notification supprimée",
       description: "Le message a été retiré de votre espace.",
+    })
+  }
+
+  // Supprimer toutes les notifications
+  const handleDeleteAll = async () => {
+    setIsDeleteAllOpen(false)
+    setSendingState(true)
+    const ids = displayNotifications.map(n => n.id)
+    await deleteNotifications(ids)
+    setSendingState(false)
+    toast({
+      title: "Page vidée",
+      description: "Toutes vos notifications ont été supprimées.",
     })
   }
 
@@ -268,6 +284,20 @@ export default function NotificationsPage() {
             >
               {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
               Tout marquer comme lu
+            </Button>
+          )}
+
+          {/* Bouton Supprimer tout */}
+          {displayNotifications.length > 0 && (
+            <Button 
+              onClick={() => setIsDeleteAllOpen(true)}
+              size="sm"
+              variant="outline"
+              disabled={loadingAction}
+              className="font-bold text-xs rounded-xl flex items-center gap-2 border border-rose-200 text-rose-600 bg-transparent hover:bg-rose-50 hover:text-rose-700 transition-all duration-200 dark:border-rose-900/30 dark:hover:bg-rose-950/20"
+            >
+              {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Supprimer tout
             </Button>
           )}
 
@@ -515,6 +545,39 @@ export default function NotificationsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Modale de Confirmation de Suppression de toutes les notifications */}
+      <Dialog open={isDeleteAllOpen} onOpenChange={setIsDeleteAllOpen}>
+        <DialogContent className="sm:max-w-[400px] border border-border rounded-2xl bg-card text-text">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-lg flex items-center gap-2 text-rose-600">
+              <Trash2 className="h-5 w-5" />
+              Supprimer toutes les notifications
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-2">
+              Êtes-vous sûr de vouloir vider toutes les notifications de votre espace ? Cette action est irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-4 flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteAllOpen(false)}
+              className="rounded-xl font-bold text-xs"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={handleDeleteAll}
+              disabled={loadingAction}
+              className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs"
+            >
+              {loadingAction ? <Loader2 className="h-4 w-4 animate-spin" /> : "Oui, supprimer tout"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -149,9 +149,12 @@ Dans Next.js 16, **`src/proxy.ts`** fait office d'Edge Middleware. Le contrôle 
 ### 2. Durcissement de la Sécurité de la Base de Données (Supabase RLS)
 L'isolation multi-tenant a été renforcée au niveau de PostgreSQL :
 * **RLS Fine-Grained (Polices Restrictives)** :
-  * `utilisateurs` : Lecture limitée à l'établissement ; écriture et suppression restreintes aux seuls directeurs authentifiés.
+  * `utilisateurs` : Lecture limitée à l'établissement d'appartenance (`utilisateurs_select`), mais accès en lecture propre (`utilisateurs_self_select` via `auth.uid() = id`) et mise à jour propre (`utilisateurs_self_update`) toujours garanti, y compris si l'école de l'utilisateur n'est pas encore créée (valeur `NULL`). Écriture administrative et suppression globale restreintes aux seuls directeurs authentifiés.
+  * `abonnements` : Accès en lecture (`SELECT`) restreint aux seuls membres authentifiés de l'école concernée (`Lecture abonnement école`). Les écritures, modifications et suppressions directes depuis l'API cliente sont strictement interdites (aucune règle RLS en écriture n'est active), forçant l'utilisation des Server Actions sécurisées avec client admin.
+  * `audit_suppressions` : Autorise uniquement l'insertion par le directeur de l'école concernée (`directeur_insert_audit` via `directeur_id = auth.uid()`), tout accès direct en lecture client est bloqué par défaut.
   * `paiements` & `bulletins` : Lecture restreinte aux directeurs pour leur école, et aux parents pour leurs enfants uniquement (bulletins visibles uniquement s'ils sont validés via `est_valide = true`).
   * `notes` & `absences` : Lecture isolée par école ; modification limitée aux directeurs et aux enseignants affectés à l'établissement.
+  * `notifications` : Lecture restreinte aux directeurs pour leur école (`lecture_notifications_directeur`) et aux parents/enseignants pour les messages ciblés ou créés par eux-mêmes (`lecture_notifications_autres`). La suppression est réservée aux directeurs authentifiés de l'établissement.
 
 ### 3. Protection contre les Attaques Standard (OWASP)
 * **Chiffrement des Mots de Passe & NIST 800-63B** : alignement de la force de mot de passe sur la norme NIST. Toute création de compte exige un mot de passe d'au moins **12 caractères** incluant obligatoirement des majuscules, des minuscules, des chiffres et des caractères spéciaux (validation Zod côté serveur).
