@@ -30,6 +30,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // --- DONNÉES FAUSSES INTERACTIVES POUR LA DÉMO ---
 interface DemoEleve {
@@ -276,63 +283,114 @@ export default function LandingPage() {
       </header>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-16 pb-28 md:pt-28 md:pb-40 overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white">
+      <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
+        {/* Dégradé de fond de la section */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-white -z-20" />
+        {/* Image de fond thématique premium */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 -z-10"
+          style={{ backgroundImage: `url('/landing_bg.png')` }}
+        />
         {/* Cercles luminescents en arrière-plan */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-8 max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/80 text-emerald-700 text-xs font-semibold border border-emerald-200/50 shadow-sm backdrop-blur-sm">
-              <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-              <span>La plateforme n°1 des écoles privées d'Afrique de l'Ouest</span>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-extrabold leading-tight tracking-tight text-slate-900">
-              Pilotez votre établissement avec{' '}
-              <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent font-extrabold">
-                intelligence
-              </span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
-              La solution complète pour digitaliser la gestion de votre école : encaissements Wave & Mobile Money, bulletins conformes MENA, et suivi en temps réel pour les parents.
-            </p>
+            {/* Colonne gauche : Textes & Appels à l'action */}
+            <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/80 text-emerald-700 text-xs font-semibold border border-emerald-200/50 shadow-sm backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+                <span>La plateforme n°1 des écoles privées d'Afrique de l'Ouest</span>
+              </div>
+              
+              <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl font-display font-extrabold leading-tight tracking-tight text-slate-900">
+                Pilotez votre établissement avec{' '}
+                <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent font-extrabold">
+                  intelligence
+                </span>
+              </h1>
+              
+              <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
+                La solution complète pour digitaliser la gestion de votre école : encaissements Wave & Mobile Money, bulletins conformes MENA, et suivi en temps réel pour les parents.
+              </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-              <Link 
-                href="/register" 
-                className="w-full sm:w-auto inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-semibold text-base px-8 py-4 rounded-full shadow-xl shadow-slate-900/10 transition-all gap-2 group border border-slate-800"
-                id="hero-primary-cta"
-              >
-                Créer un compte
-                <ArrowRight className="h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <a 
-                href="#demo" 
-                className="w-full sm:w-auto inline-flex items-center justify-center bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-base px-8 py-4 rounded-full shadow-sm hover:shadow transition-all"
-                id="hero-secondary-cta"
-              >
-                Découvrir la démo
-              </a>
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                <Link 
+                  href="/register" 
+                  className="w-full sm:w-auto inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-semibold text-base px-8 py-4 rounded-full shadow-xl shadow-slate-900/10 transition-all gap-2 group border border-slate-800"
+                  id="hero-primary-cta"
+                >
+                  Créer un compte
+                  <ArrowRight className="h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <a 
+                  href="#demo" 
+                  className="w-full sm:w-auto inline-flex items-center justify-center bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-base px-8 py-4 rounded-full shadow-sm hover:shadow transition-all"
+                  id="hero-secondary-cta"
+                >
+                  Découvrir la démo
+                </a>
+              </div>
+              <p className="text-xs text-slate-500 pt-2">
+                Déjà inscrit ? <Link href="/login" className="text-primary hover:underline font-bold transition-all">Se connecter</Link>
+              </p>
             </div>
-            <p className="text-xs text-slate-500 pt-2">
-              Déjà inscrit ? <Link href="/login" className="text-primary hover:underline font-bold transition-all">Se connecter</Link>
-            </p>
 
-            {/* Avantages en 3 mots */}
-            <div className="flex flex-wrap justify-center gap-6 pt-12 text-xs font-semibold text-slate-500 uppercase tracking-widest">
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Conforme MENA</span>
+            {/* Colonne droite : Visuel / Illustration de marque */}
+            <div className="lg:col-span-5 relative w-full flex justify-center">
+              <div className="relative w-full max-w-md sm:max-w-lg lg:max-w-none">
+                {/* Lueur d'accentuation en arrière-plan */}
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-primary to-accent rounded-3xl blur opacity-30 animate-pulse" />
+                
+                {/* Cadre de l'image de prestige */}
+                <div className="relative bg-white p-2 sm:p-3 rounded-3xl border border-slate-200 shadow-2xl">
+                  <img 
+                    src="/landing_hero.png" 
+                    alt="GestScol Éducation Afrique" 
+                    className="w-full h-auto object-cover rounded-2xl shadow-inner aspect-[4/3] lg:aspect-[1.1]" 
+                  />
+                  
+                  {/* Badge flottant 1 : Paiements Wave & Mobile Money */}
+                  <div className="absolute bottom-6 -left-6 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3 shadow-lg flex items-center gap-3 animate-fadeIn max-w-[220px] hidden sm:flex">
+                    <div className="bg-sky-100 p-2 rounded-xl text-sky-600">
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Paiements</p>
+                      <p className="text-xs font-bold text-slate-800">Wave & MoMo</p>
+                    </div>
+                  </div>
+
+                  {/* Badge flottant 2 : Conformité MENA */}
+                  <div className="absolute top-6 -right-6 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3 shadow-lg flex items-center gap-3 animate-fadeIn max-w-[220px] hidden sm:flex">
+                    <div className="bg-emerald-100 p-2 rounded-xl text-emerald-600">
+                      <GraduationCap className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bulletins</p>
+                      <p className="text-xs font-bold text-slate-800">Conforme MENA</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Wave & Mobile Money</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Mobile-First</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Cloud Sécurisé</span>
-              </div>
+            </div>
+
+          </div>
+
+          {/* Avantages en 4 mots clés */}
+          <div className="flex flex-wrap justify-center lg:justify-start gap-6 pt-16 text-xs font-semibold text-slate-500 uppercase tracking-widest border-t border-slate-100 mt-16">
+            <div className="flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Conforme MENA</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Wave & Mobile Money</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Mobile-First</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Cloud Sécurisé</span>
             </div>
           </div>
         </div>
@@ -488,17 +546,21 @@ export default function LandingPage() {
                     <form onSubmit={handleSimulatePayment} className="space-y-4 pt-2">
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-muted-foreground">Élève concerné</label>
-                        <select 
+                        <Select 
                           value={selectedDemoEleveId} 
-                          onChange={(e) => setSelectedDemoEleveId(e.target.value)}
-                          className="w-full bg-white border border-border rounded-lg text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary"
+                          onValueChange={setSelectedDemoEleveId}
                         >
-                          {demoEleves.map(e => (
-                            <option key={e.id} value={e.id}>
-                              {e.nom} ({e.paiementStatut === 'paye' ? 'Solfé' : `Reste: ${formatCFA(e.montantDu - e.montantPaye)}`})
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger className="w-full bg-white border border-border rounded-lg text-xs h-10 px-3 outline-none focus:ring-1 focus:ring-primary">
+                            <SelectValue placeholder="Choisir un élève" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {demoEleves.map(e => (
+                              <SelectItem key={e.id} value={e.id}>
+                                {e.nom} ({e.paiementStatut === 'paye' ? 'Solfé' : `Reste: ${formatCFA(e.montantDu - e.montantPaye)}`})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-1.5">

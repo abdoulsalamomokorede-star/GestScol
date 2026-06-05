@@ -11,6 +11,7 @@ import logoImg from '@/app/logo.png'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@/types'
 import Link from 'next/link'
+import { Sparkles } from 'lucide-react'
 
 const chargerProfilAvecRetry = async (supabase: any, userId: string, maxAttempts = 3, delay = 500) => {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -213,77 +214,105 @@ export default function EnseignantLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="mb-8 flex flex-col items-center">
-        <Link href="/" className="mb-4 transition-transform duration-300 hover:scale-105 cursor-pointer">
-          <img src={logoImg.src} alt="GestScol Logo" className="h-20 w-auto object-contain" />
-        </Link>
-        <h1 className="text-3xl font-display font-extrabold text-text tracking-wide mt-2">GestScol</h1>
+    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn">
+      {/* Panneau Gauche - Photo en plein écran 100% claire, colorée et visible */}
+      <div className="hidden md:block md:flex-1 relative">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-100"
+          style={{ backgroundImage: `url('/teacher_login_bg.png')` }}
+        />
+        {/* Un léger dégradé blanc sur le bord droit uniquement pour fusionner avec la bordure du formulaire */}
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent" />
       </div>
 
-      <Card className="w-full max-w-md shadow-lg border-border/50">
-        <CardHeader className="space-y-1 text-center bg-slate-50 border-b border-border/50 rounded-t-xl pb-6">
-          <CardTitle className="text-2xl font-bold text-primary">Espace Enseignant</CardTitle>
-          <CardDescription>
-            Connectez-vous avec votre adresse e-mail professionnelle
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4 pt-6">
-            {error && (
-              <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-md text-sm font-medium">
-                {lockoutSeconds > 0 
-                  ? `Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans ${formatLockoutTime(lockoutSeconds)}.`
-                  : error
-                }
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Adresse e-mail</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="ex: enseignant@ecole.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="focus-visible:ring-primary"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mot de passe</Label>
-              </div>
-              <Input 
-                id="password" 
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="focus-visible:ring-primary"
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button 
-              type="submit" 
-              className="w-full bg-primary hover:bg-primary-dark text-white font-bold"
-              disabled={isLoading || lockoutSeconds > 0}
-            >
-              {isLoading ? 'Connexion en cours...' : lockoutSeconds > 0 
-                ? `Bloqué (Réessayer dans ${Math.floor(lockoutSeconds / 60)}m ${lockoutSeconds % 60}s)` 
-                : 'Se connecter'}
-            </Button>
+      {/* Panneau Droit - Formulaire et Identité de marque sur fond blanc clair */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 md:max-w-md lg:max-w-lg xl:max-w-xl bg-white border-l border-border shadow-sm">
+        <div className="space-y-6 my-auto">
+          <div className="flex flex-col items-center md:items-start">
+            <Link href="/" className="mb-4 transition-transform duration-300 hover:scale-105 cursor-pointer">
+              <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
+            </Link>
+            <h1 className="text-3xl font-display font-extrabold text-text tracking-wide mt-2">GestScol</h1>
+            <p className="text-muted-foreground mt-1 font-medium text-center md:text-left text-sm">La gestion scolaire simplifiée en Afrique de l&apos;Ouest</p>
+          </div>
 
-            <div className="text-center text-xs text-muted-foreground pt-4 border-t border-border/40 w-full">
-              Vous n'êtes pas enseignant ?{" "}
-              <Link href="/" className="text-primary hover:underline font-bold">
-                Retour à l'accueil
-              </Link>
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-primary text-xs font-semibold border border-primary/20">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Espace Enseignant</span>
             </div>
-          </CardFooter>
-        </form>
-      </Card>
+            <p className="text-muted-foreground text-xs leading-relaxed hidden md:block">
+              Saisissez vos notes en toute simplicité, gérez l'assiduité grâce à la feuille d'appel tactile rapide, et suivez vos classes.
+            </p>
+          </div>
+
+          <Card className="w-full shadow-lg border-border/50">
+            <CardHeader className="space-y-1 text-center bg-slate-50 border-b border-border/50 rounded-t-xl pb-4">
+              <CardTitle className="text-xl font-bold text-primary">Connexion</CardTitle>
+              <CardDescription>
+                Connectez-vous avec votre adresse e-mail professionnelle
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleLogin}>
+              <CardContent className="space-y-4 pt-6">
+                {error && (
+                  <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-md text-sm font-medium">
+                    {lockoutSeconds > 0 
+                      ? `Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans ${formatLockoutTime(lockoutSeconds)}.`
+                      : error
+                    }
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Adresse e-mail</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="ex: enseignant@ecole.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="focus-visible:ring-primary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Mot de passe</Label>
+                  <Input 
+                    id="password" 
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="focus-visible:ring-primary"
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary hover:bg-primary-dark text-white font-bold"
+                  disabled={isLoading || lockoutSeconds > 0}
+                >
+                  {isLoading ? 'Connexion en cours...' : lockoutSeconds > 0 
+                    ? `Bloqué (Réessayer dans ${Math.floor(lockoutSeconds / 60)}m)` 
+                    : 'Se connecter'}
+                </Button>
+
+                <div className="text-center text-xs text-muted-foreground pt-4 border-t border-border/40 w-full">
+                  Vous n'êtes pas enseignant ?{" "}
+                  <Link href="/" className="text-primary hover:underline font-bold">
+                    Retour à l'accueil
+                  </Link>
+                </div>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+
+        <div className="text-xs text-muted-foreground text-center md:text-left pt-6 border-t border-border/40">
+          <p>© {new Date().getFullYear()} GestScol. Tous droits réservés.</p>
+        </div>
+      </div>
     </div>
   )
 }

@@ -6,10 +6,57 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "lucide-react"
-import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
+import { DayButton, DayPicker, getDefaultClassNames, type DropdownProps } from "react-day-picker"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
+
+function CalendarDropdown({
+  value,
+  onChange,
+  options,
+  className,
+  disabled,
+  ...props
+}: DropdownProps) {
+  const selectedValue = value?.toString()
+
+  const handleValueChange = (val: string) => {
+    if (onChange) {
+      const event = {
+        target: {
+          value: val,
+        },
+      } as React.ChangeEvent<HTMLSelectElement>
+      onChange(event)
+    }
+  }
+
+  return (
+    <Select value={selectedValue} onValueChange={handleValueChange} disabled={disabled}>
+      <SelectTrigger
+        className="h-7 border-none bg-transparent hover:bg-accent hover:text-accent-foreground font-semibold px-2 py-1 flex items-center gap-1 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none text-xs [&>svg]:opacity-50"
+        {...(props as any)}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent portal={false} className="max-h-60 overflow-y-auto z-50 bg-popover border border-border shadow-md rounded-md">
+        {options?.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value.toString()} disabled={opt.disabled} className="text-xs cursor-pointer">
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
 
 function Calendar({
   className,
@@ -66,11 +113,11 @@ function Calendar({
           defaultClassNames.month_caption
         ),
         dropdowns: cn(
-          "flex h-[--cell-size] w-full items-center justify-center gap-1.5 text-sm font-medium",
+          "flex h-[--cell-size] w-full items-center justify-center gap-1 text-sm font-medium",
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          "has-focus:border-ring border-input shadow-xs has-focus:ring-ring/50 has-focus:ring-[3px] relative rounded-md border",
+          "relative inline-flex items-center",
           defaultClassNames.dropdown_root
         ),
         dropdown: cn(
@@ -157,6 +204,8 @@ function Calendar({
           )
         },
         DayButton: CalendarDayButton,
+        MonthsDropdown: CalendarDropdown,
+        YearsDropdown: CalendarDropdown,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
