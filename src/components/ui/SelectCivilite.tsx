@@ -28,7 +28,7 @@ export function SelectCivilite({
 }: SelectCiviliteProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor="civilite" className="text-xs font-bold text-slate-300 uppercase flex items-center gap-1">
+      <Label htmlFor="civilite" className="text-slate-700 dark:text-slate-300">
         Civilité <span className="text-red-500">*</span>
       </Label>
       <Select
@@ -39,14 +39,14 @@ export function SelectCivilite({
         <SelectTrigger 
           id="civilite" 
           className={cn(
-            "text-xs h-9 bg-slate-900 border-slate-800 text-slate-100 focus:border-slate-700 focus-visible:ring-slate-500/20", 
+            "text-xs h-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 focus:border-slate-300 focus-visible:ring-slate-200/50 rounded-xl", 
             error && "border-red-500",
             className
           )}
         >
           <SelectValue placeholder="Sélectionner une civilité" />
         </SelectTrigger>
-        <SelectContent className="bg-slate-950 border-slate-800 text-slate-200">
+        <SelectContent className="bg-white dark:bg-slate-900 border-slate-250/20 dark:border-border/60 text-slate-900 dark:text-slate-100">
           <SelectItem value="M">M. — Monsieur</SelectItem>
           <SelectItem value="Mme">Mme — Madame</SelectItem>
           <SelectItem value="Mlle">Mlle — Mademoiselle</SelectItem>

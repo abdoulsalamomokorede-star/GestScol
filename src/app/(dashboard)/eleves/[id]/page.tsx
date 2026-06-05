@@ -217,7 +217,7 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                         </div>
                         <div className="flex justify-between items-center border-b border-border/55 pb-2">
                           <span className="text-xs text-muted-foreground font-medium">Rang</span>
-                          <span className="text-xs font-bold text-text bg-slate-200/60 px-2 py-0.5 rounded">
+                          <span className="text-xs font-bold text-text bg-slate-200/60 dark:bg-slate-800/60 px-2 py-0.5 rounded">
                             {bulletinEleve.rangClasse}e sur {bulletinEleve.effectifClasse}
                           </span>
                         </div>
@@ -667,7 +667,7 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                                   ✓ Validé
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200 font-bold text-[9px] px-1.5 py-0 rounded">
+                                <Badge variant="outline" className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-bold text-[9px] px-1.5 py-0 rounded">
                                   En attente
                                 </Badge>
                               )}
@@ -686,7 +686,7 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground font-medium">Rang</span>
-                                    <span className="font-bold text-text bg-slate-100 px-2 py-0.5 rounded">
+                                    <span className="font-bold text-text bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                                       {bEleve.rangClasse}e sur {bEleve.effectifClasse}
                                     </span>
                                   </div>

@@ -239,18 +239,18 @@ export default function RegisterEnseignantPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 py-12 text-slate-200">
-        <Card className="w-full max-w-md shadow-2xl border-slate-800 bg-slate-950/60 backdrop-blur-md text-slate-100 text-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 py-12 text-slate-800 dark:text-slate-200 animate-fadeIn">
+        <Card className="w-full max-w-md shadow-2xl border-slate-200 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200 text-center">
           <CardContent className="pt-8 pb-6 flex flex-col items-center space-y-4">
-            <div className="h-16 w-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mb-2">
+            <div className="h-16 w-16 bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-2 border border-blue-100 dark:border-blue-900/30">
               <CheckCircle2 className="h-10 w-10 animate-bounce" />
             </div>
-            <h1 className="text-2xl font-bold">Inscription Enregistrée !</h1>
-            <p className="text-sm text-slate-400 leading-relaxed px-2">
+            <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100">Inscription Enregistrée !</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-2">
               Votre compte Enseignant a été créé avec succès. Si vous avez saisi un code d&apos;invitation ou si votre Directeur vous a invité par e-mail, vous serez lié automatiquement.
             </p>
-            <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-xs text-left text-slate-400 w-full space-y-1">
-              <p className="font-bold text-slate-300">Prochaines étapes :</p>
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl text-xs text-left text-slate-500 dark:text-slate-400 w-full space-y-1">
+              <p className="font-bold text-slate-700 dark:text-slate-300">Prochaines étapes :</p>
               <p>1. Le Directeur valide votre demande et vous affecte à vos classes.</p>
               <p>2. Vous recevrez l&apos;accès complet dès que la validation sera effective.</p>
             </div>
@@ -267,230 +267,240 @@ export default function RegisterEnseignantPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden text-slate-200">
-      {/* Background accents */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-slate-500/5 rounded-full blur-[80px] -z-10" />
-
-      {/* Brand Header */}
-      <div className="mb-6 flex flex-col items-center">
-        <Link href="/register" className="mb-3 transition-transform duration-300 hover:scale-105 inline-block">
-          <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
-        </Link>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-wide">GestScol</h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 text-center font-medium max-w-sm">
-          Espace Enseignant — Inscription
-        </p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn">
+      {/* Panneau Gauche - Photo en plein écran */}
+      <div className="hidden md:block md:flex-1 relative">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/teacher_login_bg.png')` }}
+        />
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-background to-transparent" />
       </div>
 
-      <Card className="w-full max-w-xl shadow-2xl border-slate-800 bg-slate-950/60 backdrop-blur-md text-slate-100">
-        <CardHeader className="border-b border-slate-800/80 pb-6">
-          <CardTitle className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-blue-500" /> Profil Enseignant
-          </CardTitle>
-          <CardDescription className="text-xs text-slate-400">
-            Créez votre compte enseignant pour saisir les notes et les absences.
-          </CardDescription>
-        </CardHeader>
-
-        <form onSubmit={handleSubmit}>
-          <CardContent className="py-6 space-y-4">
-            {/* Civilité */}
-            <div className="space-y-2">
-              <SelectCivilite
-                value={form.civilite}
-                onChange={(val) => setForm(prev => ({ ...prev, civilite: val }))}
-                error={errors.civilite}
-              />
-            </div>
-
-            {/* Prénom & Nom */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="prenom" className="text-slate-300">Prénom *</Label>
-                <Input
-                  id="prenom"
-                  placeholder="Ex: Kouame"
-                  value={form.prenom}
-                  onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-blue-500 text-slate-100 focus-visible:ring-blue-500/20"
-                />
-                {errors.prenom && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.prenom}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nom" className="text-slate-300">Nom de famille *</Label>
-                <Input
-                  id="nom"
-                  placeholder="Ex: N&apos;guessan"
-                  value={form.nom}
-                  onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-blue-500 text-slate-100 focus-visible:ring-blue-500/20"
-                />
-                {errors.nom && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nom}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Email professionnel */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">Votre adresse e-mail professionnelle *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="enseignant@ecole.ci"
-                value={form.email}
-                onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-                className="bg-slate-900 border-slate-800 focus:border-blue-500 text-slate-100 focus-visible:ring-blue-500/20"
-              />
-              {errors.email && (
-                <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.email}
-                </p>
-              )}
-            </div>
-
-            {/* Téléphone */}
-            <div className="space-y-2">
-              <Label htmlFor="telephone" className="text-slate-300">Numéro de téléphone mobile *</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={form.phonePrefix}
-                  onValueChange={(val) => setForm(prev => ({ ...prev, phonePrefix: val }))}
-                >
-                  <SelectTrigger className="w-[110px] bg-slate-900 border-slate-800 text-slate-200 shrink-0">
-                    <SelectValue placeholder="CI" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-950 border-slate-800 text-slate-200">
-                    {WEST_AFRICAN_COUNTRIES.map((c) => (
-                      <SelectItem key={c.value} value={c.prefix}>
-                        {c.value} ({c.prefix})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  id="telephone"
-                  placeholder="07 48 85 96 12"
-                  value={form.telephone}
-                  onChange={(e) => setForm(prev => ({ ...prev, telephone: e.target.value }))}
-                  className="flex-1 bg-slate-900 border-slate-800 focus:border-blue-500 text-slate-100 focus-visible:ring-blue-500/20"
-                />
-              </div>
-              {errors.telephone && (
-                <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephone}
-                </p>
-              )}
-            </div>
-
-            {/* Code d'invitation (Optionnel) */}
-            <div className="space-y-2">
-              <Label htmlFor="codeInvitation" className="text-slate-300">Code d&apos;invitation (Optionnel)</Label>
-              <Input
-                id="codeInvitation"
-                placeholder="Ex: A1B2C3D4"
-                value={form.codeInvitation}
-                onChange={(e) => setForm(prev => ({ ...prev, codeInvitation: e.target.value }))}
-                className="bg-slate-900 border-slate-800 focus:border-blue-500 text-slate-100 focus-visible:ring-blue-500/20"
-              />
-              <span className="text-[10px] text-slate-500 block leading-tight">
-                Saisissez le code d&apos;invitation fourni par votre Directeur. Si vous n&apos;en avez pas, vous pourrez être lié à votre école ultérieurement.
-              </span>
-            </div>
-
-            {/* Mots de passe */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="motDePasse" className="text-slate-300">Mot de passe *</Label>
-                <Input
-                  id="motDePasse"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.motDePasse}
-                  onChange={(e) => setForm(prev => ({ ...prev, motDePasse: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-blue-500 text-slate-100 focus-visible:ring-blue-500/20"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmationMotDePasse" className="text-slate-300">Confirmer *</Label>
-                <Input
-                  id="confirmationMotDePasse"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.confirmationMotDePasse}
-                  onChange={(e) => setForm(prev => ({ ...prev, confirmationMotDePasse: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-blue-500 text-slate-100 focus-visible:ring-blue-500/20"
-                />
-                {errors.confirmationMotDePasse && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1 mt-1">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.confirmationMotDePasse}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Force du mot de passe */}
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 space-y-2">
-              <h3 className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-                <ShieldCheck className="h-4.5 w-4.5 text-blue-400" /> Force du mot de passe
-              </h3>
-              <div className="space-y-1">
-                {handlePasswordRules().map((rule, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs">
-                    {rule.met ? (
-                      <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <X className="h-4 w-4 text-slate-600 shrink-0" />
-                    )}
-                    <span className={rule.met ? "text-slate-300" : "text-slate-500"}>
-                      {rule.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex items-center justify-between border-t border-slate-800/80 pt-6">
-            <Link
-              href="/register"
-              className="text-xs text-slate-400 hover:text-slate-300 flex items-center gap-1 font-semibold animate-pulse"
-            >
-              <ArrowLeft className="h-4 w-4" /> Autre profil
+      {/* Panneau Droit - Formulaire */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 md:max-w-xl lg:max-w-2xl bg-white dark:bg-background border-l border-border dark:border-border/40 shadow-sm overflow-y-auto max-h-screen">
+        <div className="space-y-6 my-auto">
+          {/* Brand Header */}
+          <div className="flex flex-col items-center md:items-start">
+            <Link href="/" className="mb-3 transition-transform duration-300 hover:scale-105 inline-block">
+              <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
             </Link>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
-            >
-              {isSubmitting ? (
-                <>
-                  Création... <Loader2 className="h-4 w-4 animate-spin" />
-                </>
-              ) : (
-                <>
-                  S&apos;inscrire
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-wide font-display">GestScol</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 text-center md:text-left font-medium">
+              Espace Enseignant — Inscription
+            </p>
+          </div>
 
-      <div className="mt-8 text-center space-y-2 text-xs text-slate-400">
-        <p>Déjà inscrit ? <Link href="/login/enseignant" className="text-blue-400 hover:text-blue-300 font-bold">Se connecter</Link></p>
-        <p className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
-          <PhoneCall className="h-3.5 w-3.5" /> Assistance technique GestScol : +225 05 86 03 79 74
-        </p>
+          <Card className="w-full shadow-lg border-slate-200/80 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200">
+            <CardHeader className="border-b border-slate-100 dark:border-border/60 pb-6">
+              <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 font-display">
+                <GraduationCap className="h-6 w-6 text-blue-600 dark:text-blue-450" /> Profil Enseignant
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                Créez votre compte enseignant pour saisir les notes et les absences.
+              </CardDescription>
+            </CardHeader>
+
+            <form onSubmit={handleSubmit}>
+              <CardContent className="py-6 space-y-4">
+                {/* Civilité */}
+                <div className="space-y-2">
+                  <SelectCivilite
+                    value={form.civilite}
+                    onChange={(val) => setForm(prev => ({ ...prev, civilite: val }))}
+                    error={errors.civilite}
+                  />
+                </div>
+
+                {/* Prénom & Nom */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prenom" className="text-slate-700 dark:text-slate-300">Prénom *</Label>
+                    <Input
+                      id="prenom"
+                      placeholder="Ex: Kouame"
+                      value={form.prenom}
+                      onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                    />
+                    {errors.prenom && (
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.prenom}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="nom" className="text-slate-700 dark:text-slate-300">Nom de famille *</Label>
+                    <Input
+                      id="nom"
+                      placeholder="Ex: N&apos;guessan"
+                      value={form.nom}
+                      onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                    />
+                    {errors.nom && (
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nom}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email professionnel */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">Votre adresse e-mail professionnelle *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="enseignant@ecole.ci"
+                    value={form.email}
+                    onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                  />
+                  {errors.email && (
+                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Téléphone */}
+                <div className="space-y-2">
+                  <Label htmlFor="telephone" className="text-slate-700 dark:text-slate-300">Numéro de téléphone mobile *</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={form.phonePrefix}
+                      onValueChange={(val) => setForm(prev => ({ ...prev, phonePrefix: val }))}
+                    >
+                      <SelectTrigger className="w-[110px] bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 shrink-0 rounded-xl">
+                        <SelectValue placeholder="CI" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100">
+                        {WEST_AFRICAN_COUNTRIES.map((c) => (
+                          <SelectItem key={c.value} value={c.prefix}>
+                            {c.value} ({c.prefix})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      id="telephone"
+                      placeholder="07 48 85 96 12"
+                      value={form.telephone}
+                      onChange={(e) => setForm(prev => ({ ...prev, telephone: e.target.value }))}
+                      className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                    />
+                  </div>
+                  {errors.telephone && (
+                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephone}
+                    </p>
+                  )}
+                </div>
+
+                {/* Code d'invitation (Optionnel) */}
+                <div className="space-y-2">
+                  <Label htmlFor="codeInvitation" className="text-slate-700 dark:text-slate-300">Code d&apos;invitation (Optionnel)</Label>
+                  <Input
+                    id="codeInvitation"
+                    placeholder="Ex: A1B2C3D4"
+                    value={form.codeInvitation}
+                    onChange={(e) => setForm(prev => ({ ...prev, codeInvitation: e.target.value }))}
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                  />
+                  <span className="text-[10px] text-slate-400 block leading-tight">
+                    Saisissez le code d&apos;invitation fourni par votre Directeur. Si vous n&apos;en avez pas, vous pourrez être lié à votre école ultérieurement.
+                  </span>
+                </div>
+
+                {/* Mots de passe */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="motDePasse" className="text-slate-700 dark:text-slate-300">Mot de passe *</Label>
+                    <Input
+                      id="motDePasse"
+                      type="password"
+                      placeholder="••••••••"
+                      value={form.motDePasse}
+                      onChange={(e) => setForm(prev => ({ ...prev, motDePasse: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmationMotDePasse" className="text-slate-700 dark:text-slate-300">Confirmer *</Label>
+                    <Input
+                      id="confirmationMotDePasse"
+                      type="password"
+                      placeholder="••••••••"
+                      value={form.confirmationMotDePasse}
+                      onChange={(e) => setForm(prev => ({ ...prev, confirmationMotDePasse: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                    />
+                    {errors.confirmationMotDePasse && (
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1 mt-1">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.confirmationMotDePasse}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Force du mot de passe */}
+                <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl p-4 space-y-2">
+                  <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                    <ShieldCheck className="h-4.5 w-4.5 text-blue-600 dark:text-blue-450" /> Force du mot de passe
+                  </h3>
+                  <div className="space-y-1">
+                    {handlePasswordRules().map((rule, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs">
+                        {rule.met ? (
+                          <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <X className="h-4 w-4 text-slate-350 dark:text-slate-500 shrink-0" />
+                        )}
+                        <span className={rule.met ? "text-slate-700 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}>
+                          {rule.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+
+              <CardFooter className="flex items-center justify-between border-t border-slate-100 dark:border-border/60 pt-6">
+                <Link
+                  href="/register"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Autre profil
+                </Link>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
+                >
+                  {isSubmitting ? (
+                    <>
+                      Création... <Loader2 className="h-4 w-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      S&apos;inscrire
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+
+        <div className="mt-8 text-center space-y-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-border/60 pt-4">
+          <p>Déjà inscrit ? <Link href="/login/enseignant" className="text-blue-600 hover:text-blue-700 font-bold hover:underline">Se connecter</Link></p>
+          <p className="flex items-center justify-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <PhoneCall className="h-3.5 w-3.5" /> Assistance technique GestScol : +225 05 86 03 79 74
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -321,446 +321,456 @@ export default function RegisterDirecteurPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden text-slate-200">
-      {/* Background accents */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px] -z-10" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-slate-500/5 rounded-full blur-[80px] -z-10" />
-
-      {/* Brand Header */}
-      <div className="mb-6 flex flex-col items-center">
-        <Link href="/register" className="mb-3 transition-transform duration-300 hover:scale-105 inline-block">
-          <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
-        </Link>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-wide">GestScol</h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 text-center font-medium max-w-sm">
-          Espace Directeur — Inscription en 2 étapes
-        </p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn">
+      {/* Panneau Gauche - Photo en plein écran */}
+      <div className="hidden md:block md:flex-1 relative">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/director_login_bg.png')` }}
+        />
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-background to-transparent" />
       </div>
 
-      <Card className="w-full max-w-xl shadow-2xl border-slate-800 bg-slate-950/60 backdrop-blur-md text-slate-100">
-        <CardHeader className="border-b border-slate-800/80 pb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl font-bold text-slate-100">
-                {step === 1 ? "Étape 1 : Vos Informations" : "Étape 2 : Votre École (Optionnel)"}
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-400">
-                {step === 1 
-                  ? "Créez vos identifiants d'administrateur principal."
-                  : "Vous pourrez configurer vos écoles plus tard si vous préférez."}
-              </CardDescription>
-            </div>
-            <div className="flex gap-1.5">
-              <div className={`h-2 rounded-full transition-all duration-300 ${step === 1 ? 'w-8 bg-emerald-500' : 'w-3 bg-slate-800'}`} />
-              <div className={`h-2 rounded-full transition-all duration-300 ${step === 2 ? 'w-8 bg-emerald-500' : 'w-3 bg-slate-800'}`} />
-            </div>
+      {/* Panneau Droit - Formulaire */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 md:max-w-xl lg:max-w-2xl bg-white dark:bg-background border-l border-border dark:border-border/40 shadow-sm overflow-y-auto max-h-screen">
+        <div className="space-y-6 my-auto">
+          {/* Brand Header */}
+          <div className="flex flex-col items-center md:items-start">
+            <Link href="/" className="mb-3 transition-transform duration-300 hover:scale-105 inline-block">
+              <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
+            </Link>
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-wide font-display">GestScol</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 text-center md:text-left font-medium">
+              Espace Directeur — Inscription en 2 étapes
+            </p>
           </div>
-        </CardHeader>
 
-        <form onSubmit={(e) => step === 1 ? (e.preventDefault(), nextStep()) : handleSubmit(e)}>
-          <CardContent className="py-6 space-y-5">
-            {step === 1 ? (
-              <>
-                {/* Civilité */}
-                <div className="space-y-2">
-                  <SelectCivilite
-                    value={form.civilite}
-                    onChange={(val) => setForm(prev => ({ ...prev, civilite: val }))}
-                    error={errors.civilite}
-                  />
+          <Card className="w-full shadow-lg border-slate-200/80 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200">
+            <CardHeader className="border-b border-slate-100 dark:border-border/60 pb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">
+                    {step === 1 ? "Étape 1 : Vos Informations" : "Étape 2 : Votre École (Optionnel)"}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                    {step === 1 
+                      ? "Créez vos identifiants d'administrateur principal."
+                      : "Vous pourrez configurer vos écoles plus tard si vous préférez."}
+                  </CardDescription>
                 </div>
-
-                {/* Nom et Prénom */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="prenom" className="text-slate-300">Prénom *</Label>
-                    <Input
-                      id="prenom"
-                      placeholder="Ex: Amenan"
-                      value={form.prenom}
-                      onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
-                      className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                    />
-                    {errors.prenom && (
-                      <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.prenom}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="nom" className="text-slate-300">Nom de famille *</Label>
-                    <Input
-                      id="nom"
-                      placeholder="Ex: Kouakou"
-                      value={form.nom}
-                      onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
-                      className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                    />
-                    {errors.nom && (
-                      <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nom}
-                      </p>
-                    )}
-                  </div>
+                <div className="flex gap-1.5">
+                  <div className={`h-2 rounded-full transition-all duration-300 ${step === 1 ? 'w-8 bg-emerald-600' : 'w-3 bg-slate-200 dark:bg-slate-800'}`} />
+                  <div className={`h-2 rounded-full transition-all duration-300 ${step === 2 ? 'w-8 bg-emerald-600' : 'w-3 bg-slate-200 dark:bg-slate-800'}`} />
                 </div>
+              </div>
+            </CardHeader>
 
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-300">Email professionnel *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="directeur@ecole.ci"
-                    value={form.email}
-                    onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                  />
-                  {errors.email && (
-                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.email}
-                    </p>
-                  )}
-                </div>
-
-                {/* Téléphone */}
-                <div className="space-y-2">
-                  <Label htmlFor="telephone" className="text-slate-300">Numéro de téléphone mobile *</Label>
-                  <div className="flex gap-2">
-                    <Select
-                      value={form.phonePrefix}
-                      onValueChange={(val) => setForm(prev => ({ ...prev, phonePrefix: val }))}
-                    >
-                      <SelectTrigger className="w-[110px] bg-slate-900 border-slate-800 text-slate-200 shrink-0">
-                        <SelectValue placeholder="CI" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-950 border-slate-800 text-slate-200">
-                        {WEST_AFRICAN_COUNTRIES.map((c) => (
-                          <SelectItem key={c.value} value={c.prefix}>
-                            {c.value} ({c.prefix})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      id="telephone"
-                      placeholder="07 48 85 96 12"
-                      value={form.telephone}
-                      onChange={(e) => setForm(prev => ({ ...prev, telephone: e.target.value }))}
-                      className="flex-1 bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                    />
-                  </div>
-                  {errors.telephone && (
-                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephone}
-                    </p>
-                  )}
-                </div>
-
-                {/* Mot de passe */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="motDePasse" className="text-slate-300">Mot de passe de sécurité *</Label>
-                    <Input
-                      id="motDePasse"
-                      type="password"
-                      placeholder="••••••••"
-                      value={form.motDePasse}
-                      onChange={(e) => setForm(prev => ({ ...prev, motDePasse: e.target.value }))}
-                      className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmationMotDePasse" className="text-slate-300">Confirmer le mot de passe *</Label>
-                    <Input
-                      id="confirmationMotDePasse"
-                      type="password"
-                      placeholder="••••••••"
-                      value={form.confirmationMotDePasse}
-                      onChange={(e) => setForm(prev => ({ ...prev, confirmationMotDePasse: e.target.value }))}
-                      className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                    />
-                    {errors.confirmationMotDePasse && (
-                      <p className="text-[11px] text-rose-400 flex items-center gap-1 mt-1">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.confirmationMotDePasse}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Password validation panel */}
-                <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 space-y-2.5">
-                  <h3 className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-                    <ShieldCheck className="h-4.5 w-4.5 text-emerald-400" /> Force du mot de passe (NIST 800-63B)
-                  </h3>
-                  <div className="space-y-1.5">
-                    {handlePasswordRules().map((rule, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs">
-                        {rule.met ? (
-                          <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                        ) : (
-                          <X className="h-4 w-4 text-slate-600 shrink-0" />
-                        )}
-                        <span className={rule.met ? "text-slate-300" : "text-slate-500"}>
-                          {rule.label}
-                        </span>
-                      </div>
-                    ))}
-                    <div className="flex items-center gap-2 text-xs pt-1.5 border-t border-slate-800/60">
-                      {isMatch ? (
-                        <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                      ) : (
-                        <X className="h-4 w-4 text-slate-600 shrink-0" />
-                      )}
-                      <span className={isMatch ? "text-slate-300" : "text-slate-500"}>
-                        Les deux mots de passe correspondent
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Étape 2 — Première école */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nomEcole" className="text-slate-300">Nom de l&apos;établissement *</Label>
-                    <Input
-                      id="nomEcole"
-                      placeholder="Ex: Groupe Scolaire Les Flamboyants"
-                      value={form.nomEcole}
-                      onChange={(e) => setForm(prev => ({ ...prev, nomEcole: e.target.value }))}
-                      className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                    />
-                    {errors.nomEcole && (
-                      <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nomEcole}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={(e) => step === 1 ? (e.preventDefault(), nextStep()) : handleSubmit(e)}>
+              <CardContent className="py-6 space-y-5">
+                {step === 1 ? (
+                  <>
+                    {/* Civilité */}
                     <div className="space-y-2">
-                      <Label htmlFor="villeEcole" className="text-slate-300">Ville / Commune *</Label>
-                      <Input
-                        id="villeEcole"
-                        placeholder="Ex: Abidjan Cocody"
-                        value={form.villeEcole}
-                        onChange={(e) => setForm(prev => ({ ...prev, villeEcole: e.target.value }))}
-                        className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                      />
-                      {errors.villeEcole && (
-                        <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                          <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.villeEcole}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="adresseEcole" className="text-slate-300">Adresse complète *</Label>
-                      <Input
-                        id="adresseEcole"
-                        placeholder="Ex: Riviera Palmeraie, Rue de la Paix"
-                        value={form.adresseEcole}
-                        onChange={(e) => setForm(prev => ({ ...prev, adresseEcole: e.target.value }))}
-                        className="bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
-                      />
-                      {errors.adresseEcole && (
-                        <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                          <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.adresseEcole}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="telephoneEcole" className="text-slate-300">Téléphone de l&apos;établissement *</Label>
-                    <div className="flex gap-2">
-                      <Select
-                        value={form.ecolePhonePrefix}
-                        onValueChange={(val) => setForm(prev => ({ ...prev, ecolePhonePrefix: val }))}
-                      >
-                        <SelectTrigger className="w-[110px] bg-slate-900 border-slate-800 text-slate-200 shrink-0">
-                          <SelectValue placeholder="CI" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-950 border-slate-800 text-slate-200">
-                          {WEST_AFRICAN_COUNTRIES.map((c) => (
-                            <SelectItem key={c.value} value={c.prefix}>
-                              {c.value} ({c.prefix})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        id="telephoneEcole"
-                        placeholder="07 48 85 96 12"
-                        value={form.telephoneEcole}
-                        onChange={(e) => setForm(prev => ({ ...prev, telephoneEcole: e.target.value }))}
-                        className="flex-1 bg-slate-900 border-slate-800 focus:border-emerald-500 text-slate-100 focus-visible:ring-emerald-500/20"
+                      <SelectCivilite
+                        value={form.civilite}
+                        onChange={(val) => setForm(prev => ({ ...prev, civilite: val }))}
+                        error={errors.civilite}
                       />
                     </div>
-                    {errors.telephoneEcole && (
-                      <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephoneEcole}
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Niveaux d'enseignement checkboxes */}
-                  <div className="space-y-2.5">
-                    <Label className="text-slate-300">Niveaux d&apos;enseignement *</Label>
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {niveauxOptions.map((opt) => {
-                        const isChecked = form.niveauxEcole.includes(opt.value as any)
-                        return (
-                          <div
-                            key={opt.value}
-                            onClick={() => {
-                              const alreadyChecked = form.niveauxEcole.includes(opt.value as any)
-                              const nextNiveaux = alreadyChecked
-                                ? form.niveauxEcole.filter(n => n !== opt.value)
-                                : [...form.niveauxEcole, opt.value as any]
-                              setForm(prev => ({ ...prev, niveauxEcole: nextNiveaux }))
-                            }}
-                            className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 flex items-center gap-3.5 ${
-                              isChecked
-                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 font-semibold'
-                                : 'bg-slate-900/60 border-slate-800 hover:bg-slate-900 text-slate-400'
-                            }`}
-                          >
-                            <div className={`h-4.5 w-4.5 rounded border flex items-center justify-center shrink-0 ${
-                              isChecked ? 'bg-emerald-500 border-emerald-500 text-slate-900' : 'border-slate-700 bg-slate-900'
-                            }`}>
-                              {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
-                            </div>
-                            <div className="flex-1">
-                              <p className={`text-xs font-bold ${isChecked ? 'text-slate-200' : 'text-slate-300'}`}>{opt.label}</p>
-                              <p className="text-[10px] text-slate-500 mt-0.5">{opt.description}</p>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    {errors.niveauxEcole && (
-                      <p className="text-[11px] text-rose-400 flex items-center gap-1 mt-1">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.niveauxEcole}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Logo de l'établissement */}
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">Logo de l&apos;établissement (Optionnel)</Label>
-                    <div className="flex items-center gap-4">
-                      <div className="h-16 w-16 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
-                        {form.logo ? (
-                          <img src={form.logo} alt="Logo preview" className="h-full w-full object-cover" />
-                        ) : (
-                          <Upload className="h-5 w-5 text-slate-500" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          id="logo-input-directeur"
-                          accept="image/png, image/jpeg, image/webp"
-                          onChange={handleLogoUpload}
-                          className="hidden"
+                    {/* Nom et Prénom */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="prenom" className="text-slate-700 dark:text-slate-300">Prénom *</Label>
+                        <Input
+                          id="prenom"
+                          placeholder="Ex: Amenan"
+                          value={form.prenom}
+                          onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
+                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById('logo-input-directeur')?.click()}
-                          className="bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-slate-200 text-xs rounded-xl"
-                        >
-                          Choisir une image
-                        </Button>
-                        <span className="text-[10px] text-slate-500 block mt-1 leading-normal">
-                          Format JPEG, PNG, WebP uniquement (Max. 1 Mo)
-                        </span>
+                        {errors.prenom && (
+                          <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.prenom}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="nom" className="text-slate-700 dark:text-slate-300">Nom de famille *</Label>
+                        <Input
+                          id="nom"
+                          placeholder="Ex: Kouakou"
+                          value={form.nom}
+                          onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
+                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                        />
+                        {errors.nom && (
+                          <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nom}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    {errors.logo && (
-                      <p className="text-[11px] text-rose-400 flex items-center gap-1 mt-1">
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.logo}
-                      </p>
-                    )}
-                  </div>
 
-                  <div className="p-4 bg-emerald-950/20 border border-emerald-900/30 rounded-xl text-xs text-emerald-400 leading-normal flex items-start gap-2.5 mt-2">
-                    <Building2 className="h-5 w-5 shrink-0 mt-0.5" />
-                    <p>
-                      La saisie de votre école est <strong>facultative</strong> à cette étape. Vous pouvez sauter cette étape et configurer vos écoles plus tard depuis votre console de gestion multi-établissement.
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">Email professionnel *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="directeur@ecole.ci"
+                        value={form.email}
+                        onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                      />
+                      {errors.email && (
+                        <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.email}
+                        </p>
+                      )}
+                    </div>
 
-          <CardFooter className="flex items-center justify-between border-t border-slate-800/80 pt-6">
-            {step === 1 ? (
-              <>
-                <Link
-                  href="/register"
-                  className="text-xs text-slate-400 hover:text-slate-300 flex items-center gap-1 font-semibold"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Retour
-                </Link>
-                <Button
-                  type="submit"
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
-                >
-                  Continuer <ArrowRight className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="text-xs text-slate-400 hover:text-slate-300 flex items-center gap-1 font-semibold"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Vos informations
-                </button>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={(e) => handleSubmit(e, true)}
-                    disabled={isSubmitting}
-                    className="text-slate-400 hover:text-slate-300 font-semibold"
-                  >
-                    Passer cette étape
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200 disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        Création... <Loader2 className="h-4 w-4 animate-spin" />
-                      </>
-                    ) : (
-                      <>
-                        Créer mon compte
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardFooter>
-        </form>
-      </Card>
+                    {/* Téléphone */}
+                    <div className="space-y-2">
+                      <Label htmlFor="telephone" className="text-slate-700 dark:text-slate-300">Numéro de téléphone mobile *</Label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={form.phonePrefix}
+                          onValueChange={(val) => setForm(prev => ({ ...prev, phonePrefix: val }))}
+                        >
+                           <SelectTrigger className="w-[110px] bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 shrink-0 rounded-xl">
+                             <SelectValue placeholder="CI" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100">
+                            {WEST_AFRICAN_COUNTRIES.map((c) => (
+                              <SelectItem key={c.value} value={c.prefix}>
+                                {c.value} ({c.prefix})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          id="telephone"
+                          placeholder="07 48 85 96 12"
+                          value={form.telephone}
+                          onChange={(e) => setForm(prev => ({ ...prev, telephone: e.target.value }))}
+                          className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                        />
+                      </div>
+                      {errors.telephone && (
+                        <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephone}
+                        </p>
+                      )}
+                    </div>
 
-      <div className="mt-8 text-center space-y-2 text-xs text-slate-400">
-        <p>Déjà inscrit ? <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-bold">Se connecter</Link></p>
-        <p className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
-          <PhoneCall className="h-3.5 w-3.5" /> Une question technique ? Contactez l&apos;assistance au +225 05 86 03 79 74
-        </p>
+                    {/* Mot de passe */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="motDePasse" className="text-slate-700 dark:text-slate-300">Mot de passe de sécurité *</Label>
+                        <Input
+                          id="motDePasse"
+                          type="password"
+                          placeholder="••••••••"
+                          value={form.motDePasse}
+                          onChange={(e) => setForm(prev => ({ ...prev, motDePasse: e.target.value }))}
+                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmationMotDePasse" className="text-slate-700 dark:text-slate-300">Confirmer le mot de passe *</Label>
+                        <Input
+                          id="confirmationMotDePasse"
+                          type="password"
+                          placeholder="••••••••"
+                          value={form.confirmationMotDePasse}
+                          onChange={(e) => setForm(prev => ({ ...prev, confirmationMotDePasse: e.target.value }))}
+                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                        />
+                        {errors.confirmationMotDePasse && (
+                          <p className="text-[11px] text-rose-600 flex items-center gap-1 mt-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.confirmationMotDePasse}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Password validation panel */}
+                    <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl p-4 space-y-2.5">
+                      <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                        <ShieldCheck className="h-4.5 w-4.5 text-emerald-600" /> Force du mot de passe (NIST 800-63B)
+                      </h3>
+                      <div className="space-y-1.5">
+                        {handlePasswordRules().map((rule, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-xs">
+                            {rule.met ? (
+                              <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                            ) : (
+                              <X className="h-4 w-4 text-slate-300 shrink-0" />
+                            )}
+                            <span className={rule.met ? "text-slate-700 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}>
+                              {rule.label}
+                            </span>
+                          </div>
+                        ))}
+                        <div className="flex items-center gap-2 text-xs pt-1.5 border-t border-slate-200 dark:border-border/60">
+                          {isMatch ? (
+                            <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                          ) : (
+                            <X className="h-4 w-4 text-slate-300 shrink-0" />
+                          )}
+                          <span className={isMatch ? "text-slate-700 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}>
+                            Les deux mots de passe correspondent
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Étape 2 — Première école */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nomEcole" className="text-slate-700 dark:text-slate-300">Nom de l&apos;établissement *</Label>
+                        <Input
+                          id="nomEcole"
+                          placeholder="Ex: Groupe Scolaire Les Flamboyants"
+                          value={form.nomEcole}
+                          onChange={(e) => setForm(prev => ({ ...prev, nomEcole: e.target.value }))}
+                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                        />
+                        {errors.nomEcole && (
+                          <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nomEcole}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="villeEcole" className="text-slate-700 dark:text-slate-300">Ville / Commune *</Label>
+                          <Input
+                            id="villeEcole"
+                            placeholder="Ex: Abidjan Cocody"
+                            value={form.villeEcole}
+                            onChange={(e) => setForm(prev => ({ ...prev, villeEcole: e.target.value }))}
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                          />
+                          {errors.villeEcole && (
+                            <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                              <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.villeEcole}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="adresseEcole" className="text-slate-700 dark:text-slate-300">Adresse complète *</Label>
+                          <Input
+                            id="adresseEcole"
+                            placeholder="Ex: Riviera Palmeraie, Rue de la Paix"
+                            value={form.adresseEcole}
+                            onChange={(e) => setForm(prev => ({ ...prev, adresseEcole: e.target.value }))}
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                          />
+                          {errors.adresseEcole && (
+                            <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                              <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.adresseEcole}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="telephoneEcole" className="text-slate-700 dark:text-slate-300">Téléphone de l&apos;établissement *</Label>
+                        <div className="flex gap-2">
+                          <Select
+                            value={form.ecolePhonePrefix}
+                            onValueChange={(val) => setForm(prev => ({ ...prev, ecolePhonePrefix: val }))}
+                          >
+                            <SelectTrigger className="w-[110px] bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 shrink-0 rounded-xl">
+                              <SelectValue placeholder="CI" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100">
+                              {WEST_AFRICAN_COUNTRIES.map((c) => (
+                                <SelectItem key={c.value} value={c.prefix}>
+                                  {c.value} ({c.prefix})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            id="telephoneEcole"
+                            placeholder="07 48 85 96 12"
+                            value={form.telephoneEcole}
+                            onChange={(e) => setForm(prev => ({ ...prev, telephoneEcole: e.target.value }))}
+                            className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-emerald-500 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 rounded-xl"
+                          />
+                        </div>
+                        {errors.telephoneEcole && (
+                          <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephoneEcole}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Niveaux d'enseignement checkboxes */}
+                      <div className="space-y-2.5">
+                        <Label className="text-slate-700 dark:text-slate-300">Niveaux d&apos;enseignement *</Label>
+                        <div className="grid grid-cols-1 gap-2.5">
+                          {niveauxOptions.map((opt) => {
+                            const isChecked = form.niveauxEcole.includes(opt.value as any)
+                            return (
+                              <div
+                                key={opt.value}
+                                onClick={() => {
+                                  const alreadyChecked = form.niveauxEcole.includes(opt.value as any)
+                                  const nextNiveaux = alreadyChecked
+                                    ? form.niveauxEcole.filter(n => n !== opt.value)
+                                    : [...form.niveauxEcole, opt.value as any]
+                                  setForm(prev => ({ ...prev, niveauxEcole: nextNiveaux }))
+                                }}
+                                className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 flex items-center gap-3.5 ${
+                                  isChecked
+                                    ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-500 text-emerald-700 dark:text-emerald-450 font-semibold shadow-sm shadow-emerald-500/5'
+                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-500 dark:text-slate-400'
+                                }`}
+                              >
+                                <div className={`h-4.5 w-4.5 rounded border flex items-center justify-center shrink-0 ${
+                                  isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 dark:border-border/60 bg-white dark:bg-slate-900'
+                                }`}>
+                                  {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                                </div>
+                                <div className="flex-1">
+                                  <p className={`text-xs font-bold ${isChecked ? 'text-slate-800 dark:text-slate-200' : 'text-slate-750 dark:text-slate-350'}`}>{opt.label}</p>
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{opt.description}</p>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        {errors.niveauxEcole && (
+                          <p className="text-[11px] text-rose-600 flex items-center gap-1 mt-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.niveauxEcole}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Logo de l'établissement */}
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 dark:text-slate-300">Logo de l&apos;établissement (Optionnel)</Label>
+                        <div className="flex items-center gap-4">
+                          <div className="h-16 w-16 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                            {form.logo ? (
+                              <img src={form.logo} alt="Logo preview" className="h-full w-full object-cover" />
+                            ) : (
+                              <Upload className="h-5 w-5 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              id="logo-input-directeur"
+                              accept="image/png, image/jpeg, image/webp"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => document.getElementById('logo-input-directeur')?.click()}
+                              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-850 text-xs rounded-xl"
+                            >
+                              Choisir une image
+                            </Button>
+                            <span className="text-[10px] text-slate-400 block mt-1 leading-normal">
+                              Format JPEG, PNG, WebP uniquement (Max. 1 Mo)
+                            </span>
+                          </div>
+                        </div>
+                        {errors.logo && (
+                          <p className="text-[11px] text-rose-600 flex items-center gap-1 mt-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.logo}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-250/20 dark:border-emerald-800/30 rounded-xl text-xs text-emerald-700 dark:text-emerald-400 leading-normal flex items-start gap-2.5 mt-2">
+                        <Building2 className="h-5 w-5 shrink-0 mt-0.5 text-emerald-600" />
+                        <p>
+                          La saisie de votre école est <strong>facultative</strong> à cette étape. Vous pouvez sauter cette étape et configurer vos écoles plus tard depuis votre console de gestion multi-établissement.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+
+              <CardFooter className="flex items-center justify-between border-t border-slate-100 dark:border-border/60 pt-6">
+                {step === 1 ? (
+                  <>
+                    <Link
+                      href="/register"
+                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" /> Retour
+                    </Link>
+                    <Button
+                      type="submit"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
+                    >
+                      Continuer <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" /> Vos informations
+                    </button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={(e) => handleSubmit(e, true)}
+                        disabled={isSubmitting}
+                        className="text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
+                      >
+                        Passer cette étape
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200 disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            Création... <Loader2 className="h-4 w-4 animate-spin" />
+                          </>
+                        ) : (
+                          <>
+                            Créer mon compte
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+
+        <div className="mt-8 text-center space-y-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-border/60 pt-4">
+          <p>Déjà inscrit ? <Link href="/login" className="text-emerald-600 hover:text-emerald-700 font-bold hover:underline">Se connecter</Link></p>
+          <p className="flex items-center justify-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <PhoneCall className="h-3.5 w-3.5" /> Une question technique ? Contactez l&apos;assistance au +225 05 86 03 79 74
+          </p>
+        </div>
       </div>
     </div>
   )

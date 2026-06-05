@@ -44,20 +44,20 @@ export default function ConfirmSuppressionEcole({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full bg-slate-950 border border-slate-800 text-slate-100">
+      <DialogContent className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-xl">
         <DialogHeader>
-          <div className="flex items-center gap-2 text-rose-500 mb-1">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 mb-1">
             <AlertTriangle className="h-5 w-5 animate-pulse shrink-0" />
             <DialogTitle className="text-lg font-bold">⚠️ Action Irréversible !</DialogTitle>
           </div>
-          <DialogDescription className="text-xs text-slate-400">
-            Vous êtes sur le point de supprimer définitivement l&apos;école <strong className="text-slate-200">{ecoleNom}</strong>.
+          <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
+            Vous êtes sur le point de supprimer définitivement l&apos;école <strong className="text-slate-900 dark:text-white">{ecoleNom}</strong>.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {/* Avertissement fort */}
-          <div className="bg-rose-950/20 border border-rose-900/30 rounded-xl p-4 text-xs text-rose-400 space-y-1.5 leading-normal">
+          <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl p-4 text-xs text-rose-700 dark:text-rose-400 space-y-1.5 leading-normal">
             <p className="font-bold">Les données suivantes seront supprimées définitivement :</p>
             <ul className="list-disc pl-4 space-y-0.5">
               <li>Tous les élèves de l&apos;établissement et leurs fiches de profil</li>
@@ -71,26 +71,26 @@ export default function ConfirmSuppressionEcole({
 
           {/* Saisie de validation */}
           <div className="space-y-2">
-            <Label htmlFor="confirm-nom-ecole" className="text-xs text-slate-300">
-              Pour confirmer, tapez le nom exact de l&apos;école : <strong className="text-slate-200">{ecoleNom}</strong>
+            <Label htmlFor="confirm-nom-ecole" className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+              Pour confirmer, tapez le nom exact de l&apos;école : <strong className="text-slate-900 dark:text-white">{ecoleNom}</strong>
             </Label>
             <Input
               id="confirm-nom-ecole"
               placeholder="Nom de l'établissement"
               value={typedNom}
               onChange={(e) => setTypedNom(e.target.value)}
-              className="bg-slate-900 border-slate-800 focus:border-rose-500 focus:ring-rose-500/20 text-slate-100"
+              className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-rose-500 text-slate-900 dark:text-white focus-visible:ring-rose-550/20 rounded-xl"
               autoComplete="off"
             />
           </div>
         </div>
 
-        <DialogFooter className="border-t border-slate-900/60 pt-4 flex gap-2 justify-end">
+        <DialogFooter className="border-t border-slate-100 dark:border-slate-800/60 pt-4 flex gap-2 justify-end">
           <Button
             type="button"
             variant="ghost"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-300 text-xs rounded-xl"
+            className="text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold"
           >
             Annuler
           </Button>

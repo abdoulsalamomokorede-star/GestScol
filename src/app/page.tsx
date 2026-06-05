@@ -24,6 +24,7 @@ import {
   Loader2
 } from 'lucide-react'
 import logoImg from '@/app/logo.png'
+import ThemeToggle from '@/components/layout/ThemeToggle'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -159,7 +160,7 @@ export default function LandingPage() {
       )}
 
       {/* --- EN-TÊTE DE PRESTIGE --- */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border/60 transition-all duration-300">
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-border/60 dark:border-border/40 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 cursor-pointer">
             <div className="transition-transform duration-300 hover:scale-105 shrink-0">
@@ -179,6 +180,7 @@ export default function LandingPage() {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger className="text-sm font-semibold text-text hover:text-primary transition-colors px-4 py-2 outline-none">
                 Se Connecter
@@ -207,44 +209,47 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Menu Mobile Button */}
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-text hover:bg-muted"
-            id="mobile-menu-btn"
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {/* Menu Mobile Button & ThemeToggle */}
+          <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-text hover:bg-muted"
+              id="mobile-menu-btn"
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Menu Mobile */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-b border-border/80 px-4 pt-2 pb-6 space-y-4 shadow-xl">
+          <div className="md:hidden bg-card border-b border-border/80 px-4 pt-2 pb-6 space-y-4 shadow-xl">
             <a 
               href="#features" 
               onClick={() => setMobileMenuOpen(false)}
-              className="block font-medium py-2 hover:text-primary"
+              className="block font-medium py-2 hover:text-primary text-text"
             >
               Fonctionnalités
             </a>
             <a 
               href="#demo" 
               onClick={() => setMobileMenuOpen(false)}
-              className="block font-medium py-2 hover:text-primary"
+              className="block font-medium py-2 hover:text-primary text-text"
             >
               Démo Interactive
             </a>
             <a 
               href="#pricing" 
               onClick={() => setMobileMenuOpen(false)}
-              className="block font-medium py-2 hover:text-primary"
+              className="block font-medium py-2 hover:text-primary text-text"
             >
               Tarification
             </a>
             <a 
               href="#faq" 
               onClick={() => setMobileMenuOpen(false)}
-              className="block font-medium py-2 hover:text-primary"
+              className="block font-medium py-2 hover:text-primary text-text"
             >
               FAQ
             </a>
@@ -283,12 +288,12 @@ export default function LandingPage() {
       </header>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
+      <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden isolate">
         {/* Dégradé de fond de la section */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-white -z-20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/35 via-slate-50/10 to-white dark:from-background dark:via-muted/20 dark:to-background -z-20" />
         {/* Image de fond thématique premium */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35 -z-10"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-45 dark:opacity-15 -z-10"
           style={{ backgroundImage: `url('/landing_bg.png')` }}
         />
         {/* Cercles luminescents en arrière-plan */}
@@ -299,40 +304,43 @@ export default function LandingPage() {
             
             {/* Colonne gauche : Textes & Appels à l'action */}
             <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/80 text-emerald-700 text-xs font-semibold border border-emerald-200/50 shadow-sm backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold border border-emerald-200/50 shadow-sm backdrop-blur-sm">
                 <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
                 <span>La plateforme n°1 des écoles privées d'Afrique de l'Ouest</span>
               </div>
               
-              <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl font-display font-extrabold leading-tight tracking-tight text-slate-900">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl font-display font-extrabold leading-tight tracking-tight text-slate-900 dark:text-slate-50">
                 Pilotez votre établissement avec{' '}
                 <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent font-extrabold">
                   intelligence
                 </span>
               </h1>
               
-              <p className="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-slate-800 dark:text-slate-300 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
                 La solution complète pour digitaliser la gestion de votre école : encaissements Wave & Mobile Money, bulletins conformes MENA, et suivi en temps réel pour les parents.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
                 <Link 
                   href="/register" 
-                  className="w-full sm:w-auto inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-semibold text-base px-8 py-4 rounded-full shadow-xl shadow-slate-900/10 transition-all gap-2 group border border-slate-800"
+                  className="relative w-full sm:w-auto inline-flex items-center justify-center bg-gradient-to-r from-primary to-emerald-600 text-white font-semibold text-base px-8 py-4 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group gap-2"
                   id="hero-primary-cta"
                 >
-                  Créer un compte
-                  <ArrowRight className="h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
+                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500 to-primary-dark transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    Créer un compte
+                    <ArrowRight className="h-5 w-5 transform group-hover:translate-x-1.5 transition-transform duration-300" />
+                  </span>
                 </Link>
                 <a 
                   href="#demo" 
-                  className="w-full sm:w-auto inline-flex items-center justify-center bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-base px-8 py-4 rounded-full shadow-sm hover:shadow transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center bg-white dark:bg-slate-900/60 backdrop-blur-sm border border-slate-200 dark:border-border text-slate-800 dark:text-slate-200 font-semibold text-base px-8 py-4 rounded-full shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] hover:text-primary dark:hover:text-primary hover:border-primary/30 dark:hover:border-primary/30 transition-all duration-300"
                   id="hero-secondary-cta"
                 >
                   Découvrir la démo
                 </a>
               </div>
-              <p className="text-xs text-slate-500 pt-2">
+              <p className="text-xs text-slate-600 dark:text-slate-400 pt-2">
                 Déjà inscrit ? <Link href="/login" className="text-primary hover:underline font-bold transition-all">Se connecter</Link>
               </p>
             </div>
@@ -344,7 +352,7 @@ export default function LandingPage() {
                 <div className="absolute -inset-1.5 bg-gradient-to-r from-primary to-accent rounded-3xl blur opacity-30 animate-pulse" />
                 
                 {/* Cadre de l'image de prestige */}
-                <div className="relative bg-white p-2 sm:p-3 rounded-3xl border border-slate-200 shadow-2xl">
+                <div className="relative bg-white dark:bg-card p-2 sm:p-3 rounded-3xl border border-slate-200 dark:border-border shadow-2xl">
                   <img 
                     src="/landing_hero.png" 
                     alt="GestScol Éducation Afrique" 
@@ -352,24 +360,24 @@ export default function LandingPage() {
                   />
                   
                   {/* Badge flottant 1 : Paiements Wave & Mobile Money */}
-                  <div className="absolute bottom-6 -left-6 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3 shadow-lg flex items-center gap-3 animate-fadeIn max-w-[220px] hidden sm:flex">
-                    <div className="bg-sky-100 p-2 rounded-xl text-sky-600">
+                  <div className="absolute bottom-6 -left-6 bg-white/95 dark:bg-card/95 backdrop-blur-md border border-slate-200 dark:border-border rounded-2xl p-3 shadow-lg flex items-center gap-3 animate-fadeIn max-w-[220px] hidden sm:flex">
+                    <div className="bg-sky-100 dark:bg-sky-950/30 p-2 rounded-xl text-sky-600 dark:text-sky-400">
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Paiements</p>
-                      <p className="text-xs font-bold text-slate-800">Wave & MoMo</p>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Paiements</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Wave & MoMo</p>
                     </div>
                   </div>
 
                   {/* Badge flottant 2 : Conformité MENA */}
-                  <div className="absolute top-6 -right-6 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-3 shadow-lg flex items-center gap-3 animate-fadeIn max-w-[220px] hidden sm:flex">
-                    <div className="bg-emerald-100 p-2 rounded-xl text-emerald-600">
+                  <div className="absolute top-6 -right-6 bg-white/95 dark:bg-card/95 backdrop-blur-md border border-slate-200 dark:border-border rounded-2xl p-3 shadow-lg flex items-center gap-3 animate-fadeIn max-w-[220px] hidden sm:flex">
+                    <div className="bg-emerald-100 dark:bg-emerald-950/30 p-2 rounded-xl text-emerald-600 dark:text-emerald-400">
                       <GraduationCap className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bulletins</p>
-                      <p className="text-xs font-bold text-slate-800">Conforme MENA</p>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Bulletins</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Conforme MENA</p>
                     </div>
                   </div>
                 </div>
@@ -379,80 +387,80 @@ export default function LandingPage() {
           </div>
 
           {/* Avantages en 4 mots clés */}
-          <div className="flex flex-wrap justify-center lg:justify-start gap-6 pt-16 text-xs font-semibold text-slate-500 uppercase tracking-widest border-t border-slate-100 mt-16">
+          <div className="flex flex-wrap justify-center lg:justify-start gap-6 pt-16 text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-widest border-t border-slate-100 dark:border-border mt-16">
             <div className="flex items-center justify-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Conforme MENA</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-pulse" /> <span>Conforme MENA</span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Wave & Mobile Money</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-pulse" /> <span>Wave & Mobile Money</span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Mobile-First</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-pulse" /> <span>Mobile-First</span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span>Cloud Sécurisé</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-pulse" /> <span>Cloud Sécurisé</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* --- GRILLE DE FONCTIONNALITÉS MÉTIERS --- */}
-      <section id="features" className="py-24 bg-white border-y border-slate-100 relative">
+      <section id="features" className="py-24 bg-white dark:bg-background border-y border-slate-100 dark:border-border relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 max-w-2xl mx-auto mb-20">
             <h2 className="text-xs uppercase tracking-widest text-emerald-500 font-bold">Fonctionnalités Clés</h2>
-            <p className="text-3xl md:text-4xl font-display font-bold text-slate-900">Spécialement taillé pour les établissements d'Afrique Francophone</p>
-            <p className="text-slate-500 text-lg">Une gestion fluide pour les directeurs, rapide pour les enseignants et transparente pour les parents.</p>
+            <p className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-slate-100">Spécialement taillé pour les établissements d'Afrique Francophone</p>
+            <p className="text-slate-500 dark:text-slate-400 text-lg">Une gestion fluide pour les directeurs, rapide pour les enseignants et transparente pour les parents.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Carte 1 : Scolarité & Mobile Money */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 hover:border-emerald-200 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
+            <div className="bg-white dark:bg-card rounded-3xl p-8 border border-slate-200 dark:border-border hover:border-emerald-200 dark:hover:border-emerald-500/50 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
               <div className="space-y-5">
-                <div className="bg-emerald-50 p-4 rounded-2xl w-fit text-emerald-600 group-hover:scale-110 transition-transform">
+                <div className="bg-emerald-50 dark:bg-emerald-950/20 p-4 rounded-2xl w-fit text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                   <CreditCard className="h-7 w-7" />
                 </div>
-                <h3 className="text-xl font-display font-bold text-slate-900">Scolarité Multi-Versements</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h3 className="text-xl font-display font-bold text-slate-900 dark:text-slate-100">Scolarité Multi-Versements</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                   Enregistrez des acomptes réguliers en FCFA. Support des opérateurs locaux (Wave, Orange, MTN) avec reçus de caisse certifiés A4 prêts pour l'impression ou l'exportation PDF.
                 </p>
               </div>
             </div>
 
             {/* Carte 2 : Bulletins Trimestriels MENA */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 hover:border-accent/30 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
+            <div className="bg-white dark:bg-card rounded-3xl p-8 border border-slate-200 dark:border-border hover:border-accent/30 dark:hover:border-accent/50 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
               <div className="space-y-5">
-                <div className="bg-amber-50 p-4 rounded-2xl w-fit text-amber-600 group-hover:scale-110 transition-transform">
+                <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-2xl w-fit text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
                   <FileText className="h-7 w-7" />
                 </div>
-                <h3 className="text-xl font-display font-bold text-slate-900">Bulletins PDF Officiels</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h3 className="text-xl font-display font-bold text-slate-900 dark:text-slate-100">Bulletins PDF Officiels</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                   Calcul automatisé des moyennes pondérées selon les coefficients de chaque classe. Classement des rangs instantané et impression globale ou individuelle en A4.
                 </p>
               </div>
             </div>
 
             {/* Carte 3 : Absences (Appel Rapide) */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 hover:border-teal-200 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
+            <div className="bg-white dark:bg-card rounded-3xl p-8 border border-slate-200 dark:border-border hover:border-teal-200 dark:hover:border-teal-500/50 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
               <div className="space-y-5">
-                <div className="bg-teal-50 p-4 rounded-2xl w-fit text-teal-600 group-hover:scale-110 transition-transform">
+                <div className="bg-teal-50 dark:bg-teal-950/20 p-4 rounded-2xl w-fit text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform">
                   <UserCheck className="h-7 w-7" />
                 </div>
-                <h3 className="text-xl font-display font-bold text-slate-900">Feuille d'Appel Mobile</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h3 className="text-xl font-display font-bold text-slate-900 dark:text-slate-100">Feuille d'Appel Mobile</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                   Faites l'appel en classe par séance (Matin/Après-midi) en 1 minute. Le directeur justifie les motifs à la volée, et le parent reçoit un rapport d'assiduité en temps réel.
                 </p>
               </div>
             </div>
 
             {/* Carte 4 : Espace Parent Mobile-First */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 hover:border-blue-200 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
+            <div className="bg-white dark:bg-card rounded-3xl p-8 border border-slate-200 dark:border-border hover:border-blue-200 dark:hover:border-blue-500/50 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
               <div className="space-y-5">
-                <div className="bg-blue-50 p-4 rounded-2xl w-fit text-blue-600 group-hover:scale-110 transition-transform">
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-2xl w-fit text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
                   <Smartphone className="h-7 w-7" />
                 </div>
-                <h3 className="text-xl font-display font-bold text-slate-900">Suivi pour les Familles</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <h3 className="text-xl font-display font-bold text-slate-900 dark:text-slate-100">Suivi pour les Familles</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                   Un espace parent allégé et mobile-first. Les familles suivent le solde scolarité, déchargent des reçus officiels, et signalent des motifs d'absences directement depuis leur smartphone.
                 </p>
               </div>
@@ -462,7 +470,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- SECTION DÉMO INTERACTIVE --- */}
-      <section id="demo" className="py-20 bg-gradient-to-b from-background to-slate-50 relative scroll-mt-10">
+      <section id="demo" className="py-20 bg-gradient-to-b from-background to-slate-50 dark:to-slate-950/40 relative scroll-mt-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center space-y-4 max-w-2xl mx-auto mb-12">
@@ -471,7 +479,7 @@ export default function LandingPage() {
             <p className="text-muted-foreground">Cliquez sur les onglets ci-dessous pour tester l'application directement dans votre navigateur web.</p>
           </div>
 
-          <div className="bg-white rounded-3xl border border-border/70 shadow-2xl overflow-hidden max-w-5xl mx-auto">
+          <div className="bg-white dark:bg-card rounded-3xl border border-border/70 dark:border-border/80 shadow-2xl overflow-hidden max-w-5xl mx-auto">
             {/* Header de la fausse app */}
             <div className="bg-slate-900 px-6 py-4 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center gap-2">
@@ -487,13 +495,13 @@ export default function LandingPage() {
             </div>
 
             {/* Onglets sélecteurs */}
-            <div className="bg-slate-50 border-b border-border/80 flex flex-wrap">
+            <div className="bg-slate-50 dark:bg-slate-900/60 border-b border-border/80 dark:border-border flex flex-wrap">
               <button 
                 onClick={() => setActiveTab('scolarite')}
                 className={`px-6 py-4 flex items-center gap-2 border-b-2 font-semibold text-sm transition-all outline-none ${
                   activeTab === 'scolarite' 
-                    ? 'border-primary text-primary bg-white' 
-                    : 'border-transparent text-muted-foreground hover:bg-slate-100 hover:text-text'
+                    ? 'border-primary text-primary bg-white dark:bg-card' 
+                    : 'border-transparent text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-text dark:hover:text-slate-100'
                 }`}
                 id="demo-tab-scolarite"
               >
@@ -504,8 +512,8 @@ export default function LandingPage() {
                 onClick={() => setActiveTab('bulletins')}
                 className={`px-6 py-4 flex items-center gap-2 border-b-2 font-semibold text-sm transition-all outline-none ${
                   activeTab === 'bulletins' 
-                    ? 'border-primary text-primary bg-white' 
-                    : 'border-transparent text-muted-foreground hover:bg-slate-100 hover:text-text'
+                    ? 'border-primary text-primary bg-white dark:bg-card' 
+                    : 'border-transparent text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-text dark:hover:text-slate-100'
                 }`}
                 id="demo-tab-bulletins"
               >
@@ -516,8 +524,8 @@ export default function LandingPage() {
                 onClick={() => setActiveTab('appel')}
                 className={`px-6 py-4 flex items-center gap-2 border-b-2 font-semibold text-sm transition-all outline-none ${
                   activeTab === 'appel' 
-                    ? 'border-primary text-primary bg-white' 
-                    : 'border-transparent text-muted-foreground hover:bg-slate-100 hover:text-text'
+                    ? 'border-primary text-primary bg-white dark:bg-card' 
+                    : 'border-transparent text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-text dark:hover:text-slate-100'
                 }`}
                 id="demo-tab-appel"
               >
@@ -534,7 +542,7 @@ export default function LandingPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
                   
                   {/* Partie gauche : Formulaire simulation paiement */}
-                  <div className="lg:col-span-1 bg-slate-50 p-5 rounded-2xl border border-border/80 space-y-4">
+                  <div className="lg:col-span-1 bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl border border-border/80 dark:border-border space-y-4">
                     <h4 className="font-semibold text-sm text-text flex items-center gap-1.5">
                       <CreditCard className="h-4 w-4 text-primary" />
                       Simuler un encaissement
@@ -550,7 +558,7 @@ export default function LandingPage() {
                           value={selectedDemoEleveId} 
                           onValueChange={setSelectedDemoEleveId}
                         >
-                          <SelectTrigger className="w-full bg-white border border-border rounded-lg text-xs h-10 px-3 outline-none focus:ring-1 focus:ring-primary">
+                          <SelectTrigger className="w-full bg-white dark:bg-slate-900 border border-border rounded-lg text-xs h-10 px-3 outline-none focus:ring-1 focus:ring-primary">
                             <SelectValue placeholder="Choisir un élève" />
                           </SelectTrigger>
                           <SelectContent>
@@ -571,7 +579,7 @@ export default function LandingPage() {
                             value={paymentAmount}
                             onChange={(e) => setPaymentAmount(Math.max(1000, Number(e.target.value)))}
                             max={selectedEleveForPayment ? selectedEleveForPayment.montantDu - selectedEleveForPayment.montantPaye : 70000}
-                            className="w-full bg-white border border-border rounded-lg text-xs p-2.5 pr-14 outline-none focus:ring-1 focus:ring-primary font-mono font-bold"
+                            className="w-full bg-white dark:bg-slate-900 border border-border rounded-lg text-xs p-2.5 pr-14 outline-none focus:ring-1 focus:ring-primary font-mono font-bold"
                           />
                           <span className="absolute right-3 top-2.5 text-[10px] font-bold text-muted-foreground">FCFA</span>
                         </div>
@@ -585,8 +593,8 @@ export default function LandingPage() {
                             onClick={() => setPaymentOperator('wave')}
                             className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all text-center ${
                               paymentOperator === 'wave' 
-                                ? 'bg-sky-50 text-sky-700 border-sky-300 shadow-sm' 
-                                : 'bg-white border-border text-muted-foreground hover:bg-slate-50'
+                                ? 'bg-sky-50 dark:bg-sky-950/20 text-sky-700 dark:text-sky-400 border-sky-300 dark:border-sky-800 shadow-sm' 
+                                : 'bg-white dark:bg-slate-900 border-border dark:border-border text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800'
                             }`}
                           >
                             Wave
@@ -596,8 +604,8 @@ export default function LandingPage() {
                             onClick={() => setPaymentOperator('orange')}
                             className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all text-center ${
                               paymentOperator === 'orange' 
-                                ? 'bg-orange-50 text-orange-700 border-orange-300 shadow-sm' 
-                                : 'bg-white border-border text-muted-foreground hover:bg-slate-50'
+                                ? 'bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 border-orange-300 dark:border-orange-800 shadow-sm' 
+                                : 'bg-white dark:bg-slate-900 border-border dark:border-border text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800'
                             }`}
                           >
                             Orange
@@ -607,8 +615,8 @@ export default function LandingPage() {
                             onClick={() => setPaymentOperator('mtn')}
                             className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all text-center ${
                               paymentOperator === 'mtn' 
-                                ? 'bg-yellow-50 text-yellow-700 border-yellow-300 shadow-sm' 
-                                : 'bg-white border-border text-muted-foreground hover:bg-slate-50'
+                                ? 'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-800 shadow-sm' 
+                                : 'bg-white dark:bg-slate-900 border-border dark:border-border text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800'
                             }`}
                           >
                             MTN
@@ -618,8 +626,8 @@ export default function LandingPage() {
                             onClick={() => setPaymentOperator('especes')}
                             className={`p-1.5 rounded-lg border text-[10px] font-bold transition-all text-center ${
                               paymentOperator === 'especes' 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 shadow-sm' 
-                                : 'bg-white border-border text-muted-foreground hover:bg-slate-50'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm' 
+                                : 'bg-white dark:bg-slate-900 border-border dark:border-border text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800'
                             }`}
                           >
                             Espèces
@@ -650,13 +658,13 @@ export default function LandingPage() {
                   <div className="lg:col-span-2 space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="font-semibold text-sm text-text">Scolarité de la classe : CM2 A (Démo)</h4>
-                      <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-muted-foreground font-semibold uppercase tracking-wider">Trimestre 1</span>
+                      <span className="text-[10px] bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded text-muted-foreground font-semibold uppercase tracking-wider">Trimestre 1</span>
                     </div>
 
                     <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs text-left">
-                          <thead className="bg-slate-50 text-muted-foreground font-semibold uppercase text-[10px] tracking-wider border-b border-border">
+                          <thead className="bg-slate-50 dark:bg-slate-900/60 text-muted-foreground font-semibold uppercase text-[10px] tracking-wider border-b border-border">
                             <tr>
                               <th className="p-3">Élève</th>
                               <th className="p-3">Total dû</th>
@@ -669,7 +677,7 @@ export default function LandingPage() {
                             {demoEleves.map(eleve => {
                               const remaining = eleve.montantDu - eleve.montantPaye
                               return (
-                                <tr key={eleve.id} className="hover:bg-slate-50/50 transition-colors">
+                                <tr key={eleve.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                   <td className="p-3 font-semibold text-text">{eleve.nom}</td>
                                   <td className="p-3 font-mono">{formatCFA(eleve.montantDu)}</td>
                                   <td className="p-3 font-mono text-emerald-600 font-semibold">{formatCFA(eleve.montantPaye)}</td>
@@ -678,11 +686,11 @@ export default function LandingPage() {
                                   </td>
                                   <td className="p-3">
                                     {eleve.paiementStatut === 'paye' ? (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">Payé</span>
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800">Payé</span>
                                     ) : eleve.paiementStatut === 'partiel' ? (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-200">Acompte</span>
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800">Acompte</span>
                                     ) : (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-rose-50 text-rose-700 border-rose-200">Non payé</span>
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800">Non payé</span>
                                     )}
                                   </td>
                                 </tr>
@@ -693,12 +701,12 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 text-emerald-800 font-medium">
+                    <div className="bg-emerald-50/50 dark:bg-emerald-950/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-950/35 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400 font-medium">
                         <ShieldCheck className="h-4 w-4 text-emerald-600" />
                         <span>Toutes les transactions sont enregistrées dans le store persistant.</span>
                       </div>
-                      <span className="text-[10px] font-mono text-emerald-700 font-bold bg-white px-2 py-1 rounded shadow-sm border border-emerald-200/50">
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold bg-white dark:bg-slate-900 px-2 py-1 rounded shadow-sm border border-emerald-200/50 dark:border-emerald-800/50">
                         Total Encaissé : {formatCFA(demoEleves.reduce((acc, e) => acc + e.montantPaye, 0))}
                       </span>
                     </div>
@@ -844,7 +852,7 @@ export default function LandingPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
                   
                   {/* Partie gauche : statistiques d'appel */}
-                  <div className="lg:col-span-1 bg-slate-50 p-5 rounded-2xl border border-border/80 flex flex-col justify-between">
+                  <div className="lg:col-span-1 bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl border border-border/80 dark:border-border flex flex-col justify-between">
                     <div className="space-y-3">
                       <h4 className="font-semibold text-sm text-text flex items-center gap-1.5">
                         <UserCheck className="h-4 w-4 text-primary" />
@@ -857,7 +865,7 @@ export default function LandingPage() {
 
                     <div className="py-6 flex flex-col items-center justify-center space-y-2">
                       {/* Indicateur circulaire en CSS simple */}
-                      <div className="relative w-28 h-28 flex items-center justify-center rounded-full border-4 border-slate-100 bg-white shadow-inner">
+                      <div className="relative w-28 h-28 flex items-center justify-center rounded-full border-4 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner">
                         <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin-slow opacity-20" />
                         <div className="text-center">
                           <span className="text-3xl font-mono font-bold text-primary">{attendanceRate}%</span>
@@ -888,13 +896,13 @@ export default function LandingPage() {
                       <div className="flex gap-2">
                         <button 
                           onClick={() => setDemoEleves(prev => prev.map(e => ({ ...e, statutAppel: 'present' })))}
-                          className="bg-white hover:bg-slate-100 border border-border text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors"
+                          className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-border dark:border-border text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors"
                         >
                           Tous Présents
                         </button>
                         <button 
                           onClick={() => setDemoEleves(prev => prev.map(e => ({ ...e, statutAppel: 'absent' })))}
-                          className="bg-white hover:bg-slate-100 border border-border text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors"
+                          className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-border dark:border-border text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors"
                         >
                           Tous Absents
                         </button>
@@ -904,7 +912,7 @@ export default function LandingPage() {
                     <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                       <div className="divide-y divide-border/60">
                         {demoEleves.map(eleve => (
-                          <div key={eleve.id} className="p-3 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                          <div key={eleve.id} className="p-3 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                             <div>
                               <p className="text-xs font-semibold text-text">{eleve.nom}</p>
                               <p className="text-[9px] text-muted-foreground font-mono">{eleve.matricule}</p>
@@ -913,8 +921,8 @@ export default function LandingPage() {
                             <div className="flex items-center gap-3">
                               <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
                                 eleve.statutAppel === 'present' 
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                  : 'bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
                               }`}>
                                 {eleve.statutAppel === 'present' ? 'Présent' : 'Absent'}
                               </span>
@@ -923,8 +931,8 @@ export default function LandingPage() {
                                 onClick={() => toggleDemoAppel(eleve.id)}
                                 className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border transition-all ${
                                   eleve.statutAppel === 'present'
-                                    ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
-                                    : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                                    ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40'
+                                    : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
                                 }`}
                               >
                                 {eleve.statutAppel === 'present' ? 'Marquer Absent' : 'Marquer Présent'}
@@ -969,7 +977,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- PRICING --- */}
-      <section id="pricing" className="py-20 bg-white">
+      <section id="pricing" className="py-20 bg-white dark:bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 max-w-2xl mx-auto mb-16">
             <h2 className="text-xs uppercase tracking-widest text-primary font-bold">Tarification Transparente</h2>
@@ -979,10 +987,10 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Plan Gratuit */}
-            <div className="bg-background rounded-3xl p-8 border border-border/60 hover:border-slate-300 transition-all flex flex-col justify-between space-y-8 shadow-sm">
+            <div className="bg-background dark:bg-card rounded-3xl p-8 border border-border/60 dark:border-border/80 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-8 shadow-sm">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider">Formule Gratuite</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider">Formule Gratuite</span>
                 </div>
                 <div className="space-y-1">
                   <p className="text-4xl font-display font-bold text-text">0 FCFA</p>
@@ -1006,7 +1014,7 @@ export default function LandingPage() {
 
               <Link 
                 href="/register?plan=gratuit" 
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-center py-3.5 rounded-xl text-sm transition-all"
+                className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-center py-3.5 rounded-xl text-sm transition-all"
                 id="pricing-free-cta"
               >
                 Commencer Gratuitement
@@ -1014,7 +1022,7 @@ export default function LandingPage() {
             </div>
 
             {/* Plan Standard (Recommandé) */}
-            <div className="bg-gradient-to-b from-white to-emerald-50/10 rounded-3xl p-8 border-2 border-primary transition-all flex flex-col justify-between space-y-8 shadow-md relative">
+            <div className="bg-gradient-to-b from-white to-emerald-50/10 dark:from-card dark:to-emerald-950/5 rounded-3xl p-8 border-2 border-primary transition-all flex flex-col justify-between space-y-8 shadow-md relative">
               <div className="absolute -top-3.5 right-6 bg-primary text-white font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-400 shadow-md">
                 <Check className="h-3 w-3 inline-block mr-1" /> Recommandé
               </div>
@@ -1056,13 +1064,13 @@ export default function LandingPage() {
             </div>
 
             {/* Plan Premium */}
-            <div className="bg-background rounded-3xl p-8 border border-border/60 hover:border-slate-300 transition-all flex flex-col justify-between space-y-8 shadow-sm relative">
+            <div className="bg-background dark:bg-card rounded-3xl p-8 border border-border/60 dark:border-border/80 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-8 shadow-sm relative">
               <div className="absolute -top-3.5 right-6 bg-accent text-white font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border border-amber-400 shadow-md">
                 Premium
               </div>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider">Formule Premium</span>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider">Formule Premium</span>
                 </div>
                 <div className="space-y-1">
                   <p className="text-4xl font-display font-bold text-text">250 000 FCFA</p>
@@ -1090,7 +1098,7 @@ export default function LandingPage() {
 
               <Link 
                 href="/register?plan=premium" 
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-center py-3.5 rounded-xl text-sm transition-all"
+                className="w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold text-center py-3.5 rounded-xl text-sm transition-all"
                 id="pricing-premium-cta"
               >
                 Choisir Premium
@@ -1101,24 +1109,24 @@ export default function LandingPage() {
       </section>
 
       {/* --- SECTION FAQ --- */}
-      <section id="faq" className="py-24 bg-slate-50 border-t border-slate-200 scroll-mt-10">
+      <section id="faq" className="py-24 bg-slate-50 dark:bg-slate-900/30 border-t border-slate-200 dark:border-border scroll-mt-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-xs uppercase tracking-widest text-emerald-500 font-bold">Une question ?</h2>
-            <h3 className="text-3xl font-display font-bold text-slate-900">Questions fréquemment posées</h3>
-            <p className="text-slate-500">Voici toutes les réponses aux interrogations de nos futurs établissements partenaires.</p>
+            <h3 className="text-3xl font-display font-bold text-slate-900 dark:text-slate-100">Questions fréquemment posées</h3>
+            <p className="text-slate-500 dark:text-slate-400">Voici toutes les réponses aux interrogations de nos futurs établissements partenaires.</p>
           </div>
 
           <div className="space-y-4">
             {faqs.map((faq, idx) => (
               <div 
                 key={idx} 
-                className="bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all shadow-sm hover:shadow"
+                className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border overflow-hidden transition-all shadow-sm hover:shadow"
               >
                 <button 
                   onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
-                  className="w-full text-left p-6 font-semibold text-sm sm:text-base text-slate-900 flex items-center justify-between gap-4 outline-none hover:bg-slate-50/50 transition-colors"
+                  className="w-full text-left p-6 font-semibold text-sm sm:text-base text-slate-900 dark:text-slate-100 flex items-center justify-between gap-4 outline-none hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
                   id={`faq-btn-${idx}`}
                 >
                   <span>{faq.q}</span>
@@ -1127,7 +1135,7 @@ export default function LandingPage() {
                   }`} />
                 </button>
                 {openFaqIndex === idx && (
-                  <div className="px-6 pb-6 text-xs sm:text-sm text-slate-500 leading-relaxed border-t border-slate-100 pt-4 animate-slideDown">
+                  <div className="px-6 pb-6 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-border pt-4 animate-slideDown">
                     {faq.a}
                   </div>
                 )}
@@ -1135,12 +1143,12 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-6 text-center mt-12 space-y-3">
-            <p className="font-semibold text-sm text-emerald-800 flex items-center justify-center gap-1.5">
+          <div className="bg-emerald-50 dark:bg-emerald-950/10 rounded-2xl border border-emerald-100 dark:border-emerald-950/20 p-6 text-center mt-12 space-y-3">
+            <p className="font-semibold text-sm text-emerald-800 dark:text-emerald-400 flex items-center justify-center gap-1.5">
               <MessageSquare className="h-4.5 w-4.5 text-emerald-600" />
               Des besoins spécifiques ou besoin d'une présentation privée ?
             </p>
-            <p className="text-xs text-emerald-600/80">
+            <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">
               Notre équipe d'assistance basée à Abidjan est à votre écoute pour organiser une démonstration sur place ou en visioconférence.
             </p>
             <div className="pt-2">
@@ -1148,7 +1156,7 @@ export default function LandingPage() {
                 href="https://wa.me/2250586037974" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs px-4 py-2 rounded-lg border border-emerald-200 shadow-sm transition-all"
+                className="inline-flex items-center gap-1 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs px-4 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 shadow-sm transition-all"
                 id="contact-support-faq"
               >
                 Contacter notre conseiller WhatsApp

@@ -222,11 +222,11 @@ export default function ParentLoginPage() {
           style={{ backgroundImage: `url('/parent_login_bg.png')` }}
         />
         {/* Un léger dégradé blanc sur le bord droit uniquement pour fusionner avec la bordure du formulaire */}
-        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-background to-transparent" />
       </div>
 
       {/* Panneau Droit - Formulaire et Identité de marque sur fond blanc clair */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 md:max-w-md lg:max-w-lg xl:max-w-xl bg-white border-l border-border shadow-sm">
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 md:max-w-md lg:max-w-lg xl:max-w-xl bg-white dark:bg-card border-l border-border dark:border-border/40 shadow-sm">
         <div className="space-y-6 my-auto">
           <div className="flex flex-col items-center md:items-start">
             <Link href="/" className="mb-4 transition-transform duration-300 hover:scale-105 cursor-pointer">
@@ -237,7 +237,7 @@ export default function ParentLoginPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold border border-blue-200/50">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/35 text-blue-600 dark:text-blue-400 text-xs font-semibold border border-blue-200/50">
               <Sparkles className="h-3.5 w-3.5" />
               <span>Portail Famille</span>
             </div>
@@ -247,8 +247,8 @@ export default function ParentLoginPage() {
           </div>
 
           <Card className="w-full shadow-lg border-border/50">
-            <CardHeader className="space-y-1 text-center bg-blue-50/50 border-b border-blue-100 rounded-t-xl pb-4">
-              <CardTitle className="text-xl font-bold text-blue-600">Connexion</CardTitle>
+            <CardHeader className="space-y-1 text-center bg-blue-50/50 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40 rounded-t-xl pb-4">
+              <CardTitle className="text-xl font-bold text-blue-600 dark:text-blue-400">Connexion</CardTitle>
               <CardDescription>
                 Connectez-vous pour suivre la scolarité de vos enfants
               </CardDescription>

@@ -238,19 +238,19 @@ export default function RegisterParentPage() {
     const hasLinkedChildren = successData.count > 0
 
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 py-12 text-slate-200">
-        <Card className="w-full max-w-md shadow-2xl border-slate-800 bg-slate-950/60 backdrop-blur-md text-slate-100 text-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 py-12 text-slate-800 dark:text-slate-200 animate-fadeIn">
+        <Card className="w-full max-w-md shadow-2xl border-slate-200 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200 text-center">
           <CardContent className="pt-8 pb-6 flex flex-col items-center space-y-4">
             {hasLinkedChildren ? (
               <>
-                <div className="h-16 w-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-2">
-                  <CheckCircle2 className="h-10 w-10" />
+                <div className="h-16 w-16 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-2 border border-emerald-100 dark:border-emerald-900/30">
+                  <CheckCircle2 className="h-10 w-10 animate-bounce" />
                 </div>
-                <h1 className="text-2xl font-bold">Compte Connecté !</h1>
-                <p className="text-sm text-slate-400 leading-relaxed px-2">
+                <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100">Compte Connecté !</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-2">
                   Votre compte Parent a été créé avec succès et lié automatiquement à <strong>{successData.count} enfant(s)</strong> référencé(s) dans le système.
                 </p>
-                <div className="p-4 bg-emerald-950/20 border border-emerald-900/30 rounded-xl text-xs text-left text-emerald-400 w-full">
+                <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-250/20 dark:border-emerald-900/40 rounded-xl text-xs text-left text-emerald-700 dark:text-emerald-400 w-full">
                   <p className="font-bold">Liaison automatique réussie !</p>
                   <p className="mt-1">
                     Vos identifiants ont été validés. Vous pouvez désormais vous connecter pour suivre les notes, absences, paiements et bulletins de vos enfants.
@@ -259,14 +259,14 @@ export default function RegisterParentPage() {
               </>
             ) : (
               <>
-                <div className="h-16 w-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-2">
+                <div className="h-16 w-16 bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-450 rounded-full flex items-center justify-center mb-2 border border-amber-100 dark:border-amber-900/30">
                   <AlertTriangle className="h-10 w-10" />
                 </div>
-                <h1 className="text-2xl font-bold">Compte créé avec alerte</h1>
-                <p className="text-sm text-slate-400 leading-relaxed px-2">
+                <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100">Compte créé avec alerte</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-2">
                   Votre compte Parent a bien été créé, mais <strong>aucun élève n&apos;est actuellement associé</strong> à l&apos;adresse email <strong>{form.email}</strong>.
                 </p>
-                <div className="p-4 bg-amber-950/20 border border-amber-900/30 rounded-xl text-xs text-left text-amber-400 w-full">
+                <div className="p-4 bg-amber-50/50 dark:bg-amber-950/30 border border-amber-250/20 dark:border-amber-900/40 rounded-xl text-xs text-left text-amber-700 dark:text-amber-400 w-full">
                   <p className="font-bold">Que faire ?</p>
                   <p className="mt-1">
                     Contactez l&apos;établissement de votre enfant pour qu&apos;il enregistre votre adresse e-mail correcte (<strong>{form.email}</strong>) dans la fiche élève.
@@ -288,218 +288,228 @@ export default function RegisterParentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden text-slate-200">
-      {/* Background accents */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-[100px] -z-10" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-slate-500/5 rounded-full blur-[80px] -z-10" />
-
-      {/* Brand Header */}
-      <div className="mb-6 flex flex-col items-center">
-        <Link href="/register" className="mb-3 transition-transform duration-300 hover:scale-105 inline-block">
-          <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
-        </Link>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-wide">GestScol</h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 text-center font-medium max-w-sm">
-          Espace Parent — Inscription
-        </p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn">
+      {/* Panneau Gauche - Photo en plein écran */}
+      <div className="hidden md:block md:flex-1 relative">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/parent_login_bg.png')` }}
+        />
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-background to-transparent" />
       </div>
 
-      <Card className="w-full max-w-xl shadow-2xl border-slate-800 bg-slate-950/60 backdrop-blur-md text-slate-100">
-        <CardHeader className="border-b border-slate-800/80 pb-6">
-          <CardTitle className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <Users className="h-6 w-6 text-amber-500" /> Profil Parent
-          </CardTitle>
-          <CardDescription className="text-xs text-slate-400">
-            Créez votre compte pour suivre les résultats et la scolarité de vos enfants.
-          </CardDescription>
-        </CardHeader>
-
-        <form onSubmit={handleSubmit}>
-          <CardContent className="py-6 space-y-4">
-            {/* Civilité */}
-            <div className="space-y-2">
-              <SelectCivilite
-                value={form.civilite}
-                onChange={(val) => setForm(prev => ({ ...prev, civilite: val }))}
-                error={errors.civilite}
-              />
-            </div>
-
-            {/* Prénom & Nom */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="prenom" className="text-slate-300">Prénom *</Label>
-                <Input
-                  id="prenom"
-                  placeholder="Ex: Mireille"
-                  value={form.prenom}
-                  onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-amber-500 text-slate-100 focus-visible:ring-amber-500/20"
-                />
-                {errors.prenom && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.prenom}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nom" className="text-slate-300">Nom de famille *</Label>
-                <Input
-                  id="nom"
-                  placeholder="Ex: Akossi"
-                  value={form.nom}
-                  onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-amber-500 text-slate-100 focus-visible:ring-amber-500/20"
-                />
-                {errors.nom && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nom}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Email de contact */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">Votre adresse e-mail *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="parent@ecole.ci"
-                value={form.email}
-                onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-                className="bg-slate-900 border-slate-800 focus:border-amber-500 text-slate-100 focus-visible:ring-amber-500/20"
-              />
-              <span className="text-[10px] text-emerald-400 font-semibold block leading-tight">
-                ⚠️ Utilisez impérativement l&apos;adresse email que vous avez fournie à l&apos;école de votre enfant.
-              </span>
-              {errors.email && (
-                <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.email}
-                </p>
-              )}
-            </div>
-
-            {/* Téléphone */}
-            <div className="space-y-2">
-              <Label htmlFor="telephone" className="text-slate-300">Numéro de téléphone mobile *</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={form.phonePrefix}
-                  onValueChange={(val) => setForm(prev => ({ ...prev, phonePrefix: val }))}
-                >
-                  <SelectTrigger className="w-[110px] bg-slate-900 border-slate-800 text-slate-200 shrink-0">
-                    <SelectValue placeholder="CI" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-950 border-slate-800 text-slate-200">
-                    {WEST_AFRICAN_COUNTRIES.map((c) => (
-                      <SelectItem key={c.value} value={c.prefix}>
-                        {c.value} ({c.prefix})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  id="telephone"
-                  placeholder="07 48 85 96 12"
-                  value={form.telephone}
-                  onChange={(e) => setForm(prev => ({ ...prev, telephone: e.target.value }))}
-                  className="flex-1 bg-slate-900 border-slate-800 focus:border-amber-500 text-slate-100 focus-visible:ring-amber-500/20"
-                />
-              </div>
-              {errors.telephone && (
-                <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephone}
-                </p>
-              )}
-            </div>
-
-            {/* Mots de passe */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="motDePasse" className="text-slate-300">Mot de passe *</Label>
-                <Input
-                  id="motDePasse"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.motDePasse}
-                  onChange={(e) => setForm(prev => ({ ...prev, motDePasse: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-amber-500 text-slate-100 focus-visible:ring-amber-500/20"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmationMotDePasse" className="text-slate-300">Confirmer *</Label>
-                <Input
-                  id="confirmationMotDePasse"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.confirmationMotDePasse}
-                  onChange={(e) => setForm(prev => ({ ...prev, confirmationMotDePasse: e.target.value }))}
-                  className="bg-slate-900 border-slate-800 focus:border-amber-500 text-slate-100 focus-visible:ring-amber-500/20"
-                />
-                {errors.confirmationMotDePasse && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1 mt-1">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.confirmationMotDePasse}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Force du mot de passe */}
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 space-y-2">
-              <h3 className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-                <ShieldCheck className="h-4.5 w-4.5 text-amber-400" /> Force du mot de passe
-              </h3>
-              <div className="space-y-1">
-                {handlePasswordRules().map((rule, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs">
-                    {rule.met ? (
-                      <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <X className="h-4 w-4 text-slate-600 shrink-0" />
-                    )}
-                    <span className={rule.met ? "text-slate-300" : "text-slate-500"}>
-                      {rule.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex items-center justify-between border-t border-slate-800/80 pt-6">
-            <Link
-              href="/register"
-              className="text-xs text-slate-400 hover:text-slate-300 flex items-center gap-1 font-semibold"
-            >
-              <ArrowLeft className="h-4 w-4" /> Autre profil
+      {/* Panneau Droit - Formulaire */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 md:max-w-xl lg:max-w-2xl bg-white dark:bg-background border-l border-border dark:border-border/40 shadow-sm overflow-y-auto max-h-screen">
+        <div className="space-y-6 my-auto">
+          {/* Brand Header */}
+          <div className="flex flex-col items-center md:items-start">
+            <Link href="/" className="mb-3 transition-transform duration-300 hover:scale-105 inline-block">
+              <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
             </Link>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
-            >
-              {isSubmitting ? (
-                <>
-                  Création... <Loader2 className="h-4 w-4 animate-spin" />
-                </>
-              ) : (
-                <>
-                  S&apos;inscrire
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-wide font-display">GestScol</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 text-center md:text-left font-medium">
+              Espace Parent — Inscription
+            </p>
+          </div>
 
-      <div className="mt-8 text-center space-y-2 text-xs text-slate-400">
-        <p>Déjà inscrit ? <Link href="/login/parent" className="text-amber-500 hover:text-amber-400 font-bold">Se connecter</Link></p>
-        <p className="flex items-center justify-center gap-1 text-[11px] text-slate-500">
-          <PhoneCall className="h-3.5 w-3.5" /> Support GestScol : +225 05 86 03 79 74
-        </p>
+          <Card className="w-full shadow-lg border-slate-200/80 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200">
+            <CardHeader className="border-b border-slate-100 dark:border-border/60 pb-6">
+              <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 font-display">
+                <Users className="h-6 w-6 text-amber-600 dark:text-amber-450" /> Profil Parent
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                Créez votre compte pour suivre les résultats et la scolarité de vos enfants.
+              </CardDescription>
+            </CardHeader>
+
+            <form onSubmit={handleSubmit}>
+              <CardContent className="py-6 space-y-4">
+                {/* Civilité */}
+                <div className="space-y-2">
+                  <SelectCivilite
+                    value={form.civilite}
+                    onChange={(val) => setForm(prev => ({ ...prev, civilite: val }))}
+                    error={errors.civilite}
+                  />
+                </div>
+
+                {/* Prénom & Nom */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prenom" className="text-slate-700 dark:text-slate-300">Prénom *</Label>
+                    <Input
+                      id="prenom"
+                      placeholder="Ex: Mireille"
+                      value={form.prenom}
+                      onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-amber-500 text-slate-900 dark:text-slate-100 focus-visible:ring-amber-500/20 rounded-xl"
+                    />
+                    {errors.prenom && (
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.prenom}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="nom" className="text-slate-700 dark:text-slate-300">Nom de famille *</Label>
+                    <Input
+                      id="nom"
+                      placeholder="Ex: Akossi"
+                      value={form.nom}
+                      onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-amber-500 text-slate-900 dark:text-slate-100 focus-visible:ring-amber-500/20 rounded-xl"
+                    />
+                    {errors.nom && (
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nom}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email de contact */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">Votre adresse e-mail *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="parent@ecole.ci"
+                    value={form.email}
+                    onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-amber-500 text-slate-900 dark:text-slate-100 focus-visible:ring-amber-500/20 rounded-xl"
+                  />
+                  <span className="text-[10px] text-emerald-600 font-semibold block leading-tight">
+                    ⚠️ Utilisez impérativement l&apos;adresse email que vous avez fournie à l&apos;école de votre enfant.
+                  </span>
+                  {errors.email && (
+                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Téléphone */}
+                <div className="space-y-2">
+                  <Label htmlFor="telephone" className="text-slate-700 dark:text-slate-300">Numéro de téléphone mobile *</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={form.phonePrefix}
+                      onValueChange={(val) => setForm(prev => ({ ...prev, phonePrefix: val }))}
+                    >
+                      <SelectTrigger className="w-[110px] bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 shrink-0 rounded-xl">
+                        <SelectValue placeholder="CI" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100">
+                        {WEST_AFRICAN_COUNTRIES.map((c) => (
+                          <SelectItem key={c.value} value={c.prefix}>
+                            {c.value} ({c.prefix})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      id="telephone"
+                      placeholder="07 48 85 96 12"
+                      value={form.telephone}
+                      onChange={(e) => setForm(prev => ({ ...prev, telephone: e.target.value }))}
+                      className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-amber-500 text-slate-900 dark:text-slate-100 focus-visible:ring-amber-500/20 rounded-xl"
+                    />
+                  </div>
+                  {errors.telephone && (
+                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephone}
+                    </p>
+                  )}
+                </div>
+
+                {/* Mots de passe */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="motDePasse" className="text-slate-700 dark:text-slate-300">Mot de passe *</Label>
+                    <Input
+                      id="motDePasse"
+                      type="password"
+                      placeholder="••••••••"
+                      value={form.motDePasse}
+                      onChange={(e) => setForm(prev => ({ ...prev, motDePasse: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-amber-500 text-slate-900 dark:text-slate-100 focus-visible:ring-amber-500/20 rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmationMotDePasse" className="text-slate-700 dark:text-slate-300">Confirmer *</Label>
+                    <Input
+                      id="confirmationMotDePasse"
+                      type="password"
+                      placeholder="••••••••"
+                      value={form.confirmationMotDePasse}
+                      onChange={(e) => setForm(prev => ({ ...prev, confirmationMotDePasse: e.target.value }))}
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-amber-500 text-slate-900 dark:text-slate-100 focus-visible:ring-amber-500/20 rounded-xl"
+                    />
+                    {errors.confirmationMotDePasse && (
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1 mt-1">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.confirmationMotDePasse}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Force du mot de passe */}
+                <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl p-4 space-y-2">
+                  <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                    <ShieldCheck className="h-4.5 w-4.5 text-amber-600 dark:text-amber-450" /> Force du mot de passe
+                  </h3>
+                  <div className="space-y-1">
+                    {handlePasswordRules().map((rule, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs">
+                        {rule.met ? (
+                          <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <X className="h-4 w-4 text-slate-350 dark:text-slate-500 shrink-0" />
+                        )}
+                        <span className={rule.met ? "text-slate-700 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}>
+                          {rule.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+
+              <CardFooter className="flex items-center justify-between border-t border-slate-100 dark:border-border/60 pt-6">
+                <Link
+                  href="/register"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Autre profil
+                </Link>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-amber-500 hover:bg-amber-650 text-slate-950 font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
+                >
+                  {isSubmitting ? (
+                    <>
+                      Création... <Loader2 className="h-4 w-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      S&apos;inscrire
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+
+        <div className="mt-8 text-center space-y-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-border/60 pt-4">
+          <p>Déjà inscrit ? <Link href="/login/parent" className="text-amber-600 hover:text-amber-700 font-bold hover:underline">Se connecter</Link></p>
+          <p className="flex items-center justify-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <PhoneCall className="h-3.5 w-3.5" /> Support GestScol : +225 05 86 03 79 74
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -375,7 +375,7 @@ export default function AbonnementPage() {
                     ? 'ring-2 ring-emerald-600 bg-gradient-to-b ' + plan.bgGradient
                     : plan.id === 'premium'
                     ? 'ring-2 ring-amber-500 bg-gradient-to-b ' + plan.bgGradient
-                    : 'bg-slate-50'
+                    : 'bg-slate-50 dark:bg-slate-900/50'
                   : 'bg-card'
               }`}
             >
@@ -383,10 +383,10 @@ export default function AbonnementPage() {
               <div className="p-6 pb-2">
                 <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
                   plan.id === 'gratuit' 
-                    ? 'bg-slate-100 text-slate-500 border border-slate-200' 
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60' 
                     : plan.id === 'standard'
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                    : 'bg-amber-50 text-amber-600 border border-amber-100'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30'
+                    : 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30'
                 }`}>
                   {plan.id === 'gratuit' ? 'Formule Gratuite' : plan.id === 'standard' ? 'Formule Standard' : 'Formule Premium'}
                 </span>
@@ -398,7 +398,7 @@ export default function AbonnementPage() {
                   <span className="text-4xl font-extrabold font-display text-text">
                     {plan.prix === 0 ? '0 FCFA' : formatCFA(plan.prix)}
                   </span>
-                  <span className="text-xs text-slate-500 font-semibold mt-1">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
                     {plan.prix === 0 ? 'Gratuit à vie' : 'par établissement / an'}
                   </span>
                 </div>
@@ -411,13 +411,13 @@ export default function AbonnementPage() {
               <CardContent className="p-6 flex-1 space-y-4 border-t border-border/40">
                 <ul className="space-y-3.5">
                   {plan.features.map((feat, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-xs text-slate-700 leading-relaxed font-medium">
+                    <li key={idx} className="flex items-start gap-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                       <div className={`p-0.5 rounded-full shrink-0 mt-0.5 ${
                         plan.id === 'gratuit' 
-                          ? 'bg-slate-100 text-slate-500' 
+                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' 
                           : plan.id === 'standard'
-                          ? 'bg-emerald-100 text-emerald-600'
-                          : 'bg-amber-100 text-amber-600'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/35 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-amber-100 dark:bg-amber-950/35 text-amber-600 dark:text-amber-400'
                       }`}>
                         <Check className="h-3.5 w-3.5" />
                       </div>
@@ -428,13 +428,13 @@ export default function AbonnementPage() {
               </CardContent>
 
               {/* Bouton de confirmation */}
-              <CardFooter className="p-6 border-t border-border/40 bg-slate-50/50">
+              <CardFooter className="p-6 border-t border-border/40 bg-slate-50/50 dark:bg-slate-900/50">
                 <Button
                   disabled={(isCurrent && !isExpired) || plan.id === 'gratuit'}
                   onClick={() => handleUpgradeClick(plan)}
                   className={`w-full font-bold text-xs py-5 rounded-xl ${
                     (isCurrent && !isExpired)
-                      ? 'bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-not-allowed border border-slate-200'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-not-allowed border border-slate-200 dark:border-border/40'
                       : plan.id === 'premium'
                       ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/20 hover:scale-[1.01] transition-all'
                       : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-600/20 hover:scale-[1.01] transition-all'
@@ -491,12 +491,12 @@ export default function AbonnementPage() {
 
       {/* Dialog CinetPay */}
       <Dialog open={isCinetPayOpen} onOpenChange={setIsCinetPayOpen}>
-        <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border border-amber-500/20 shadow-2xl rounded-xl">
+        <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border border-amber-500/20 shadow-2xl rounded-xl bg-white dark:bg-slate-950">
           
           {/* Header style CinetPay */}
           <div className="bg-[#1E293B] p-5 flex items-center justify-between text-white border-b border-white/10">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 bg-amber-500 rounded-lg flex items-center justify-center font-bold text-[#1E293B] text-lg font-display tracking-tighter">
+              <div className="h-8 w-8 bg-amber-50 rounded-lg flex items-center justify-center font-bold text-[#1E293B] text-lg font-display tracking-tighter">
                 CP
               </div>
               <div>
@@ -517,15 +517,15 @@ export default function AbonnementPage() {
             
             {/* Infos de facturation */}
             {selectedPlan && (
-              <div className="bg-slate-50 border border-slate-200/60 rounded-lg p-4 flex justify-between items-center">
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-border/40 rounded-lg p-4 flex justify-between items-center">
                 <div>
-                  <h4 className="font-bold text-slate-800 text-xs">{selectedPlan.nom}</h4>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-250 text-xs">{selectedPlan.nom}</h4>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
                     Abonnement Annuel GestScol
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-extrabold text-sm text-[#1E293B]">
+                  <p className="font-extrabold text-sm text-[#1E293B] dark:text-slate-100">
                     {formatCFA(selectedPlan.prix)}
                   </p>
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
@@ -538,17 +538,18 @@ export default function AbonnementPage() {
             {/* Étape 1 : Choix de l'opérateur mobile */}
             {paymentStep === 'select' && (
               <div className="space-y-4">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
                   1. Choisissez votre moyen de paiement :
                 </label>
                 <div className="grid grid-cols-2 gap-3.5">
                   {/* Wave */}
                   <button
+                    type="button"
                     onClick={() => setPaymentProvider('wave')}
                     className={`p-3.5 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
                       paymentProvider === 'wave'
                         ? 'border-[#1E90FF] bg-[#1E90FF]/5 text-[#1E90FF] shadow-sm'
-                        : 'border-slate-200 text-slate-600 hover:border-[#1E90FF]/30'
+                        : 'border-slate-200 dark:border-border/60 text-slate-600 dark:text-slate-400 hover:border-[#1E90FF]/30'
                     }`}
                   >
                     <Smartphone className="h-5 w-5 shrink-0" />
@@ -557,11 +558,12 @@ export default function AbonnementPage() {
 
                   {/* Orange Money */}
                   <button
+                    type="button"
                     onClick={() => setPaymentProvider('orange')}
                     className={`p-3.5 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
                       paymentProvider === 'orange'
                         ? 'border-[#FF6600] bg-[#FF6600]/5 text-[#FF6600] shadow-sm'
-                        : 'border-slate-200 text-slate-600 hover:border-[#FF6600]/30'
+                        : 'border-slate-200 dark:border-border/60 text-slate-600 dark:text-slate-400 hover:border-[#FF6600]/30'
                     }`}
                   >
                     <Smartphone className="h-5 w-5 shrink-0" />
@@ -570,11 +572,12 @@ export default function AbonnementPage() {
 
                   {/* MTN MoMo */}
                   <button
+                    type="button"
                     onClick={() => setPaymentProvider('mtn')}
                     className={`p-3.5 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
                       paymentProvider === 'mtn'
                         ? 'border-[#FFCC00] bg-[#FFCC00]/5 text-[#CC9900] shadow-sm'
-                        : 'border-slate-200 text-slate-600 hover:border-[#FFCC00]/30'
+                        : 'border-slate-200 dark:border-border/60 text-slate-600 dark:text-slate-400 hover:border-[#FFCC00]/30'
                     }`}
                   >
                     <Smartphone className="h-5 w-5 shrink-0" />
@@ -583,11 +586,12 @@ export default function AbonnementPage() {
 
                   {/* Moov Money */}
                   <button
+                    type="button"
                     onClick={() => setPaymentProvider('moov')}
                     className={`p-3.5 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all text-xs font-bold ${
                       paymentProvider === 'moov'
                         ? 'border-[#008080] bg-[#008080]/5 text-[#008080] shadow-sm'
-                        : 'border-slate-200 text-slate-600 hover:border-[#008080]/30'
+                        : 'border-slate-200 dark:border-border/60 text-slate-600 dark:text-slate-400 hover:border-[#008080]/30'
                     }`}
                   >
                     <Smartphone className="h-5 w-5 shrink-0" />
@@ -609,7 +613,7 @@ export default function AbonnementPage() {
             {paymentStep === 'input' && (
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
                     2. Saisissez votre numéro {paymentProvider.toUpperCase()} :
                   </label>
                   <div className="relative">
@@ -624,7 +628,7 @@ export default function AbonnementPage() {
                         setPhoneNumber(e.target.value)
                         if (phoneError) setPhoneError('')
                       }}
-                      className="pl-14 py-6 font-bold text-sm tracking-widest text-[#1E293B]"
+                      className="pl-14 py-6 font-bold text-sm tracking-widest text-[#1E293B] dark:text-slate-100 dark:bg-slate-950 dark:border-border/60"
                     />
                   </div>
                   {phoneError && (
@@ -642,7 +646,7 @@ export default function AbonnementPage() {
                   <Button
                     variant="outline"
                     onClick={() => setPaymentStep('select')}
-                    className="flex-1 py-6 border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs"
+                    className="flex-1 py-6 border-slate-200 dark:border-border/60 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-350 font-bold text-xs"
                   >
                     Retour
                   </Button>
@@ -661,7 +665,7 @@ export default function AbonnementPage() {
               <div className="py-10 flex flex-col items-center justify-center text-center space-y-5">
                 <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
                 <div className="space-y-2 max-w-[320px]">
-                  <h4 className="font-bold text-slate-800 text-sm">Paiement en cours</h4>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">Paiement en cours</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed animate-pulse">
                     {processingStatus}
                   </p>
@@ -676,7 +680,7 @@ export default function AbonnementPage() {
                   <CheckCircle2 className="h-10 w-10 text-success" />
                 </div>
                 <div className="space-y-2 max-w-[300px]">
-                  <h4 className="font-extrabold text-slate-800 text-lg">Paiement Validé !</h4>
+                  <h4 className="font-extrabold text-slate-800 dark:text-slate-200 text-lg">Paiement Validé !</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Votre abonnement à la formule **{selectedPlan.nom}** est maintenant actif ! Votre limite d'élèves est rehaussée à {selectedPlan.maxEleves === 99999 ? 'l\'infini' : selectedPlan.maxEleves}.
                   </p>
@@ -694,7 +698,7 @@ export default function AbonnementPage() {
           </div>
 
           {/* Footer sécurisé */}
-          <div className="bg-slate-50 p-4 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-muted-foreground">
+          <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-t border-slate-200/60 dark:border-border/40 flex items-center justify-between text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <ShieldCheck className="h-4 w-4 text-slate-400" />
               Cryptage SSL 256 bits

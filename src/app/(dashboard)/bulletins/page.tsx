@@ -466,7 +466,7 @@ export default function BulletinsPage() {
                   )
                 ) : (
                   <Button 
-                    className="w-full h-11 bg-slate-200 text-slate-500 shadow-sm flex items-center justify-center font-semibold cursor-not-allowed hover:bg-slate-200 rounded-xl"
+                    className="w-full h-11 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-450 shadow-sm flex items-center justify-center font-semibold cursor-not-allowed hover:bg-slate-300 dark:hover:bg-slate-700 rounded-xl border border-transparent dark:border-border/40"
                     onClick={() => toast({ title: "Bulletins vides", description: "Aucune note n'a été trouvée pour générer les bulletins.", variant: "destructive" })}
                   >
                     <Download className="mr-2 h-4 w-4" />
@@ -574,7 +574,7 @@ export default function BulletinsPage() {
 
           {/* LISTE DES BULLETINS */}
           <Card className="shadow-sm border-border bg-card overflow-hidden">
-            <CardHeader className="border-b border-border pb-4 bg-slate-50/50">
+            <CardHeader className="border-b border-border pb-4 bg-slate-50/50 dark:bg-slate-900/50">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <CardTitle className="text-lg font-bold font-display text-text">Bulletins Trimestriels</CardTitle>
@@ -588,7 +588,7 @@ export default function BulletinsPage() {
                   <input
                     type="text"
                     placeholder="Rechercher un élève..."
-                    className="w-full pl-9 pr-4 py-2 border border-border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-4 py-2 border border-border rounded-md text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-550 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -618,13 +618,13 @@ export default function BulletinsPage() {
                       const isPassing = b.moyenneGenerale >= 10
                       
                       // Style de rang
-                      let rangBadge = "bg-slate-100 text-slate-700"
-                      if (b.rangClasse === 1) rangBadge = "bg-amber-100 text-amber-800 font-bold border border-amber-200"
-                      else if (b.rangClasse === 2) rangBadge = "bg-slate-200 text-slate-800 font-bold"
-                      else if (b.rangClasse === 3) rangBadge = "bg-amber-50 text-amber-700 font-bold"
+                      let rangBadge = "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/40 dark:border-slate-700/50"
+                      if (b.rangClasse === 1) rangBadge = "bg-amber-100 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/30"
+                      else if (b.rangClasse === 2) rangBadge = "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold border border-slate-300/40 dark:border-slate-600/40"
+                      else if (b.rangClasse === 3) rangBadge = "bg-amber-50 dark:bg-amber-950/10 text-amber-700 dark:text-amber-450 font-bold border border-amber-100/30 dark:border-amber-900/20"
 
                       return (
-                        <TableRow key={b.eleveId} className="border-b border-border hover:bg-slate-50/50 transition-colors">
+                        <TableRow key={b.eleveId} className="border-b border-border hover:bg-slate-100/40 dark:hover:bg-slate-800/30 transition-colors">
                           {/* Rang */}
                           <TableCell className="text-center font-medium">
                             <span className={`inline-flex items-center justify-center px-2.5 py-1 text-xs rounded-full ${rangBadge}`}>
@@ -654,7 +654,7 @@ export default function BulletinsPage() {
                           <TableCell className="text-center">
                             {hasMoyenne ? (
                               <span className={`text-sm font-bold font-display px-2 py-0.5 rounded ${
-                                isPassing ? 'text-emerald-600 bg-emerald-50' : 'text-danger bg-red-50'
+                                isPassing ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30' : 'text-danger bg-red-50 dark:text-red-400 dark:bg-red-950/30'
                               }`}>
                                 {b.moyenneGenerale.toFixed(2)} /20
                               </span>
@@ -667,7 +667,7 @@ export default function BulletinsPage() {
                           <TableCell className="text-center">
                             {hasMoyenne ? (
                               <span className={`inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded ${
-                                isPassing ? 'bg-primary-light text-primary' : 'bg-red-50 text-danger'
+                                isPassing ? 'bg-primary-light dark:bg-primary/15 text-primary dark:text-primary-light' : 'bg-red-50 dark:bg-red-950/30 text-danger dark:text-red-400'
                               }`}>
                                 {b.appreciation}
                               </span>
@@ -680,7 +680,7 @@ export default function BulletinsPage() {
                           <TableCell>
                             <div className="flex gap-2 items-center py-2 max-w-lg">
                               <textarea
-                                className="w-full min-h-[50px] p-2 text-xs border border-border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition-all placeholder:italic disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                className="w-full min-h-[50px] p-2 text-xs border border-border rounded-md bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition-all placeholder:italic disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed dark:disabled:bg-slate-900/50 dark:disabled:text-slate-550"
                                 placeholder={hasMoyenne ? "Saisir les remarques et conseils du Directeur..." : "Aucune note saisie..."}
                                 value={appreciationInputs[b.eleveId] || ''}
                                 onChange={(e) => setAppreciationInputs(prev => ({ ...prev, [b.eleveId]: e.target.value }))}
@@ -688,7 +688,7 @@ export default function BulletinsPage() {
                               />
                               <Button
                                 size="icon"
-                                className="bg-white hover:bg-slate-100 text-slate-600 hover:text-primary border border-border shadow-sm shrink-0 h-9 w-9 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-white dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary border border-border shadow-sm shrink-0 h-9 w-9 disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={() => handleSaveAppreciation(b.id, b)}
                                 disabled={!hasMoyenne || loadingMap[b.id]}
                               >

@@ -358,7 +358,7 @@ function RegisterSchoolForm() {
   if (!currentUser) return null
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden">
       {/* Visual background accents */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -z-10" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-amber-500/5 rounded-full blur-[80px] -z-10" />
@@ -374,8 +374,8 @@ function RegisterSchoolForm() {
         </p>
       </div>
 
-      <Card className="w-full max-w-2xl shadow-xl border-border/80 bg-white">
-        <CardHeader className="border-b border-border/60 pb-6">
+      <Card className="w-full max-w-2xl shadow-xl border-border/80 dark:border-border/60 bg-white dark:bg-card">
+        <CardHeader className="border-b border-border/60 dark:border-border/60 pb-6">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl sm:text-2xl font-bold text-text">
@@ -393,10 +393,10 @@ function RegisterSchoolForm() {
             {/* Step badges */}
             <div className="flex gap-2">
               {[1, 2].map(i => (
-                <div key={i} className={`h-2.5 rounded-full transition-all duration-300 ${step >= i ? 'w-8 bg-primary' : 'w-4 bg-slate-200'}`} />
+                <div key={i} className={`h-2.5 rounded-full transition-all duration-300 ${step >= i ? 'w-8 bg-primary' : 'w-4 bg-slate-200 dark:bg-slate-800'}`} />
               ))}
               {maxSteps === 3 && (
-                <div className={`h-2.5 rounded-full transition-all duration-300 ${step >= 3 ? 'w-8 bg-primary' : 'w-4 bg-slate-200'}`} />
+                <div className={`h-2.5 rounded-full transition-all duration-300 ${step >= 3 ? 'w-8 bg-primary' : 'w-4 bg-slate-200 dark:bg-slate-800'}`} />
               )}
             </div>
           </div>
@@ -407,13 +407,12 @@ function RegisterSchoolForm() {
 
             {/* ==================================================== */}
             {/* ÉTAPE 1 : CHOIX DU PLAN D'ABONNEMENT */}
-            {/* ==================================================== */}
             {step === 1 && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2 animate-fadeIn">
                 {/* Carte Formule Gratuite */}
                 <div
                   onClick={() => setPlan('gratuit')}
-                  className={`group cursor-pointer rounded-2xl p-6 border-2 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden select-none hover:shadow-lg ${plan === 'gratuit' ? 'border-primary bg-emerald-50/20 shadow-md' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+                  className={`group cursor-pointer rounded-2xl p-6 border-2 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden select-none hover:shadow-lg ${plan === 'gratuit' ? 'border-primary bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md' : 'border-slate-200 dark:border-border/60 hover:border-slate-300 bg-white dark:bg-card'}`}
                 >
                   {plan === 'gratuit' && (
                     <div className="absolute top-3 right-3 bg-primary text-white p-1 rounded-full">
@@ -421,24 +420,24 @@ function RegisterSchoolForm() {
                     </div>
                   )}
                   <div className="space-y-4">
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'gratuit' ? 'bg-primary/20 text-primary-dark' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'gratuit' ? 'bg-primary/20 text-primary-dark dark:text-primary-light' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400'}`}>
                       Formule Gratuite
                     </span>
                     <div className="space-y-1">
-                      <h4 className="text-3xl font-display font-black text-slate-900">0 FCFA</h4>
-                      <p className="text-[10px] text-slate-500 font-semibold">Gratuit à vie</p>
+                      <h4 className="text-3xl font-display font-black text-slate-900 dark:text-slate-100">0 FCFA</h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Gratuit à vie</p>
                     </div>
-                    <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
                       Essentiel pour découvrir la plateforme. Limité à 50 élèves.
                     </p>
-                    <div className="border-t border-slate-100 pt-4 space-y-2.5 text-xs">
+                    <div className="border-t border-slate-100 dark:border-border/60 pt-4 space-y-2.5 text-xs">
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'gratuit' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'gratuit' ? 'text-slate-900' : 'text-slate-500'}>Jusqu'à 50 élèves</span>
+                        <span className={plan === 'gratuit' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Jusqu'à 50 élèves</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'gratuit' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'gratuit' ? 'text-slate-900' : 'text-slate-500'}>Fonctionnalités de base</span>
+                        <span className={plan === 'gratuit' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Fonctionnalités de base</span>
                       </div>
                     </div>
                   </div>
@@ -447,11 +446,11 @@ function RegisterSchoolForm() {
                 {/* Carte Formule Standard */}
                 <div
                   onClick={() => setPlan('standard')}
-                  className={`group cursor-pointer rounded-2xl p-6 border-2 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden select-none hover:shadow-lg ${plan === 'standard' ? 'border-primary bg-emerald-50/20 shadow-md' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+                  className={`group cursor-pointer rounded-2xl p-6 border-2 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden select-none hover:shadow-lg ${plan === 'standard' ? 'border-primary bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md' : 'border-slate-200 dark:border-border/60 hover:border-slate-300 bg-white dark:bg-card'}`}
                 >
                   <div className="absolute top-3 right-3 flex items-center gap-1.5">
                     {plan !== 'standard' && (
-                      <span className="bg-emerald-100 text-emerald-700 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-200 shadow-sm">
+                      <span className="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 shadow-sm">
                         Recommandé
                       </span>
                     )}
@@ -462,28 +461,28 @@ function RegisterSchoolForm() {
                     )}
                   </div>
                   <div className="space-y-4">
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'standard' ? 'bg-primary/20 text-primary-dark' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'standard' ? 'bg-primary/20 text-primary-dark dark:text-primary-light' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400'}`}>
                       Formule Standard
                     </span>
                     <div className="space-y-1">
-                      <h4 className="text-3xl font-display font-black text-slate-900">150 000 FCFA</h4>
-                      <p className="text-[10px] text-slate-500 font-semibold">par établissement / an</p>
+                      <h4 className="text-3xl font-display font-black text-slate-900 dark:text-slate-100">150 000 FCFA</h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">par établissement / an</p>
                     </div>
-                    <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
                       Idéal pour les structures de taille intermédiaire ou en lancement (Recommandé jusqu'à 300 élèves).
                     </p>
-                    <div className="border-t border-slate-100 pt-4 space-y-2.5 text-xs">
+                    <div className="border-t border-slate-100 dark:border-border/60 pt-4 space-y-2.5 text-xs">
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'standard' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'standard' ? 'text-slate-900' : 'text-slate-500'}>Inscriptions & fiches d'élèves</span>
+                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Inscriptions & fiches d'élèves</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'standard' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'standard' ? 'text-slate-900' : 'text-slate-500'}>Bulletins A4 conformes MENA</span>
+                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Bulletins A4 conformes MENA</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'standard' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'standard' ? 'text-slate-900' : 'text-slate-500'}>Suivi encaissements (FCFA)</span>
+                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Suivi encaissements (FCFA)</span>
                       </div>
                     </div>
                   </div>
@@ -492,10 +491,10 @@ function RegisterSchoolForm() {
                 {/* Carte Formule Premium */}
                 <div
                   onClick={() => setPlan('premium')}
-                  className={`group cursor-pointer rounded-2xl p-6 border-2 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden select-none hover:shadow-lg ${plan === 'premium' ? 'border-primary bg-emerald-50/20 shadow-md' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+                  className={`group cursor-pointer rounded-2xl p-6 border-2 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden select-none hover:shadow-lg ${plan === 'premium' ? 'border-primary bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md' : 'border-slate-200 dark:border-border/60 hover:border-slate-300 bg-white dark:bg-card'}`}
                 >
                   <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                    <span className="bg-amber-500 text-white font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-300 shadow-sm">
+                    <span className="bg-amber-500 text-white font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 shadow-sm">
                       Premium
                     </span>
                     {plan === 'premium' && (
@@ -505,28 +504,28 @@ function RegisterSchoolForm() {
                     )}
                   </div>
                   <div className="space-y-4">
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'premium' ? 'bg-primary/20 text-primary-dark' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'premium' ? 'bg-primary/20 text-primary-dark dark:text-primary-light' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400'}`}>
                       Formule Premium
                     </span>
                     <div className="space-y-1">
-                      <h4 className="text-3xl font-display font-black text-slate-900">250 000 FCFA</h4>
-                      <p className="text-[10px] text-slate-500 font-semibold">par établissement / an</p>
+                      <h4 className="text-3xl font-display font-black text-slate-900 dark:text-slate-100">250 000 FCFA</h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">par établissement / an</p>
                     </div>
-                    <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
                       Élèves illimités, sauvegardes automatisées, assistance prioritaire 24h/7 via WhatsApp.
                     </p>
-                    <div className="border-t border-slate-100 pt-4 space-y-2.5 text-xs">
+                    <div className="border-t border-slate-100 dark:border-border/60 pt-4 space-y-2.5 text-xs">
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'premium' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'premium' ? 'text-slate-900' : 'text-slate-500'}>Tout le contenu Standard</span>
+                        <span className={plan === 'premium' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Tout le contenu Standard</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'premium' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={`font-semibold ${plan === 'premium' ? 'text-primary' : 'text-slate-700'}`}>Nombre d'élèves illimité</span>
+                        <span className={`font-semibold ${plan === 'premium' ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>Nombre d'élèves illimité</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'premium' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'premium' ? 'text-slate-900' : 'text-slate-500'}>Assistance technique 24h/7</span>
+                        <span className={plan === 'premium' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Assistance technique 24h/7</span>
                       </div>
                     </div>
                   </div>
@@ -559,7 +558,7 @@ function RegisterSchoolForm() {
                 {/* Cycle checkboxes */}
                 <div className="space-y-3">
                   <Label>Cycle / Niveaux d'enseignement assurés *</Label>
-                  <div className="grid grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-border/60">
+                  <div className="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-border/60">
                     {/* Preschool */}
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -717,13 +716,13 @@ function RegisterSchoolForm() {
             {/* ==================================================== */}
             {step === 3 && (
               <div className="space-y-6 pt-2 animate-fadeIn">
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 flex items-start gap-4">
-                  <div className="bg-white p-2 rounded-lg shadow-sm">
+                <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/20 dark:border-primary/30 flex items-start gap-4">
+                  <div className="bg-white dark:bg-slate-900 p-2 rounded-lg shadow-sm">
                     <Sparkles className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800">Abonnement {plan === 'premium' ? 'Premium' : 'Standard'}</h3>
-                    <p className="text-sm text-slate-600 mt-1">Montant à régler : <span className="font-bold text-primary">{plan === 'premium' ? '250 000 FCFA' : '150 000 FCFA'}</span> / an</p>
+                    <h3 className="font-bold text-slate-800 dark:text-slate-200">Abonnement {plan === 'premium' ? 'Premium' : 'Standard'}</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Montant à régler : <span className="font-bold text-primary">{plan === 'premium' ? '250 000 FCFA' : '150 000 FCFA'}</span> / an</p>
                   </div>
                 </div>
 
@@ -732,24 +731,24 @@ function RegisterSchoolForm() {
                   <div className="grid grid-cols-3 gap-3">
                     <div
                       onClick={() => setPaymentInfo(prev => ({ ...prev, method: 'wave' }))}
-                      className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${paymentInfo.method === 'wave' ? 'border-primary bg-primary/5' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                      className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${paymentInfo.method === 'wave' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-slate-100 dark:border-border/60 bg-white dark:bg-card hover:border-slate-200'}`}
                     >
                       <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">WAVE</div>
-                      <span className="text-xs font-semibold text-slate-700">Wave</span>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Wave</span>
                     </div>
                     <div
                       onClick={() => setPaymentInfo(prev => ({ ...prev, method: 'orange_money' }))}
-                      className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${paymentInfo.method === 'orange_money' ? 'border-orange-500 bg-orange-500/5' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                      className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${paymentInfo.method === 'orange_money' ? 'border-orange-500 bg-orange-500/5 dark:bg-orange-500/10' : 'border-slate-100 dark:border-border/60 bg-white dark:bg-card hover:border-slate-200'}`}
                     >
                       <div className="h-10 w-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">OM</div>
-                      <span className="text-xs font-semibold text-slate-700">Orange Money</span>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Orange Money</span>
                     </div>
                     <div
                       onClick={() => setPaymentInfo(prev => ({ ...prev, method: 'mtn_momo' }))}
-                      className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${paymentInfo.method === 'mtn_momo' ? 'border-yellow-400 bg-yellow-400/5' : 'border-slate-100 bg-white hover:border-slate-200'}`}
+                      className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all ${paymentInfo.method === 'mtn_momo' ? 'border-yellow-400 bg-yellow-400/5 dark:bg-yellow-400/10' : 'border-slate-100 dark:border-border/60 bg-white dark:bg-card hover:border-slate-200'}`}
                     >
                       <div className="h-10 w-10 bg-yellow-400 rounded-full flex items-center justify-center text-slate-800 font-bold text-xs">MOMO</div>
-                      <span className="text-xs font-semibold text-slate-700">MTN MoMo</span>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">MTN MoMo</span>
                     </div>
                   </div>
                 </div>
@@ -843,10 +842,10 @@ function RegisterSchoolForm() {
 export default function RegisterEcolePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-10 w-10 text-primary animate-spin" />
-          <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Chargement de l'assistant...</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">Chargement de l'assistant...</p>
         </div>
       </div>
     }>

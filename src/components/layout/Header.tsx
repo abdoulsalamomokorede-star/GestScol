@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Bell, Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Link from 'next/link'
+import ThemeToggle from './ThemeToggle'
 
 const getPageTitle = (pathname: string) => {
   if (pathname.startsWith('/dashboard')) return 'Tableau de bord'
@@ -129,6 +130,9 @@ export default function Header() {
       </div>
 
       <div className="flex items-center space-x-2 md:space-x-4">
+        {/* Theme Toggle Selector */}
+        <ThemeToggle />
+
         {/* Notifications avec badge dynamique */}
         <Link 
           href="/notifications"

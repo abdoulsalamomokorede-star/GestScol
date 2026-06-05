@@ -226,23 +226,23 @@ export default function SupportPage() {
               <form onSubmit={handleCreateTicket} className="space-y-5">
 
                 {/* Métadonnées de l'établissement */}
-                <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between text-xs text-slate-600">
+                <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-border/60 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between text-xs text-slate-600 dark:text-slate-400">
                   <div>
-                    <span className="font-semibold block text-slate-800">Établissement</span>
+                    <span className="font-semibold block text-slate-800 dark:text-slate-200">Établissement</span>
                     {ecole?.nom || "Groupe Scolaire Excellence"}
                   </div>
                   <div>
-                    <span className="font-semibold block text-slate-800">Directeur demandeur</span>
+                    <span className="font-semibold block text-slate-800 dark:text-slate-200">Directeur demandeur</span>
                     {currentUser.prenom} {currentUser.nom}
                   </div>
                   <div>
-                    <span className="font-semibold block text-slate-800">Email de contact</span>
+                    <span className="font-semibold block text-slate-800 dark:text-slate-200">Email de contact</span>
                     {currentUser.email}
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="sujet" className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  <label htmlFor="sujet" className="text-xs font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider block">
                     Sujet de votre demande
                   </label>
                   <Input
@@ -252,12 +252,12 @@ export default function SupportPage() {
                     value={sujet}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSujet(e.target.value)}
                     required
-                    className="py-5 font-medium text-xs text-[#1E293B] border-slate-200 rounded-xl focus-visible:ring-primary"
+                    className="py-5 font-medium text-xs text-[#1E293B] dark:text-slate-100 border-slate-200 dark:border-border/60 bg-white dark:bg-slate-900 rounded-xl focus-visible:ring-primary"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider block">
                     Niveau d'urgence
                   </label>
                   <div className="flex gap-4">
@@ -265,8 +265,8 @@ export default function SupportPage() {
                       type="button"
                       onClick={() => setPriorite('normale')}
                       className={`flex-1 py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all ${priorite === 'normale'
-                        ? 'border-primary bg-primary/5 text-primary shadow-sm'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'border-primary bg-primary/5 dark:bg-primary/10 text-primary shadow-sm'
+                        : 'border-slate-200 dark:border-border/60 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-900'
                         }`}
                     >
                       <Clock className="h-4 w-4" />
@@ -276,8 +276,8 @@ export default function SupportPage() {
                       type="button"
                       onClick={() => setPriorite('urgente')}
                       className={`flex-1 py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all ${priorite === 'urgente'
-                        ? 'border-danger bg-danger/5 text-danger shadow-sm animate-pulse'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'border-danger bg-danger/5 dark:bg-danger/10 text-danger shadow-sm animate-pulse'
+                        : 'border-slate-200 dark:border-border/60 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-900'
                         }`}
                     >
                       <AlertCircle className="h-4 w-4" />
@@ -287,7 +287,7 @@ export default function SupportPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="description" className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  <label htmlFor="description" className="text-xs font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider block">
                     Description détaillée
                   </label>
                   <textarea
@@ -297,7 +297,7 @@ export default function SupportPage() {
                     value={description}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                     required
-                    className="flex min-h-[120px] w-full rounded-xl border border-slate-200 bg-background px-3 py-2 text-xs font-medium text-[#1E293B] ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                    className="flex min-h-[120px] w-full rounded-xl border border-slate-200 dark:border-border/60 bg-background px-3 py-2 text-xs font-medium text-[#1E293B] dark:text-slate-100 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                   />
                 </div>
 
@@ -325,7 +325,7 @@ export default function SupportPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card className="border border-border/60 shadow-md bg-card h-full">
             <CardHeader className="p-6 border-b border-border/40 flex flex-row items-center gap-3 space-y-0">
-              <div className="h-10 w-10 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center shrink-0">
+              <div className="h-10 w-10 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl flex items-center justify-center shrink-0">
                 <HelpCircle className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -344,11 +344,11 @@ export default function SupportPage() {
                   return (
                     <div
                       key={idx}
-                      className="border-b border-slate-100 pb-3.5 last:border-0 last:pb-0"
+                      className="border-b border-slate-100 dark:border-border/60 pb-3.5 last:border-0 last:pb-0"
                     >
                       <button
                         onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                        className="w-full flex items-center justify-between text-left gap-3 text-xs font-bold text-slate-800 hover:text-primary transition-colors focus:outline-none py-1"
+                        className="w-full flex items-center justify-between text-left gap-3 text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-primary transition-colors focus:outline-none py-1"
                       >
                         <span>{faq.question}</span>
                         <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-185 text-primary' : ''}`} />
@@ -365,10 +365,10 @@ export default function SupportPage() {
               </div>
 
               {/* Box sécurité et données */}
-              <div className="mt-8 bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-600">
+              <div className="mt-8 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-border/60 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                 <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-slate-800 text-[11px] uppercase tracking-wider mb-1">Sécurité des Données</h4>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider mb-1">Sécurité des Données</h4>
                   <p className="text-[11px] text-muted-foreground">
                     Toutes vos données scolaires et financières font l'objet d'un chiffrement de bout en bout et d'une sauvegarde automatisée quotidienne. Notre équipe technique n'a accès à vos données que sur demande explicite pour des fins de maintenance ou d'assistance.
                   </p>

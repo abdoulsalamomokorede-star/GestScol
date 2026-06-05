@@ -13,6 +13,7 @@ import CarteEcole from '@/components/ecoles/CarteEcole'
 import EcoleFormModal from '@/components/ecoles/EcoleFormModal'
 import ConfirmSuppressionEcole from '@/components/ecoles/ConfirmSuppressionEcole'
 import { EcoleAvecRole } from '@/types'
+import ThemeToggle from '@/components/layout/ThemeToggle'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { rejoindreEcoleViaCode } from '@/app/actions/register'
@@ -222,10 +223,10 @@ export default function EcolesPage() {
   // Rendu de skeleton loader
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 text-slate-400">
+      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 text-slate-500 dark:text-slate-400">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="h-10 w-10 text-emerald-500 animate-spin" />
-          <p className="text-xs uppercase tracking-widest font-bold">Chargement des établissements...</p>
+          <RefreshCw className="h-10 w-10 text-emerald-600 animate-spin" />
+          <p className="text-xs uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">Chargement des établissements...</p>
         </div>
       </div>
     )
@@ -233,9 +234,9 @@ export default function EcolesPage() {
 
   // Badges de rôle pour le header
   const roleBadges = {
-    directeur: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    enseignant: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    parent: "bg-amber-500/10 text-amber-400 border-amber-500/20"
+    directeur: "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-450 border border-emerald-200/30 dark:border-emerald-900/30",
+    enseignant: "bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-450 border border-blue-200/30 dark:border-blue-900/30",
+    parent: "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-450 border border-amber-200/30 dark:border-amber-900/30"
   }
 
   const roleNames = {
@@ -245,17 +246,19 @@ export default function EcolesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-background text-slate-800 dark:text-slate-200 flex flex-col">
       {/* Header standalone */}
-      <header className="border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex items-center justify-between">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={logoImg.src} alt="GestScol Logo" className="h-9 w-auto object-contain" />
-          <span className="font-extrabold text-lg tracking-wider text-slate-100 hidden sm:inline-block">GestScol</span>
+          <span className="font-extrabold text-lg tracking-wider text-slate-900 dark:text-white hidden sm:inline-block">GestScol</span>
         </div>
 
         <div className="flex items-center gap-4">
+          <ThemeToggle />
+          
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium hidden sm:inline-block">
+            <span className="text-xs text-slate-600 dark:text-slate-300 font-medium hidden sm:inline-block">
               {currentUser?.prenom} {currentUser?.nom}
             </span>
             <span className={`text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${roleBadges[currentUser?.role || 'directeur']}`}>
@@ -266,7 +269,7 @@ export default function EcolesPage() {
           <Button
             variant="ghost"
             onClick={handleSignOut}
-            className="text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 rounded-xl px-3 flex items-center gap-1 text-xs"
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-xl px-3 flex items-center gap-1 text-xs"
           >
             <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Se déconnecter</span>
           </Button>
@@ -278,10 +281,10 @@ export default function EcolesPage() {
         {/* Intro */}
         <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-100">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               {currentUser?.role === 'parent' ? "Établissements de mes enfants" : "Mes établissements"}
             </h1>
-            <p className="text-xs md:text-sm text-slate-400 mt-1.5 font-medium">
+            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
               {currentUser?.role === 'directeur' && "Sélectionnez ou créez un établissement pour accéder à sa console de gestion."}
               {currentUser?.role === 'enseignant' && "Établissements scolaires dans lesquels vous êtes actuellement affecté."}
               {currentUser?.role === 'parent' && "Consultez la scolarité, les relevés de notes et l&apos;assiduité de vos enfants."}
@@ -291,7 +294,7 @@ export default function EcolesPage() {
           {currentUser?.role === 'directeur' && (
             <Button
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto shadow-sm transition-all"
             >
               <Plus className="h-4 w-4" /> Créer un établissement
             </Button>
@@ -300,7 +303,7 @@ export default function EcolesPage() {
           {currentUser?.role === 'enseignant' && (
             <Button
               onClick={() => setIsInviteModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto shadow-md"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto shadow-md transition-all"
             >
               <Plus className="h-4 w-4" /> Rejoindre un établissement via code
             </Button>
@@ -320,7 +323,7 @@ export default function EcolesPage() {
               }
 
               return (
-                <div key={ecole.id} className="relative group">
+                <div key={ecole.id} className="relative group animate-fadeIn">
                   <CarteEcole
                     ecole={mappedEcole}
                     role={currentUser?.role || 'directeur'}
@@ -334,29 +337,29 @@ export default function EcolesPage() {
             {currentUser?.role === 'directeur' && (
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-slate-950/20 hover:bg-slate-900/20 border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-2xl h-[280px] flex flex-col items-center justify-center gap-3 transition-all duration-300 text-slate-400 hover:text-slate-300"
+                className="bg-white dark:bg-slate-900/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/60 border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl h-[280px] flex flex-col items-center justify-center gap-3 transition-all duration-300 text-slate-500 hover:text-slate-700 shadow-sm dark:shadow-none"
               >
-                <div className="p-4 bg-slate-900/60 rounded-full">
-                  <Plus className="h-6 w-6 text-slate-500" />
+                <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-full">
+                  <Plus className="h-6 w-6 text-slate-400 dark:text-slate-500" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-bold">Créer une école</p>
-                  <p className="text-[11px] text-slate-500 mt-1">Configurez une nouvelle filiale en un clic.</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Créer une école</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Configurez une nouvelle filiale en un clic.</p>
                 </div>
               </button>
             )}
           </div>
         ) : (
           /* État vide */
-          <div className="flex flex-col items-center justify-center bg-slate-950/20 border border-slate-800/80 rounded-2xl p-12 text-center py-20">
-            <div className="h-16 w-16 bg-slate-900 text-slate-400 rounded-full flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-12 text-center py-20 shadow-sm dark:shadow-none">
+            <div className="h-16 w-16 bg-slate-50 dark:bg-slate-950/40 text-slate-400 dark:text-slate-500 rounded-full flex items-center justify-center mb-4">
               <School className="h-8 w-8" />
             </div>
             
             {currentUser?.role === 'directeur' ? (
               <>
-                <h3 className="text-lg font-bold">Aucun établissement créé</h3>
-                <p className="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Aucun établissement créé</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-sm leading-relaxed">
                   Vous n&apos;avez pas encore configuré d&apos;école sur votre compte GestScol. Créez votre premier établissement pour commencer à inscrire vos élèves.
                 </p>
                 <Button
@@ -368,26 +371,26 @@ export default function EcolesPage() {
               </>
             ) : currentUser?.role === 'enseignant' ? (
               <>
-                <h3 className="text-lg font-bold">Aucune assignation d&apos;école</h3>
-                <p className="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed flex items-center gap-1.5 justify-center">
-                  <GraduationCap className="h-4.5 w-4.5 text-blue-400 shrink-0" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Aucune assignation d&apos;école</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-sm leading-relaxed flex items-center gap-1.5 justify-center">
+                  <GraduationCap className="h-4.5 w-4.5 text-blue-500 shrink-0" />
                   Aucune école ne vous a encore assigné à ses classes. Contactez le directeur de votre établissement.
                 </p>
                 <Button
                   onClick={chargerEcoles}
-                  className="bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 text-xs mt-6 rounded-xl flex items-center gap-1.5"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs mt-6 rounded-xl flex items-center gap-1.5 shadow-sm dark:shadow-none"
                 >
                   <RefreshCw className="h-4 w-4" /> Rafraîchir
                 </Button>
               </>
             ) : (
               <>
-                <h3 className="text-lg font-bold">Aucune école liée</h3>
-                <p className="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed flex items-center gap-1.5 justify-center">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Aucune école liée</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-sm leading-relaxed flex items-center gap-1.5 justify-center">
                   <Users className="h-4.5 w-4.5 text-amber-500 shrink-0" />
                   Aucun établissement n&apos;est actuellement lié à votre adresse e-mail. Veuillez contacter l&apos;école.
                 </p>
-                <div className="bg-amber-950/20 border border-amber-900/30 rounded-xl p-3.5 mt-4 text-[11px] text-amber-400 text-left w-full max-w-md">
+                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 rounded-xl p-3.5 mt-4 text-[11px] text-amber-800 dark:text-amber-400 text-left w-full max-w-md">
                   <strong>Adresse e-mail active :</strong> {currentUser?.email}
                 </div>
               </>
@@ -416,33 +419,33 @@ export default function EcolesPage() {
 
       {/* Modale de rattachement via code (Enseignant) */}
       <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
-        <DialogContent className="sm:max-w-[420px] bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl">
+        <DialogContent className="sm:max-w-[420px] bg-white dark:bg-card border border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 rounded-2xl shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <School className="h-5.5 w-5.5 text-blue-400" />
+            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <School className="h-5.5 w-5.5 text-blue-600 dark:text-blue-450" />
               Rejoindre un établissement
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
               Saisissez le code d&apos;invitation à 8 caractères fourni par le Directeur pour lier votre compte enseignant à son école.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleRejoindreEcole} className="space-y-4 py-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider block">
                 Code d&apos;invitation :
               </label>
               <Input
                 placeholder="Ex: AB12CD34"
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                className="bg-slate-950 border-slate-800 text-slate-100 text-center font-extrabold text-sm tracking-widest uppercase py-5 rounded-xl placeholder:tracking-normal placeholder:font-medium"
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 text-center font-extrabold text-sm tracking-widest uppercase py-5 rounded-xl placeholder:tracking-normal placeholder:font-medium focus:border-blue-500 focus-visible:ring-blue-500/20"
                 maxLength={10}
                 required
               />
             </div>
 
-            <DialogFooter className="pt-2 flex gap-2">
+            <DialogFooter className="pt-2 flex gap-2 justify-end">
               <Button
                 type="button"
                 variant="ghost"
@@ -450,7 +453,7 @@ export default function EcolesPage() {
                   setInviteCode('')
                   setIsInviteModalOpen(false)
                 }}
-                className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl text-xs font-bold"
+                className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-bold"
               >
                 Annuler
               </Button>

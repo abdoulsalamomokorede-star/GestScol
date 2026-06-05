@@ -6,28 +6,44 @@
 
 @layer base {
   :root {
-    --primary: #059669;
-    --primary-dark: #047857;
-    --primary-light: #D1FAE5;
-    --accent: #F59E0B;
-    --accent-dark: #D97706;
-    --sidebar-bg: #0F172A;
-    --background: #F8FAFC;
-    --card: #FFFFFF;
-    --text: #1E293B;
-    --muted: #F1F5F9;
-    --muted-foreground: #475569;
-    --secondary: #F1F5F9;
-    --secondary-foreground: #1E293B;
-    --border: #E2E8F0;
-    --danger: #EF4444;
-    --warning: #F59E0B;
-    --success: #10B981;
+    --primary: 5 150 105;
+    --primary-dark: 4 120 87;
+    --primary-light: 209 250 229;
+    --accent: 245 158 11;
+    --accent-dark: 217 119 6;
+    --sidebar-bg: 255 255 255;
+    --background: 248 250 252;
+    --card: 255 255 255;
+    --text: 30 41 59;
+    --muted: 241 245 249;
+    --muted-foreground: 71 85 105;
+    --secondary: 241 245 249;
+    --secondary-foreground: 30 41 59;
+    --border: 226 232 240;
+    --danger: 239 68 68;
+    --warning: 245 158 11;
+    --success: 16 185 129;
     --radius: 0.5rem;
   }
   
   .dark {
-    /* Si nécessaire plus tard, on ajoutera le thème sombre ici */
+    --primary: 5 150 105;
+    --primary-dark: 4 120 87;
+    --primary-light: 6 78 59;
+    --accent: 245 158 11;
+    --accent-dark: 217 119 6;
+    --sidebar-bg: 17 24 39;
+    --background: 11 15 25;
+    --card: 21 31 50;
+    --text: 243 244 246;
+    --muted: 30 41 59;
+    --muted-foreground: 148 163 184;
+    --secondary: 30 41 59;
+    --secondary-foreground: 243 244 246;
+    --border: 30 41 59;
+    --danger: 239 68 68;
+    --warning: 245 158 11;
+    --success: 16 185 129;
   }
 }
 

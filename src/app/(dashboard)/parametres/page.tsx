@@ -495,7 +495,7 @@ export default function ParametresPage() {
           
           {/* APERÇU DE LA CARTE DE SÉCURITÉ DU COMPTE CRÉÉ */}
           {compteCreeApercu && (
-            <Card className="shadow-lg border-primary/30 bg-emerald-50/50 border-l-4 border-l-primary animate-in zoom-in-95 duration-200">
+            <Card className="shadow-lg border-primary/30 dark:border-primary/20 bg-emerald-50/50 dark:bg-emerald-950/20 border-l-4 border-l-primary animate-in zoom-in-95 duration-200">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold text-primary flex items-center gap-2 uppercase tracking-wide">
                   <ShieldCheck className="h-5 w-5 text-primary" />
@@ -573,10 +573,10 @@ export default function ParametresPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
-                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 text-xs text-slate-600 leading-relaxed flex items-start gap-3">
+                <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-border/60 rounded-2xl p-4 text-xs text-slate-600 dark:text-slate-400 leading-relaxed flex items-start gap-3">
                   <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-slate-800">Comment ça marche ?</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">Comment ça marche ?</span>
                     <ul className="list-disc pl-4 mt-1 space-y-1">
                       <li>Copiez le lien correspondant au rôle souhaité (Enseignant ou Parent).</li>
                       <li>Envoyez-le par SMS, WhatsApp ou E-mail aux personnes concernées.</li>
@@ -601,7 +601,7 @@ export default function ParametresPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-slate-50 border border-border px-3 py-2 rounded-xl text-[11px] font-mono text-muted-foreground select-all truncate">
+                      <div className="flex-1 bg-slate-50 dark:bg-slate-900 border border-border px-3 py-2 rounded-xl text-[11px] font-mono text-muted-foreground select-all truncate">
                         {typeof window !== 'undefined' ? `${window.location.origin}/register/enseignant` : 'Chargement du lien...'}
                       </div>
                       <Button
@@ -617,7 +617,7 @@ export default function ParametresPage() {
                             description: "Le lien d'inscription Enseignant a été copié.",
                           })
                         }}
-                        className="h-9 shrink-0 flex items-center gap-1.5 px-3 rounded-xl border-border bg-white text-text hover:bg-slate-50 font-semibold text-xs"
+                        className="h-9 shrink-0 flex items-center gap-1.5 px-3 rounded-xl border-border bg-white dark:bg-slate-900 text-text hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-xs"
                       >
                         {copiedId === 'url-enseignant' ? (
                           <>
@@ -648,7 +648,7 @@ export default function ParametresPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-slate-50 border border-border px-3 py-2 rounded-xl text-[11px] font-mono text-muted-foreground select-all truncate">
+                      <div className="flex-1 bg-slate-50 dark:bg-slate-900 border border-border px-3 py-2 rounded-xl text-[11px] font-mono text-muted-foreground select-all truncate">
                         {typeof window !== 'undefined' ? `${window.location.origin}/register/parent` : 'Chargement du lien...'}
                       </div>
                       <Button
@@ -664,7 +664,7 @@ export default function ParametresPage() {
                             description: "Le lien d'inscription Parent a été copié.",
                           })
                         }}
-                        className="h-9 shrink-0 flex items-center gap-1.5 px-3 rounded-xl border-border bg-white text-text hover:bg-slate-50 font-semibold text-xs"
+                        className="h-9 shrink-0 flex items-center gap-1.5 px-3 rounded-xl border-border bg-white dark:bg-slate-900 text-text hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-xs"
                       >
                         {copiedId === 'url-parent' ? (
                           <>
@@ -897,30 +897,30 @@ function AccèsRestreint({ role }: AccèsRestreintProps) {
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
-      <Card className="max-w-md w-full text-center p-8 border-rose-100 shadow-xl bg-white/80 backdrop-blur-md relative overflow-hidden rounded-3xl">
+      <Card className="max-w-md w-full text-center p-8 border-rose-100 dark:border-border/60 shadow-xl bg-white/80 dark:bg-card/80 backdrop-blur-md relative overflow-hidden rounded-3xl">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-rose-600" />
         
         <CardContent className="pt-6 space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center animate-pulse border border-rose-100">
-            <ShieldAlert className="h-9 w-9 text-rose-500" />
+          <div className="mx-auto w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center animate-pulse border border-rose-100 dark:border-rose-900/30">
+            <ShieldAlert className="h-9 w-9 text-rose-500 animate-pulse" />
           </div>
           
           <div className="space-y-2">
             <h2 className="text-2xl font-display font-extrabold text-text">
               Accès Privilégié Restreint
             </h2>
-            <p className="text-sm text-slate-500 font-medium">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
               Cet espace de configuration système et de création de comptes est strictement réservé à la Direction générale de l&apos;établissement.
             </p>
           </div>
 
-          <div className="bg-rose-50/50 rounded-2xl p-4 border border-rose-100/50 text-xs text-rose-800 leading-relaxed">
+          <div className="bg-rose-50/50 dark:bg-rose-950/20 rounded-2xl p-4 border border-rose-100/50 dark:border-rose-900/30 text-xs text-rose-800 dark:text-rose-400 leading-relaxed">
             Votre profil actuel <span className="font-extrabold uppercase">{role || 'visiteur'}</span> ne dispose pas des privilèges d&apos;habilitation requis pour modifier ces paramètres.
           </div>
 
           <Button
             onClick={handleReturn}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-xs py-5 flex items-center justify-center gap-2 shadow-md transition-all duration-200"
+            className="w-full bg-slate-900 dark:bg-primary hover:bg-slate-800 dark:hover:bg-primary-dark text-white font-bold rounded-2xl text-xs py-5 flex items-center justify-center gap-2 shadow-md transition-all duration-200"
           >
             <ArrowLeft className="h-4 w-4" />
             Retourner à mon espace sécurisé

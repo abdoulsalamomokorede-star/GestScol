@@ -112,19 +112,19 @@ export default function DashboardLayout({
     const isExpired = ecole.abonnement?.statut === 'expire' || (ecole.abonnement?.dateFin && new Date(ecole.abonnement.dateFin) < new Date())
     
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-border">
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-background p-4">
+        <div className="max-w-md w-full bg-white dark:bg-card rounded-2xl shadow-xl overflow-hidden border border-border dark:border-border/60">
           <div className="p-6 md:p-8 flex flex-col items-center text-center space-y-4">
-            <div className="h-16 w-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-2">
+            <div className="h-16 w-16 bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-2">
               <Lock className="h-8 w-8" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-800">Accès Suspendu</h1>
-            <p className="text-sm text-slate-600">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Accès Suspendu</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               L&apos;abonnement de votre établissement (<span className="font-semibold">{ecole.nom}</span>) est actuellement 
               <span className="text-red-500 font-bold ml-1">{isExpired ? 'expiré' : 'suspendu'}</span>.
             </p>
             
-            <div className="bg-orange-50 text-orange-800 p-4 rounded-xl text-xs w-full flex items-start gap-3 mt-2">
+            <div className="bg-orange-50 dark:bg-amber-950/20 text-orange-800 dark:text-amber-400 p-4 rounded-xl text-xs w-full flex items-start gap-3 mt-2">
               <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
               <p className="text-left">
                 L&apos;accès à l&apos;espace de gestion et aux espaces parents/enseignants est restreint jusqu&apos;au renouvellement de la souscription.
@@ -132,7 +132,7 @@ export default function DashboardLayout({
             </div>
 
             <div className="pt-4 w-full">
-              <p className="text-xs text-slate-500 mb-3">Veuillez contacter la direction de l'établissement pour plus d'informations.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Veuillez contacter la direction de l'établissement pour plus d'informations.</p>
               <button 
                 onClick={() => {
                   const role = currentUser?.role
@@ -147,7 +147,7 @@ export default function DashboardLayout({
                     }
                   })
                 }}
-                className="w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+                className="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 font-semibold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 Retour à la connexion
               </button>

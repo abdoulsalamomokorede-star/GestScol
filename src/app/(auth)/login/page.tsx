@@ -255,11 +255,11 @@ export default function LoginPage() {
           style={{ backgroundImage: `url('/director_login_bg.png')` }}
         />
         {/* Un léger dégradé blanc sur le bord droit uniquement pour fusionner avec la bordure du formulaire */}
-        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-background to-transparent" />
       </div>
 
       {/* Panneau Droit - Formulaire et Identité de marque sur fond blanc clair */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 md:max-w-md lg:max-w-lg xl:max-w-xl bg-white border-l border-border shadow-sm">
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 md:max-w-md lg:max-w-lg xl:max-w-xl bg-white dark:bg-card border-l border-border dark:border-border/40 shadow-sm">
         <div className="space-y-6 my-auto">
           <div className="flex flex-col items-center md:items-start">
             <Link href="/" className="mb-4 transition-transform duration-300 hover:scale-105 cursor-pointer">
@@ -270,7 +270,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-primary text-xs font-semibold border border-primary/20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/35 text-primary dark:text-emerald-400 text-xs font-semibold border border-primary/20">
               <Sparkles className="h-3.5 w-3.5" />
               <span>Espace Directeur</span>
             </div>
@@ -280,7 +280,7 @@ export default function LoginPage() {
           </div>
 
           <Card className="w-full shadow-lg border-border/50">
-            <CardHeader className="space-y-1 text-center bg-slate-50 border-b border-border/50 rounded-t-xl pb-4">
+            <CardHeader className="space-y-1 text-center bg-slate-50 dark:bg-slate-900/50 border-b border-border/50 dark:border-border/30 rounded-t-xl pb-4">
               <CardTitle className="text-xl font-bold">Connexion</CardTitle>
               <CardDescription>
                 Accédez à votre console d'administration
