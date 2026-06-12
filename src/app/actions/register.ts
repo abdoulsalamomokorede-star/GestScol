@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { type EmailOtpType } from '@supabase/supabase-js'
 
 const PasswordSchema = z.string()
   .min(12, "Le mot de passe doit contenir au moins 12 caractères (NIST 800-63B)")
@@ -1198,5 +1199,33 @@ export async function rejoindreEcoleViaCode(codeInvitation: string) {
     return { success: false, error: err.message || "Une erreur inattendue est survenue." }
   }
 }
+
+/**
+ * Valide le jeton d'OTP (token_hash) pour confirmer l'inscription ou la modification du compte.
+ */
+export async function confirmUserAccount(tokenHash: string, type: EmailOtpType) {
+  try {
+    if (!tokenHash || !type) {
+      return { success: false, error: "Paramètres de confirmation invalides ou manquants." }
+    }
+    
+    const supabase = await createClient()
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type
+    })
+
+    if (error) {
+      console.error("[OTP Verification Error]:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    console.error("Unexpected error in confirmUserAccount Server Action:", error)
+    return { success: false, error: "Une erreur inattendue est survenue." }
+  }
+}
+
 
 
