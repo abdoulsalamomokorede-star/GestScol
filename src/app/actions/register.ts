@@ -660,7 +660,7 @@ export async function createDirecteurAccount(rawPayload: any) {
     const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
       email: data.email,
       password: data.motDePasse,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: {
         nom: data.nom,
         prenom: data.prenom,
@@ -806,7 +806,7 @@ export async function createEnseignantAccount(rawPayload: any) {
     const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
       email: data.email,
       password: data.motDePasse,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: {
         nom: data.nom,
         prenom: data.prenom,
@@ -903,7 +903,7 @@ export async function createParentAccount(rawPayload: any) {
     const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
       email: data.email,
       password: data.motDePasse,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: {
         nom: data.nom,
         prenom: data.prenom,

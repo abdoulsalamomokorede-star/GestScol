@@ -186,9 +186,12 @@ export default function RegisterEnseignantPage() {
 
       if (authError || !authData.user) {
         setIsSuccess(true)
+        const isEmailNotConfirmed = authError?.message?.toLowerCase().includes("confirm")
         toast({
-          title: t('toast.account_created', "Compte créé !"),
-          description: t('toast.manual_login_required', "Votre compte a été créé avec succès. Veuillez vous connecter manuellement."),
+          title: isEmailNotConfirmed ? t('toast.email_confirmation_sent', "Confirmation requise !") : t('toast.account_created', "Compte créé !"),
+          description: isEmailNotConfirmed
+            ? t('toast.check_email_confirmation', "Un e-mail de validation a été envoyé. Veuillez cliquer sur le lien pour activer votre compte.")
+            : t('toast.manual_login_required', "Votre compte a été créé avec succès. Veuillez vous connecter manuellement."),
           variant: "default"
         })
         return
