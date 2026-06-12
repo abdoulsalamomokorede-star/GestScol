@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Users, TrendingUp, Calendar, FileText, Filter, GraduationCap, School, Lock } from 'lucide-react'
 import KpiCard from '@/components/dashboard/KpiCard'
 import PaiementsParClasseChart from '@/components/dashboard/PaiementsParClasseChart'
@@ -13,6 +14,7 @@ import { formatCFA, formatDate } from '@/lib/utils'
 import { ecoleMock } from '@/data/mockData'
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const { eleves, paiements, absences, classes, enseignants, bulletins, inscriptions, currentUser, notes, anneesScolaires, activeAnneeScolaire, ecole } = useSchoolStore()
 
   // Filtres
@@ -118,8 +120,8 @@ export default function DashboardPage() {
       {/* En-tête avec filtres */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-card p-4 rounded-lg shadow-sm border border-border/50">
         <div>
-          <h2 className="text-2xl font-display font-bold text-text">Tableau de Bord</h2>
-          <p className="text-sm text-muted-foreground">Aperçu en temps réel de votre établissement.</p>
+          <h2 className="text-2xl font-display font-bold text-text">{t('title.dashboard', 'Tableau de Bord')}</h2>
+          <p className="text-sm text-muted-foreground">{t('dashboard.subtitle', 'Aperçu en temps réel de votre établissement.')}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
@@ -127,7 +129,7 @@ export default function DashboardPage() {
             <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
             <Select value={anneeScolaire} onValueChange={setAnneeScolaire}>
               <SelectTrigger className="w-full sm:w-[150px] bg-background">
-                <SelectValue placeholder="Année" />
+                <SelectValue placeholder={t('dashboard.school_year', 'Année')} />
               </SelectTrigger>
               <SelectContent>
                 {anneesScolaires.map(annee => (
@@ -139,34 +141,34 @@ export default function DashboardPage() {
 
           <Select value={trimestre} onValueChange={setTrimestre}>
             <SelectTrigger className="w-full sm:w-[160px] bg-background">
-              <SelectValue placeholder="Trimestre" />
+              <SelectValue placeholder={t('dashboard.trimestre', 'Trimestre')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="tous">Tous les trimestres</SelectItem>
-              <SelectItem value="1">1er Trimestre</SelectItem>
-              <SelectItem value="2">2ème Trimestre</SelectItem>
-              <SelectItem value="3">3ème Trimestre</SelectItem>
+              <SelectItem value="tous">{t('dashboard.all_trimestres', 'Tous les trimestres')}</SelectItem>
+              <SelectItem value="1">{t('dashboard.t1', '1er Trimestre')}</SelectItem>
+              <SelectItem value="2">{t('dashboard.t2', '2ème Trimestre')}</SelectItem>
+              <SelectItem value="3">{t('dashboard.t3', '3ème Trimestre')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={moisAbsences} onValueChange={setMoisAbsences}>
             <SelectTrigger className="w-full sm:w-[150px] bg-background">
-              <SelectValue placeholder="Mois" />
+              <SelectValue placeholder={t('dashboard.month', 'Mois')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="tous">Tous les mois</SelectItem>
-              <SelectItem value="01">Janvier</SelectItem>
-              <SelectItem value="02">Février</SelectItem>
-              <SelectItem value="03">Mars</SelectItem>
-              <SelectItem value="04">Avril</SelectItem>
-              <SelectItem value="05">Mai</SelectItem>
-              <SelectItem value="06">Juin</SelectItem>
-              <SelectItem value="07">Juillet</SelectItem>
-              <SelectItem value="08">Août</SelectItem>
-              <SelectItem value="09">Septembre</SelectItem>
-              <SelectItem value="10">Octobre</SelectItem>
-              <SelectItem value="11">Novembre</SelectItem>
-              <SelectItem value="12">Décembre</SelectItem>
+              <SelectItem value="tous">{t('dashboard.all_months', 'Tous les mois')}</SelectItem>
+              <SelectItem value="01">{t('month.01', 'Janvier')}</SelectItem>
+              <SelectItem value="02">{t('month.02', 'Février')}</SelectItem>
+              <SelectItem value="03">{t('month.03', 'Mars')}</SelectItem>
+              <SelectItem value="04">{t('month.04', 'Avril')}</SelectItem>
+              <SelectItem value="05">{t('month.05', 'Mai')}</SelectItem>
+              <SelectItem value="06">{t('month.06', 'Juin')}</SelectItem>
+              <SelectItem value="07">{t('month.07', 'Juillet')}</SelectItem>
+              <SelectItem value="08">{t('month.08', 'Août')}</SelectItem>
+              <SelectItem value="09">{t('month.09', 'Septembre')}</SelectItem>
+              <SelectItem value="10">{t('month.10', 'Octobre')}</SelectItem>
+              <SelectItem value="11">{t('month.11', 'Novembre')}</SelectItem>
+              <SelectItem value="12">{t('month.12', 'Décembre')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -175,69 +177,66 @@ export default function DashboardPage() {
       {/* KPIs (6 Cartes) en grille 3x2 sur grand écran */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <KpiCard
-          title="Élèves Actifs de l'année scolaire"
+          title={t('dashboard.kpi.active_students', "Élèves Actifs")}
           value={totalElevesActifs}
           icon={Users}
-          subtitle="Total inscrits"
+          subtitle={t('dashboard.kpi.total_enrolled', "Total inscrits")}
         />
         <KpiCard
-          title="Enseignants de l'année scolaire"
+          title={t('dashboard.kpi.teachers', "Enseignants")}
           value={totalEnseignants}
           icon={GraduationCap}
-          subtitle="Enseignants actifs"
-          isLocked={ecole?.abonnement?.plan === 'gratuit'}
+          subtitle={t('dashboard.kpi.active_teachers', "Enseignants actifs")}
         />
         <KpiCard
-          title="Classes de l'année scolaire"
+          title={t('dashboard.kpi.classes', "Classes")}
           value={totalClasses}
           icon={School}
-          subtitle="Classes ouvertes"
+          subtitle={t('dashboard.kpi.open_classes', "Classes ouvertes")}
         />
         <KpiCard
-          title="Recouvrement des Frais de scolarité"
+          title={t('dashboard.kpi.tuition_recovery', "Recouvrement des Frais de scolarité")}
           value={`${tauxPaiement}%`}
           icon={TrendingUp}
-          subtitle="Scolarité globale payée"
+          subtitle={t('dashboard.kpi.global_tuition_paid', "Scolarité globale payée")}
           trend={tauxPaiement > 80 ? { value: '+', isPositive: true } : undefined}
         />
         <KpiCard
-          title="Absences Non Justifiées"
+          title={t('dashboard.kpi.unexcused_absences', "Absences Non Justifiées")}
           value={absencesNonJustifiees}
           icon={Calendar}
-          subtitle={moisAbsences === 'tous' ? "Depuis le début de l'année scolaire" : `Pour le mois ${moisAbsences}`}
-          isLocked={ecole?.abonnement?.plan === 'gratuit'}
+          subtitle={moisAbsences === 'tous' ? t('dashboard.kpi.since_year_start', "Depuis le début de l'année scolaire") : `${t('dashboard.kpi.for_month', 'Pour le mois')} ${moisAbsences}`}
         />
         <KpiCard
-          title="Bulletins Générés"
+          title={t('dashboard.kpi.bulletins_generated', "Bulletins Générés")}
           value={`${nombreBulletinsGeneres}/${bulletinsAttendus}`}
           icon={FileText}
-          subtitle={trimestre === 'tous' ? "Générés sur l'année scolaire" : `Générés au T${trimestre}`}
-          isLocked={ecole?.abonnement?.plan === 'gratuit'}
+          subtitle={trimestre === 'tous' ? t('dashboard.kpi.generated_on_year', "Générés sur l'année scolaire") : `${t('dashboard.kpi.generated_at_t', 'Générés au T')}${trimestre}`}
         />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <PaiementsParClasseChart 
-          classes={classes} 
-          eleves={eleves} 
-          paiements={paiementsFiltres} 
-          inscriptions={inscriptions} 
-          anneeScolaire={anneeScolaire} 
+        <PaiementsParClasseChart
+          classes={classes}
+          eleves={eleves}
+          paiements={paiementsFiltres}
+          inscriptions={inscriptions}
+          anneeScolaire={anneeScolaire}
         />
 
         <Card className="col-span-1 shadow-sm border-border/50 flex flex-col">
           <CardHeader>
-            <CardTitle className="text-lg font-display">Effectifs par Classe</CardTitle>
+            <CardTitle className="text-lg font-display">{t('dashboard.class_effectifs', 'Effectifs par Classe')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 flex-1 overflow-y-auto max-h-[350px] no-scrollbar">
             {effectifsClasses.length === 0 ? (
-              <p className="text-muted-foreground text-center text-sm">Aucune classe enregistrée.</p>
+              <p className="text-muted-foreground text-center text-sm">{t('dashboard.no_classes', 'Aucune classe enregistrée.')}</p>
             ) : (
               effectifsClasses.map(classe => (
                 <div key={classe.nom} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-text">{classe.nom}</span>
-                    <span className="text-muted-foreground">{classe.effectif} élèves</span>
+                    <span className="text-muted-foreground">{classe.effectif} {t('bulletins.eleves_count', 'élèves')}</span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div
@@ -260,13 +259,13 @@ export default function DashboardPage() {
         <Card className="shadow-sm border-border/50">
           <CardHeader>
             <CardTitle className="text-lg font-display">
-              Derniers Impayés
+              {t('dashboard.recent_unpaid', 'Derniers Impayés')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {derniersImpayes.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4 text-sm">Aucun impayé trouvé.</p>
+                <p className="text-muted-foreground text-center py-4 text-sm">{t('dashboard.no_unpaid', 'Aucun impayé trouvé.')}</p>
               ) : (
                 derniersImpayes.map(paiement => {
                   const eleve = eleves.find(e => e.id === paiement.eleveId)
@@ -275,12 +274,12 @@ export default function DashboardPage() {
                     <div key={paiement.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
                       <div>
                         <p className="font-medium text-text text-sm">{eleve.prenom} {eleve.nom}</p>
-                        <p className="text-xs text-muted-foreground">Échéance: {formatDate(paiement.dateLimite)}</p>
+                        <p className="text-xs text-muted-foreground">{t('dashboard.due_date', 'Échéance')}: {formatDate(paiement.dateLimite)}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-end">
                         <p className="font-bold text-danger text-sm">{formatCFA(Math.max(0, paiement.montant - (paiement.montantPaye || 0)))}</p>
                         <Badge variant="outline" className={paiement.statut === 'retard' ? 'bg-danger/10 text-danger border-danger/20' : 'bg-warning/10 text-warning border-warning/20'}>
-                          {paiement.statut === 'retard' ? 'En Retard' : 'En Attente'}
+                          {paiement.statut === 'retard' ? t('dashboard.late', 'En Retard') : t('dashboard.pending', 'En Attente')}
                         </Badge>
                       </div>
                     </div>
@@ -295,48 +294,31 @@ export default function DashboardPage() {
         <Card className="shadow-sm border-border/50 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-display">
-              {moisAbsences === 'tous' ? "Absences Récentes" : `Absences du Mois (${moisAbsences})`}
+              {moisAbsences === 'tous' ? t('dashboard.recent_absences', 'Absences Récentes') : `${t('dashboard.monthly_absences', 'Absences du Mois')} (${moisAbsences})`}
             </CardTitle>
-            {ecole?.abonnement?.plan === 'gratuit' && (
-              <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
-                👑 Premium
-              </span>
-            )}
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-center">
-            {ecole?.abonnement?.plan === 'gratuit' ? (
-              <div className="text-center py-8 space-y-3">
-                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
-                  <Lock className="w-6 h-6" />
-                </div>
-                <h4 className="text-sm font-bold text-text">Suivi des Absences Verrouillé</h4>
-                <p className="text-xs text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
-                  L'accès à l'assiduité en temps réel, aux feuilles d'appel et au suivi des retards est réservé aux formules payantes.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {dernieresAbsences.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4 text-sm">Aucune absence trouvée.</p>
-                ) : (
-                  dernieresAbsences.map(absence => {
-                    const eleve = eleves.find(e => e.id === absence.eleveId)
-                    if (!eleve) return null
-                    return (
-                      <div key={absence.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
-                        <div>
-                          <p className="font-medium text-text text-sm">{eleve.prenom} {eleve.nom}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(absence.date)} ({absence.seance})</p>
-                        </div>
-                        <Badge variant="outline" className={absence.justifiee ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"}>
-                          {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
-                        </Badge>
+            <div className="space-y-4">
+              {dernieresAbsences.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4 text-sm">{t('dashboard.no_absences', 'Aucune absence trouvée.')}</p>
+              ) : (
+                dernieresAbsences.map(absence => {
+                  const eleve = eleves.find(e => e.id === absence.eleveId)
+                  if (!eleve) return null
+                  return (
+                    <div key={absence.id} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                      <div>
+                        <p className="font-medium text-text text-sm">{eleve.prenom} {eleve.nom}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(absence.date)} ({absence.seance})</p>
                       </div>
-                    )
-                  })
-                )}
-              </div>
-            )}
+                      <Badge variant="outline" className={absence.justifiee ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"}>
+                        {absence.justifiee ? t('dashboard.excused', 'Justifiée') : t('dashboard.unexcused', 'Non justifiée')}
+                      </Badge>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

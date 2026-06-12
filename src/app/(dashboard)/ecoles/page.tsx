@@ -13,6 +13,8 @@ import CarteEcole from '@/components/ecoles/CarteEcole'
 import EcoleFormModal from '@/components/ecoles/EcoleFormModal'
 import ConfirmSuppressionEcole from '@/components/ecoles/ConfirmSuppressionEcole'
 import { EcoleAvecRole } from '@/types'
+import { useTranslation } from '@/hooks/useTranslation'
+import LanguageToggle from '@/components/layout/LanguageToggle'
 import ThemeToggle from '@/components/layout/ThemeToggle'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -22,6 +24,7 @@ export default function EcolesPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { currentUser, setCurrentUser, fetchEcolesUtilisateur, ajouterEcole, supprimerEcole, setEcoleCourante } = useSchoolStore()
+  const { t, dir } = useTranslation()
   const supabase = createClient()
 
   const [ecoles, setEcoles] = useState<EcoleAvecRole[]>([])
@@ -47,16 +50,16 @@ export default function EcolesPage() {
       const res = await rejoindreEcoleViaCode(inviteCode)
       if (!res.success) {
         toast({
-          title: "Erreur de rattachement",
-          description: res.error || "Impossible de rejoindre l'établissement avec ce code.",
+          title: t('ecoles.toast.joining_error_title', "Erreur de rattachement"),
+          description: res.error || t('ecoles.toast.joining_error_desc', "Impossible de rejoindre l'établissement avec ce code."),
           variant: "destructive"
         })
         return
       }
 
       toast({
-        title: "Établissement rejoint !",
-        description: "Vous faites désormais partie de l'équipe pédagogique.",
+        title: t('ecoles.toast.joining_success_title', "Établissement rejoint !"),
+        description: t('ecoles.toast.joining_success_desc', "Vous faites désormais partie de l'équipe pédagogique."),
         className: "bg-success text-white border-none shadow-lg"
       })
       
@@ -65,8 +68,8 @@ export default function EcolesPage() {
       chargerEcoles()
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue est survenue.",
+        title: t('ecoles.toast.error', "Erreur"),
+        description: t('ecoles.toast.joining_error_general', "Une erreur inattendue est survenue."),
         variant: "destructive"
       })
     } finally {
@@ -129,8 +132,8 @@ export default function EcolesPage() {
     } catch (err) {
       console.error(err)
       toast({
-        title: "Erreur de chargement",
-        description: "Impossible de charger vos établissements.",
+        title: t('ecoles.toast.loading_error_title', "Erreur de chargement"),
+        description: t('ecoles.toast.loading_error_desc', "Impossible de charger vos établissements."),
         variant: "destructive"
       })
     } finally {
@@ -169,8 +172,8 @@ export default function EcolesPage() {
   const handleAccederEcole = async (ecoleId: string) => {
     await setEcoleCourante(ecoleId)
     toast({
-      title: "Établissement sélectionné !",
-      description: "Chargement de votre espace de travail...",
+      title: t('ecoles.toast.selection_title', "Établissement sélectionné !"),
+      description: t('ecoles.toast.selection_desc', "Chargement de votre espace de travail..."),
       variant: "default"
     })
     if (currentUser?.role === 'parent') {
@@ -187,15 +190,15 @@ export default function EcolesPage() {
     const res = await ajouterEcole(donnees)
     if (!res.success) {
       toast({
-        title: "Erreur",
-        description: res.error || "Impossible de créer l'école.",
+        title: t('ecoles.toast.error', "Erreur"),
+        description: res.error || t('ecoles.toast.create_error_desc', "Impossible de créer l'école."),
         variant: "destructive"
       })
       return
     }
     toast({
-      title: "Succès !",
-      description: "L'école a bien été créée avec ses paramètres de base.",
+      title: t('ecoles.toast.create_success_title', "Succès !"),
+      description: t('ecoles.toast.create_success_desc', "L'école a bien été créée avec ses paramètres de base."),
       variant: "default"
     })
     chargerEcoles()
@@ -206,15 +209,15 @@ export default function EcolesPage() {
     const res = await supprimerEcole(ecoleId)
     if (!res.success) {
       toast({
-        title: "Erreur",
-        description: res.error || "Impossible de supprimer l'établissement.",
+        title: t('ecoles.toast.error', "Erreur"),
+        description: res.error || t('ecoles.toast.delete_error_desc', "Impossible de supprimer l'établissement."),
         variant: "destructive"
       })
       return
     }
     toast({
-      title: "Suppression validée",
-      description: "L'école et toutes ses données en cascade ont été purgées.",
+      title: t('ecoles.toast.delete_success_title', "Suppression validée"),
+      description: t('ecoles.toast.delete_success_desc', "L'école et toutes ses données en cascade ont été purgées."),
       variant: "default"
     })
     chargerEcoles()
@@ -223,10 +226,10 @@ export default function EcolesPage() {
   // Rendu de skeleton loader
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 text-slate-500 dark:text-slate-400">
+      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 text-slate-500 dark:text-slate-400" dir={dir}>
         <div className="flex flex-col items-center gap-3">
           <RefreshCw className="h-10 w-10 text-emerald-600 animate-spin" />
-          <p className="text-xs uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">Chargement des établissements...</p>
+          <p className="text-xs uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{t('ecoles.loading_text', "Chargement des établissements...")}</p>
         </div>
       </div>
     )
@@ -240,13 +243,13 @@ export default function EcolesPage() {
   }
 
   const roleNames = {
-    directeur: "Directeur",
-    enseignant: "Enseignant",
-    parent: "Parent d'élève"
+    directeur: t('ecoles.role.directeur', "Directeur"),
+    enseignant: t('ecoles.role.enseignant', "Enseignant"),
+    parent: t('ecoles.role.parent', "Parent d'élève")
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-background text-slate-800 dark:text-slate-200 flex flex-col">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-background text-slate-800 dark:text-slate-200 flex flex-col" dir={dir}>
       {/* Header standalone */}
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -255,6 +258,7 @@ export default function EcolesPage() {
         </div>
 
         <div className="flex items-center gap-4">
+          <LanguageToggle />
           <ThemeToggle />
           
           <div className="flex items-center gap-2">
@@ -271,7 +275,7 @@ export default function EcolesPage() {
             onClick={handleSignOut}
             className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-xl px-3 flex items-center gap-1 text-xs"
           >
-            <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Se déconnecter</span>
+            <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">{t('nav.logout', 'Se déconnecter')}</span>
           </Button>
         </div>
       </header>
@@ -282,12 +286,12 @@ export default function EcolesPage() {
         <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              {currentUser?.role === 'parent' ? "Établissements de mes enfants" : "Mes établissements"}
+              {currentUser?.role === 'parent' ? t('ecoles.title.parent', "Établissements de mes enfants") : t('ecoles.title.other', "Mes établissements")}
             </h1>
             <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
-              {currentUser?.role === 'directeur' && "Sélectionnez ou créez un établissement pour accéder à sa console de gestion."}
-              {currentUser?.role === 'enseignant' && "Établissements scolaires dans lesquels vous êtes actuellement affecté."}
-              {currentUser?.role === 'parent' && "Consultez la scolarité, les relevés de notes et l&apos;assiduité de vos enfants."}
+              {currentUser?.role === 'directeur' && t('ecoles.desc.directeur', "Sélectionnez ou créez un établissement pour accéder à sa console de gestion.")}
+              {currentUser?.role === 'enseignant' && t('ecoles.desc.enseignant', "Établissements scolaires dans lesquels vous êtes actuellement affecté.")}
+              {currentUser?.role === 'parent' && t('ecoles.desc.parent', "Consultez la scolarité, les relevés de notes et l'assiduité de vos enfants.")}
             </p>
           </div>
 
@@ -296,7 +300,7 @@ export default function EcolesPage() {
               onClick={() => setIsAddModalOpen(true)}
               className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto shadow-sm transition-all"
             >
-              <Plus className="h-4 w-4" /> Créer un établissement
+              <Plus className="h-4 w-4" /> {t('ecoles.create_btn', "Créer un établissement")}
             </Button>
           )}
 
@@ -305,7 +309,7 @@ export default function EcolesPage() {
               onClick={() => setIsInviteModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 self-start md:self-auto shadow-md transition-all"
             >
-              <Plus className="h-4 w-4" /> Rejoindre un établissement via code
+              <Plus className="h-4 w-4" /> {t('ecoles.join_btn', "Rejoindre un établissement via code")}
             </Button>
           )}
         </div>
@@ -343,8 +347,8 @@ export default function EcolesPage() {
                   <Plus className="h-6 w-6 text-slate-400 dark:text-slate-500" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Créer une école</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Configurez une nouvelle filiale en un clic.</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('ecoles.create_school_card_title', "Créer une école")}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{t('ecoles.create_school_card_desc', "Configurez une nouvelle filiale en un clic.")}</p>
                 </div>
               </button>
             )}
@@ -358,40 +362,40 @@ export default function EcolesPage() {
             
             {currentUser?.role === 'directeur' ? (
               <>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Aucun établissement créé</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('ecoles.empty.title_directeur', "Aucun établissement créé")}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-sm leading-relaxed">
-                  Vous n&apos;avez pas encore configuré d&apos;école sur votre compte GestScol. Créez votre premier établissement pour commencer à inscrire vos élèves.
+                  {t('ecoles.empty.desc_directeur', "Vous n'avez pas encore configuré d'école sur votre compte GestScol. Créez votre premier établissement pour commencer à inscrire vos élèves.")}
                 </p>
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs mt-6 px-6 py-2.5 rounded-xl"
                 >
-                  Créer mon premier établissement
+                  {t('ecoles.empty.btn_directeur', "Créer mon premier établissement")}
                 </Button>
               </>
             ) : currentUser?.role === 'enseignant' ? (
               <>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Aucune assignation d&apos;école</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('ecoles.empty.title_enseignant', "Aucune assignation d'école")}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-sm leading-relaxed flex items-center gap-1.5 justify-center">
                   <GraduationCap className="h-4.5 w-4.5 text-blue-500 shrink-0" />
-                  Aucune école ne vous a encore assigné à ses classes. Contactez le directeur de votre établissement.
+                  {t('ecoles.empty.desc_enseignant', "Aucune école ne vous a encore assigné à ses classes. Contactez le directeur de votre établissement.")}
                 </p>
                 <Button
                   onClick={chargerEcoles}
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs mt-6 rounded-xl flex items-center gap-1.5 shadow-sm dark:shadow-none"
                 >
-                  <RefreshCw className="h-4 w-4" /> Rafraîchir
+                  <RefreshCw className="h-4 w-4" /> {t('action.refresh', "Rafraîchir")}
                 </Button>
               </>
             ) : (
               <>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Aucune école liée</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('ecoles.empty.title_parent', "Aucune école liée")}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-sm leading-relaxed flex items-center gap-1.5 justify-center">
                   <Users className="h-4.5 w-4.5 text-amber-500 shrink-0" />
-                  Aucun établissement n&apos;est actuellement lié à votre adresse e-mail. Veuillez contacter l&apos;école.
+                  {t('ecoles.empty.desc_parent', "Aucun établissement n'est actuellement lié à votre adresse e-mail. Veuillez contacter l'école.")}
                 </p>
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 rounded-xl p-3.5 mt-4 text-[11px] text-amber-800 dark:text-amber-400 text-left w-full max-w-md">
-                  <strong>Adresse e-mail active :</strong> {currentUser?.email}
+                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 rounded-xl p-3.5 mt-4 text-[11px] text-amber-800 dark:text-amber-400 text-start w-full max-w-md">
+                  <strong>{t('ecoles.empty.active_email_label', "Adresse e-mail active :")}</strong> {currentUser?.email}
                 </div>
               </>
             )}
@@ -420,23 +424,23 @@ export default function EcolesPage() {
       {/* Modale de rattachement via code (Enseignant) */}
       <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
         <DialogContent className="sm:max-w-[420px] bg-white dark:bg-card border border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 rounded-2xl shadow-xl">
-          <DialogHeader>
+          <DialogHeader className="text-start">
             <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <School className="h-5.5 w-5.5 text-blue-600 dark:text-blue-450" />
-              Rejoindre un établissement
+              {t('ecoles.join_modal.title', "Rejoindre un établissement")}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-              Saisissez le code d&apos;invitation à 8 caractères fourni par le Directeur pour lier votre compte enseignant à son école.
+              {t('ecoles.join_modal.desc', "Saisissez le code d'invitation à 8 caractères fourni par le Directeur pour lier votre compte enseignant à son école.")}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleRejoindreEcole} className="space-y-4 py-3">
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 text-start">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider block">
-                Code d&apos;invitation :
+                {t('ecoles.join_modal.code_label', "Code d'invitation :")}
               </label>
               <Input
-                placeholder="Ex: AB12CD34"
+                placeholder={t('ecoles.join_modal.placeholder', "Ex: AB12CD34")}
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 text-slate-900 dark:text-slate-100 text-center font-extrabold text-sm tracking-widest uppercase py-5 rounded-xl placeholder:tracking-normal placeholder:font-medium focus:border-blue-500 focus-visible:ring-blue-500/20"
@@ -455,7 +459,7 @@ export default function EcolesPage() {
                 }}
                 className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-bold"
               >
-                Annuler
+                {t('action.cancel', "Annuler")}
               </Button>
               <Button
                 type="submit"
@@ -467,7 +471,7 @@ export default function EcolesPage() {
                 ) : (
                   <Plus className="h-3.5 w-3.5" />
                 )}
-                Confirmer le code
+                {t('ecoles.join_modal.confirm_btn', "Confirmer le code")}
               </Button>
             </DialogFooter>
           </form>

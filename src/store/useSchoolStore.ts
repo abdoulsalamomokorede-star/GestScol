@@ -52,6 +52,8 @@ interface SchoolState {
   comptesSimules: UserCompteSimule[]
   notifications: NotificationItem[]
   suppressedNotificationIds: string[]
+  currentLanguage?: 'fr' | 'ar'
+  setLanguage: (lang: 'fr' | 'ar') => void
   
   updateEcole: (data: Partial<Ecole>) => void
   updateAbonnement: (data: Partial<AbonnementEcole>) => Promise<void>
@@ -143,6 +145,7 @@ interface SchoolState {
   ajouterEcole: (donnees: any) => Promise<{ success: boolean; data?: any; error?: string }>
   supprimerEcole: (ecoleId: string) => Promise<{ success: boolean; error?: string }>
   setEcoleCourante: (ecoleId: string) => Promise<void>
+  upgradeParentToPremium: (type: 'annuel' | 't1' | 't2' | 't3', anneeId: string) => Promise<{ success: boolean; error?: string }>
 }
 
 const checkAbonnement = (state: any, suppressToast = false): boolean => {
@@ -172,6 +175,8 @@ export const useSchoolStore = create<SchoolState>()(
   persist(
     (set, get) => ({
       ecole: ecoleMock,
+      currentLanguage: 'fr',
+      setLanguage: (lang: 'fr' | 'ar') => set({ currentLanguage: lang }),
       updateEcole: async (data) => {
         if (checkAbonnement(get())) return
         const state = get()
@@ -589,7 +594,7 @@ export const useSchoolStore = create<SchoolState>()(
             const ecoleIds = dbEleves ? Array.from(new Set(dbEleves.map(e => e.ecole_id).filter(Boolean))) as string[] : []
             const activeEcoleId = get().ecoleId || (ecoleIds.length > 0 ? ecoleIds[0] : null)
 
-            const [notes, absences, paiements, bulletins, dbClasses, dbEcoles, dbMatieres, inscriptions, dbAnnees, abonnementRes] = await Promise.all([
+            const [notes, absences, paiements, bulletins, dbClasses, dbEcoles, dbMatieres, inscriptions, dbAnnees, abonnementRes, meRes] = await Promise.all([
               supabase.from('notes').select('*').in('eleve_id', eleveIds),
               supabase.from('absences').select('*').in('eleve_id', eleveIds),
               supabase.from('paiements').select('*').in('eleve_id', eleveIds),
@@ -599,7 +604,8 @@ export const useSchoolStore = create<SchoolState>()(
               classIds.length > 0 ? supabase.from('matieres').select('*').in('classe_id', classIds) : Promise.resolve({ data: [] }),
               supabase.from('inscriptions').select('*').in('eleve_id', eleveIds),
               activeEcoleId ? supabase.from('annees_scolaires').select('*').eq('ecole_id', activeEcoleId) : Promise.resolve({ data: [] }),
-              activeEcoleId ? getSchoolAbonnement(activeEcoleId) : Promise.resolve({ success: false, data: null })
+              activeEcoleId ? getSchoolAbonnement(activeEcoleId) : Promise.resolve({ success: false, data: null }),
+              supabase.from('utilisateurs').select('*').eq('id', currentUser.id).maybeSingle()
             ])
 
             const mappedAnnees = (dbAnnees.data ?? []).map(a => ({
@@ -743,6 +749,20 @@ export const useSchoolStore = create<SchoolState>()(
                 }
               })() : get().ecole
             })
+            const dbMe = meRes?.data
+            if (dbMe) {
+              set({
+                currentUser: {
+                  ...currentUser,
+                  nom: dbMe.nom,
+                  prenom: dbMe.prenom,
+                  email: dbMe.email,
+                  telephone: dbMe.telephone,
+                  photoUrl: dbMe.photo_url,
+                  parentSubscriptionStatus: dbMe.parent_subscription_status || 'gratuit'
+                }
+              })
+            }
             return
           }
 
@@ -935,7 +955,8 @@ export const useSchoolStore = create<SchoolState>()(
                     prenom: dbMe.prenom,
                     email: dbMe.email,
                     telephone: dbMe.telephone,
-                    photoUrl: dbMe.photo_url
+                    photoUrl: dbMe.photo_url,
+                    parentSubscriptionStatus: dbMe.parent_subscription_status || 'gratuit'
                   }
                 })
               }
@@ -1308,13 +1329,7 @@ export const useSchoolStore = create<SchoolState>()(
               return []
             }
 
-            const ecolesFiltrees = (data ?? []).filter((e: any) => {
-              const plans = e.abonnements || []
-              const plan = Array.isArray(plans) ? plans[0]?.plan : plans?.plan
-              return plan !== 'gratuit'
-            })
-
-            return ecolesFiltrees.map((e: any) => ({
+            return (data ?? []).map((e: any) => ({
               id: e.id,
               nom: e.nom,
               ville: e.ville,
@@ -1381,13 +1396,7 @@ export const useSchoolStore = create<SchoolState>()(
               return []
             }
 
-            const ecolesFiltrees = (data ?? []).filter((e: any) => {
-              const plans = e.abonnements || []
-              const plan = Array.isArray(plans) ? plans[0]?.plan : plans?.plan
-              return plan !== 'gratuit'
-            })
-
-            return ecolesFiltrees.map((e: any) => ({
+            return (data ?? []).map((e: any) => ({
               id: e.id,
               nom: e.nom,
               ville: e.ville,
@@ -2943,6 +2952,12 @@ export const useSchoolStore = create<SchoolState>()(
           if (data.appreciationDirecteur !== undefined) updateData.appreciation_directeur = data.appreciationDirecteur
           if (data.dateGeneration) updateData.date_generation = data.dateGeneration
           if (data.estValide !== undefined) updateData.est_valide = data.estValide
+          if (data.notes !== undefined) updateData.notes = data.notes
+          if (data.moyenneGenerale !== undefined) updateData.moyenne_generale = data.moyenneGenerale
+          if (data.moyenneClasse !== undefined) updateData.moyenne_classe = data.moyenneClasse
+          if (data.rangClasse !== undefined) updateData.rang_classe = data.rangClasse
+          if (data.effectifClasse !== undefined) updateData.effectif_classe = data.effectifClasse
+          if (data.appreciation !== undefined) updateData.appreciation = data.appreciation
           
           const { error } = await supabase.from('bulletins').update(updateData).eq('id', id)
           if (error) {
@@ -3104,6 +3119,85 @@ export const useSchoolStore = create<SchoolState>()(
         const isExpiredStatut = ['expire', 'suspendu'].includes(ecole.abonnement.statut)
         const isExpiredDate = ecole.abonnement.dateFin ? new Date(ecole.abonnement.dateFin) < new Date() : false
         return isExpiredStatut || isExpiredDate
+      },
+      upgradeParentToPremium: async (type: 'annuel' | 't1' | 't2' | 't3', anneeId: string) => {
+        const { currentUser } = get()
+        if (!currentUser || currentUser.role !== 'parent') {
+          return { success: false, error: "Utilisateur non connecté ou n'est pas un parent." }
+        }
+
+        try {
+          const supabase = createClient()
+          const actuel = currentUser.parentSubscriptionStatus || 'gratuit'
+          
+          if (actuel === 'premium') {
+            return { success: true }
+          }
+
+          let nouveauStatut = ''
+          
+          // Récupérer et parser les abonnements existants par année
+          const abonnements = actuel.includes(':') 
+            ? actuel.split(';').filter(Boolean) 
+            : []
+            
+          const idxAnnee = abonnements.findIndex(a => a.startsWith(`${anneeId}:`))
+          let statutAnnee = 'premium'
+          
+          if (type !== 'annuel') {
+            let trimestres: string[] = []
+            if (idxAnnee !== -1) {
+              const parts = abonnements[idxAnnee].split(':')
+              const statutExistant = parts[1]
+              if (statutExistant === 'premium') {
+                return { success: true }
+              }
+              trimestres = statutExistant.split(',').filter(Boolean)
+            }
+            
+            if (!trimestres.includes(type)) {
+              trimestres.push(type)
+            }
+            trimestres.sort()
+            
+            if (trimestres.includes('t1') && trimestres.includes('t2') && trimestres.includes('t3')) {
+              statutAnnee = 'premium'
+            } else {
+              statutAnnee = trimestres.join(',')
+            }
+          }
+          
+          const nouvelAbonnementAnnee = `${anneeId}:${statutAnnee}`
+          if (idxAnnee !== -1) {
+            abonnements[idxAnnee] = nouvelAbonnementAnnee
+          } else {
+            abonnements.push(nouvelAbonnementAnnee)
+          }
+          
+          nouveauStatut = abonnements.join(';')
+
+          const { error } = await supabase
+            .from('utilisateurs')
+            .update({ parent_subscription_status: nouveauStatut })
+            .eq('id', currentUser.id)
+
+          if (error) {
+            console.error("Erreur de mise à jour de l'abonnement parent :", error.message)
+            return { success: false, error: error.message }
+          }
+
+          set({
+            currentUser: {
+              ...currentUser,
+              parentSubscriptionStatus: nouveauStatut
+            }
+          })
+
+          return { success: true }
+        } catch (err: any) {
+          console.error(err)
+          return { success: false, error: err.message || "Une erreur inattendue est survenue." }
+        }
       }
     }),
     {

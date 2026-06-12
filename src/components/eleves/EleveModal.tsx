@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DatePicker } from '@/components/ui/date-picker'
 import { uploadStudentPhoto } from '@/app/actions/upload'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface EleveModalProps {
   isOpen: boolean
@@ -36,10 +37,8 @@ const generateMatricule = () => {
 export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalProps) {
   const { classes, eleves, addEleve, updateEleve, isAbonnementExpired } = useSchoolStore()
   const { toast } = useToast()
+  const { t, dir, isAr } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
-  // For shadcn, usually it's `useToast` hook that returns `{ toast }`.
-  // Wait, shadcn toaster might not be fully configured, but I will use the standard hook if available.
-  // Actually, I'll just skip complex validation for MVP and use basic state.
   
   const [formData, setFormData] = useState<Partial<Eleve>>({
     matricule: '',
@@ -97,8 +96,8 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     if (file) {
       if (file.size > 1024 * 1024) {
         toast({
-          title: "Fichier trop volumineux",
-          description: "La taille de l'image ne doit pas dépasser 1 Mo.",
+          title: t('toast.file_too_large', "Fichier trop volumineux"),
+          description: t('eleves.modal.photo_max_size', "La taille de l'image ne doit pas dépasser 1 Mo."),
           variant: "destructive"
         })
         return
@@ -118,8 +117,8 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     
     if (isAbonnementExpired()) {
       toast({
-        title: "Action impossible",
-        description: "Abonnement expiré. Veuillez le renouveler pour effectuer cette action.",
+        title: t('toast.impossible_action', "Action impossible"),
+        description: t('toast.expired_desc', "Abonnement expiré. Veuillez le renouveler pour effectuer cette action."),
         variant: "destructive"
       })
       return
@@ -128,8 +127,8 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     // Validation basique
     if (!formData.matricule || !formData.prenom || !formData.nom || !formData.classeId || !formData.parentTelephone) {
       toast({
-        title: "Erreur de validation",
-        description: "Veuillez remplir les champs obligatoires (Matricule, Prénom, Nom, Classe, Téléphone parent)",
+        title: t('toast.validation_error', "Erreur de validation"),
+        description: t('toast.validation_error_desc', "Veuillez remplir les champs obligatoires (Matricule, Prénom, Nom, Classe, Téléphone parent)"),
         variant: "destructive"
       })
       return
@@ -139,8 +138,8 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
     const isDuplicate = eleves.some(e => e.matricule === formData.matricule && e.id !== eleveToEdit?.id)
     if (isDuplicate) {
       toast({
-        title: "Erreur",
-        description: "Ce matricule est déjà attribué à un autre élève.",
+        title: t('toast.duplicate_matricule', "Erreur"),
+        description: t('toast.duplicate_matricule_desc', "Ce matricule est déjà attribué à un autre élève."),
         variant: "destructive"
       })
       return
@@ -153,8 +152,8 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
           const uploadRes = await uploadStudentPhoto(eleveToEdit.id, formData.photoUrl)
           if (!uploadRes.success) {
             toast({
-              title: "Erreur de photo",
-              description: uploadRes.error || "La validation ou le transfert de la photo a échoué.",
+              title: t('toast.photo_error', "Erreur de photo"),
+              description: uploadRes.error || t('toast.photo_error_desc', "La validation ou le transfert de la photo a échoué."),
               variant: "destructive"
             })
             setIsLoading(false)
@@ -163,9 +162,9 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
         }
         const res = await updateEleve(eleveToEdit.id, formData)
         if (res && !res.success) {
-          toast({ title: "Erreur", description: res.error || "La modification a échoué.", variant: "destructive" })
+          toast({ title: t('toast.error', "Erreur"), description: res.error || t('toast.update_failed_desc', "La modification a échoué."), variant: "destructive" })
         } else {
-          toast({ title: "Succès", description: "Les informations de l'élève ont été mises à jour." })
+          toast({ title: t('toast.success', "Succès"), description: t('toast.student_updated', "Les informations de l'élève ont été mises à jour.") })
           onClose()
         }
       } else {
@@ -175,14 +174,14 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
           dateInscription: new Date().toISOString().split('T')[0]
         } as Eleve)
         if (res && !res.success) {
-          toast({ title: "Erreur", description: res.error || "L'ajout a échoué.", variant: "destructive" })
+          toast({ title: t('toast.error', "Erreur"), description: res.error || t('toast.add_failed_desc', "L'ajout a échoué."), variant: "destructive" })
         } else {
-          toast({ title: "Succès", description: "Le nouvel élève a été ajouté." })
+          toast({ title: t('toast.success', "Succès"), description: t('toast.student_added', "Le nouvel élève a été ajouté.") })
           onClose()
         }
       }
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message || "Une erreur est survenue.", variant: "destructive" })
+      toast({ title: t('toast.error', "Erreur"), description: err.message || "Une erreur est survenue.", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -190,18 +189,18 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto text-start" dir={dir}>
         <DialogHeader>
-          <DialogTitle>{eleveToEdit ? "Modifier l'élève" : "Ajouter un nouvel élève"}</DialogTitle>
+          <DialogTitle className="text-start">{eleveToEdit ? t('eleves.modal.edit_title', "Modifier l'élève") : t('eleves.modal.add_title', "Ajouter un nouvel élève")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Informations de l'élève</h3>
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-start">{t('eleves.modal.student_info', "Informations de l'élève")}</h3>
             
             {/* Photo de l'élève */}
             <div className="flex flex-col items-center justify-center space-y-2 mb-4 border-b border-border/40 pb-4">
-              <Label className="text-xs font-bold text-muted-foreground uppercase">Photo de l&apos;élève</Label>
+              <Label className="text-xs font-bold text-muted-foreground uppercase">{t('eleves.modal.photo', "Photo de l'élève")}</Label>
               <div className="relative group cursor-pointer">
                 <Avatar className="h-20 w-20 border-2 border-primary/20 shadow-md">
                   {formData.photoUrl ? (
@@ -216,24 +215,24 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
                   <input type="file" accept="image/*" className="hidden" onChange={handleStudentPhotoChange} />
                 </label>
               </div>
-              <span className="text-[10px] text-muted-foreground">Formats acceptés : JPG ou PNG, max 1 Mo</span>
+              <span className="text-[10px] text-muted-foreground">{t('eleves.modal.photo_formats', "Formats acceptés : JPG ou PNG, max 1 Mo")}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-1">
-                <Label htmlFor="matricule">Matricule *</Label>
-                <Input id="matricule" name="matricule" value={formData.matricule || ''} onChange={handleChange} required />
+                <Label htmlFor="matricule" className="text-start block">{t('eleves.modal.matricule', "Matricule *")}</Label>
+                <Input id="matricule" name="matricule" value={formData.matricule || ''} onChange={handleChange} required className="text-start" />
               </div>
               <div className="space-y-2 sm:col-span-1">
-                <Label htmlFor="prenom">Prénom *</Label>
-                <Input id="prenom" name="prenom" value={formData.prenom || ''} onChange={handleChange} placeholder="Ex: Koffi" required />
+                <Label htmlFor="prenom" className="text-start block">{t('eleves.modal.firstname', "Prénom *")}</Label>
+                <Input id="prenom" name="prenom" value={formData.prenom || ''} onChange={handleChange} placeholder="Ex: Koffi" required className="text-start" />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="nom">Nom *</Label>
-                <Input id="nom" name="nom" value={formData.nom || ''} onChange={handleChange} placeholder="Ex: Kouadio" required />
+                <Label htmlFor="nom" className="text-start block">{t('eleves.modal.lastname', "Nom *")}</Label>
+                <Input id="nom" name="nom" value={formData.nom || ''} onChange={handleChange} placeholder="Ex: Kouadio" required className="text-start" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dateNaissance">Date de naissance</Label>
+                <Label htmlFor="dateNaissance" className="text-start block">{t('eleves.modal.birthdate', "Date de naissance")}</Label>
                 <DatePicker
                   id="dateNaissance"
                   date={formData.dateNaissance ? new Date(formData.dateNaissance) : undefined}
@@ -246,44 +245,44 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
                       handleSelectChange('dateNaissance', '')
                     }
                   }}
-                  className="w-full bg-background"
+                  className="w-full bg-background text-start"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Sexe</Label>
+                <Label className="text-start block">{t('eleves.modal.gender', "Sexe")}</Label>
                 <Select value={formData.sexe} onValueChange={(val) => handleSelectChange('sexe', val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner le sexe" />
+                  <SelectTrigger className="text-start">
+                    <SelectValue placeholder={t('eleves.modal.select_gender', "Sélectionner le sexe")} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M">Masculin</SelectItem>
-                    <SelectItem value="F">Féminin</SelectItem>
+                  <SelectContent align={isAr ? 'end' : 'start'}>
+                    <SelectItem value="M" className="text-start">{t('eleves.modal.gender_m', "Masculin")}</SelectItem>
+                    <SelectItem value="F" className="text-start">{t('eleves.modal.gender_f', "Féminin")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Classe *</Label>
+              <div className="space-y-2 text-start">
+                <Label className="text-start block">{t('eleves.modal.class', "Classe *")}</Label>
                 <Popover open={isClasseComboboxOpen} onOpenChange={setIsClasseComboboxOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       role="combobox"
                       aria-expanded={isClasseComboboxOpen}
-                      className="w-full justify-between"
+                      className="w-full justify-between font-normal text-start"
                     >
                       {formData.classeId
-                        ? classes.find(c => c.id === formData.classeId)?.nom || "Sélectionner une classe"
-                        : "Sélectionner une classe"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        ? classes.find(c => c.id === formData.classeId)?.nom || t('eleves.modal.select_class', "Sélectionner une classe")
+                        : t('eleves.modal.select_class', "Sélectionner une classe")}
+                      <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[300px] p-0" align="start">
-                    <div className="flex flex-col">
+                  <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[300px] p-0" align={isAr ? 'end' : 'start'}>
+                    <div className="flex flex-col text-start">
                       <div className="flex items-center border-b px-3">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        <Search className="me-2 h-4 w-4 shrink-0 opacity-50" />
                         <Input
-                          className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground border-0 focus-visible:ring-0 shadow-none"
-                          placeholder="Rechercher une classe..."
+                          className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground border-0 focus-visible:ring-0 shadow-none text-start"
+                          placeholder={t('eleves.modal.search_class', "Rechercher une classe...")}
                           value={classeSearchQuery}
                           onChange={(e) => setClasseSearchQuery(e.target.value)}
                         />
@@ -294,15 +293,15 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
                           .map((c) => (
                             <div
                               key={c.id}
-                              className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground ${formData.classeId === c.id ? 'bg-accent/50' : ''}`}
+                              className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground text-start ${formData.classeId === c.id ? 'bg-accent/50' : ''}`}
                               onClick={() => { handleSelectChange('classeId', c.id); setIsClasseComboboxOpen(false); }}
                             >
-                              <Check className={`mr-2 h-4 w-4 ${formData.classeId === c.id ? 'opacity-100' : 'opacity-0'}`} />
+                              <Check className={`me-2 h-4 w-4 ${formData.classeId === c.id ? 'opacity-100' : 'opacity-0'}`} />
                               {c.nom}
                             </div>
                           ))}
                         {classes.filter(c => c.nom.toLowerCase().includes(classeSearchQuery.toLowerCase())).length === 0 && (
-                          <p className="p-4 text-center text-sm text-muted-foreground">Aucune classe trouvée.</p>
+                          <p className="p-4 text-center text-sm text-muted-foreground">{t('eleves.modal.no_class_found', "Aucune classe trouvée.")}</p>
                         )}
                       </div>
                     </div>
@@ -310,15 +309,15 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label>Statut</Label>
+                <Label className="text-start block">{t('eleves.modal.status', "Statut")}</Label>
                 <Select value={formData.statut} onValueChange={(val) => handleSelectChange('statut', val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Statut de l'élève" />
+                  <SelectTrigger className="text-start">
+                    <SelectValue placeholder={t('eleves.modal.select_status', "Statut de l'élève")} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="actif">Actif</SelectItem>
-                    <SelectItem value="suspendu">Suspendu</SelectItem>
-                    <SelectItem value="exclu">Exclu</SelectItem>
+                  <SelectContent align={isAr ? 'end' : 'start'}>
+                    <SelectItem value="actif" className="text-start">{t('eleves.modal.status_active', "Actif")}</SelectItem>
+                    <SelectItem value="suspendu" className="text-start">{t('eleves.modal.status_suspended', "Suspendu")}</SelectItem>
+                    <SelectItem value="exclu" className="text-start">{t('eleves.modal.status_excluded', "Exclu")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -326,18 +325,18 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Contact Parent/Tuteur</h3>
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-start">{t('eleves.modal.parent_contact', "Contact Parent/Tuteur")}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="parentNom">Nom complet</Label>
-                <Input id="parentNom" name="parentNom" value={formData.parentNom || ''} onChange={handleChange} placeholder="Nom du tuteur" />
+                <Label htmlFor="parentNom" className="text-start block">{t('eleves.modal.parent_name', "Nom complet")}</Label>
+                <Input id="parentNom" name="parentNom" value={formData.parentNom || ''} onChange={handleChange} placeholder={t('eleves.modal.parent_name_placeholder', "Nom du tuteur")} className="text-start" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="parentTelephone">Téléphone (WhatsApp) *</Label>
-                <Input id="parentTelephone" name="parentTelephone" value={formData.parentTelephone || ''} onChange={handleChange} placeholder="+225 01 23 45 67 89" required />
+                <Label htmlFor="parentTelephone" className="text-start block">{t('eleves.modal.parent_phone', "Téléphone (WhatsApp) *")}</Label>
+                <Input id="parentTelephone" name="parentTelephone" value={formData.parentTelephone || ''} onChange={handleChange} placeholder="+225 01 23 45 67 89" required className="text-start" />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="parentEmail">Adresse Email</Label>
+                <Label htmlFor="parentEmail" className="text-start block">{t('eleves.modal.parent_email', "Adresse Email")}</Label>
                 <Input 
                   type="email" 
                   id="parentEmail" 
@@ -345,25 +344,25 @@ export default function EleveModal({ isOpen, onClose, eleveToEdit }: EleveModalP
                   value={formData.parentEmail || ''} 
                   onChange={handleChange} 
                   placeholder="email@exemple.com"
-                  className={formData.parentEmail === '' || formData.parentEmail === undefined ? '' : !isEmailInvalid ? 'border-success focus-visible:ring-success' : 'border-destructive focus-visible:ring-destructive'} 
+                  className={cn("text-start", (formData.parentEmail === '' || formData.parentEmail === undefined ? '' : !isEmailInvalid ? 'border-success focus-visible:ring-success' : 'border-destructive focus-visible:ring-destructive'))} 
                 />
                 {isEmailInvalid && (
-                  <p className="text-xs text-destructive">
-                    Format d'email invalide. Veuillez corriger ou laisser vide.
+                  <p className="text-xs text-destructive text-start">
+                    {t('eleves.modal.invalid_email', "Format d'email invalide. Veuillez corriger ou laisser vide.")}
                   </p>
                 )}
               </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>{t('action.cancel', "Annuler")}</Button>
             <Button 
               type="submit" 
               className="bg-primary text-white hover:bg-primary-dark"
               disabled={isEmailInvalid || isLoading}
             >
-              {isLoading ? "Enregistrement..." : eleveToEdit ? "Enregistrer les modifications" : "Ajouter l'élève"}
+              {isLoading ? t('action.saving', "Enregistrement...") : (eleveToEdit ? t('eleves.modal.save_changes', "Enregistrer les modifications") : t('eleves.modal.add_student', "Ajouter l'élève"))}
             </Button>
           </DialogFooter>
         </form>

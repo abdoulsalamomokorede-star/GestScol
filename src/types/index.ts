@@ -35,6 +35,7 @@ export type User = {
   ecoleId: string | null        // FK → Ecole.id
   identifiant?: string   // Utilisé pour les comptes_connexion
   photoUrl?: string      // URL ou Base64 de la photo de profil
+  parentSubscriptionStatus?: string // Statut de l'abonnement du parent ('gratuit', 'premium', 't1', 't1,t2', etc.)
   // Note : pour role='enseignant', les classes/matières sont liées
   //        via Classe.enseignantPrincipalId et Matiere.enseignantId
   // Note : pour role='parent', le lien vers les enfants se fait

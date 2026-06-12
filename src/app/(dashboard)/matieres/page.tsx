@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
 import { Label } from '@/components/ui/label'
 import { PremiumGuard } from '@/components/ui/PremiumGuard'
+import { useTranslation } from '@/hooks/useTranslation'
 
 function MatieresContent() {
   const router = useRouter()
@@ -19,15 +20,9 @@ function MatieresContent() {
   const initialClasseId = searchParams.get('classeId') || 'toutes'
 
   const { matieres, classes, addMatiere, updateMatiere, deleteMatiere, isAbonnementExpired, ecole } = useSchoolStore()
+  const { t } = useTranslation()
 
-  if (ecole?.abonnement?.plan === 'gratuit') {
-    return (
-      <PremiumGuard 
-        title="Gestion des Matières" 
-        description="Configurez les matières enseignées dans votre établissement, définissez leurs coefficients respectifs par classe, et organisez le cursus pédagogique pour assurer un calcul précis des moyennes de vos élèves."
-      />
-    )
-  }
+
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [classFilter, setClassFilter] = useState(initialClasseId)
@@ -122,56 +117,56 @@ function MatieresContent() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h2 className="text-2xl font-display font-bold text-text">Gestion des Matières</h2>
-            <p className="text-sm text-muted-foreground">{filteredMatieres.length} matière(s)</p>
+            <h2 className="text-2xl font-display font-bold text-text">{t('matieres.title', 'Gestion des Matières')}</h2>
+            <p className="text-sm text-muted-foreground">{filteredMatieres.length} {t('matieres.found', 'matière(s)')}</p>
           </div>
         </div>
         <Button onClick={() => handleOpen()} className="bg-primary text-white hover:bg-primary-dark">
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle Matière
+          <Plus className="me-2 h-4 w-4" />
+          {t('matieres.new', 'Nouvelle Matière')}
         </Button>
       </div>
 
       <div className="bg-card p-4 rounded-lg shadow-sm border border-border/50 flex flex-col sm:flex-row gap-4">
         <Input 
-          placeholder="Rechercher une matière..." 
+          placeholder={t('matieres.search_placeholder', 'Rechercher une matière...')} 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1"
         />
         <div className="flex items-center w-full sm:w-[250px] px-3 py-2 border border-border/50 rounded-md bg-muted/20 text-sm font-medium text-text">
-          {classFilter === 'toutes' ? 'Toutes les classes' : getClasseName(classFilter)}
+          {classFilter === 'toutes' ? t('matieres.all_classes', 'Toutes les classes') : getClasseName(classFilter)}
         </div>
       </div>
 
       <div className="bg-card rounded-lg shadow-sm border border-border/50 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-start">
             <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-medium">
               <tr>
-                <th className="px-6 py-4">Nom de la matière</th>
-                <th className="px-6 py-4">Classe</th>
-                <th className="px-6 py-4 text-center">Coefficient</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-start">{t('matieres.table.name', 'Nom de la matière')}</th>
+                <th className="px-6 py-4 text-start">{t('matieres.table.class', 'Classe')}</th>
+                <th className="px-6 py-4 text-center">{t('matieres.table.coef', 'Coefficient')}</th>
+                <th className="px-6 py-4 text-end">{t('matieres.table.actions', 'Actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {filteredMatieres.map(matiere => (
                 <tr key={matiere.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-6 py-4 font-medium flex items-center">
-                    <div className="bg-primary/10 p-2 rounded-md mr-3 text-primary">
+                  <td className="px-6 py-4 font-medium flex items-center text-start">
+                    <div className="bg-primary/10 p-2 rounded-md me-3 text-primary">
                       <BookOpen className="h-4 w-4" />
                     </div>
                     {matiere.nom}
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground">{getClasseName(matiere.classeId)}</td>
+                  <td className="px-6 py-4 text-muted-foreground text-start">{getClasseName(matiere.classeId)}</td>
                   <td className="px-6 py-4 text-center">
                     <span className="font-bold text-text bg-muted/50 px-2 py-1 rounded">
                       {matiere.coefficient}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
+                  <td className="px-6 py-4 text-end">
+                    <div className="flex items-center justify-end gap-2">
                       <Button onClick={() => handleOpen(matiere)} variant="ghost" size="icon" className="text-muted-foreground hover:text-text hover:bg-muted transition-colors">
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -190,11 +185,11 @@ function MatieresContent() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingId ? "Modifier la matière" : "Ajouter une matière"}</DialogTitle>
+            <DialogTitle>{editingId ? t('matieres.modal.title_edit', 'Modifier la matière') : t('matieres.modal.title_add', 'Ajouter une matière')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Nom de la matière</Label>
+              <Label>{t('matieres.modal.name_label', 'Nom de la matière')}</Label>
               <Input 
                 value={formData.nom} 
                 onChange={e => setFormData({...formData, nom: e.target.value})} 
@@ -202,13 +197,13 @@ function MatieresContent() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Classe</Label>
-              <div className="w-full px-3 py-2 border rounded-md bg-muted/30 text-sm font-medium text-muted-foreground">
-                {formData.classeId ? getClasseName(formData.classeId) : 'Aucune classe sélectionnée'}
+              <Label>{t('matieres.modal.class_label', 'Classe')}</Label>
+              <div className="w-full px-3 py-2 border rounded-md bg-muted/30 text-sm font-medium text-muted-foreground text-start">
+                {formData.classeId ? getClasseName(formData.classeId) : t('matieres.modal.class_placeholder', 'Aucune classe sélectionnée')}
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Coefficient</Label>
+              <Label>{t('matieres.modal.coef_label', 'Coefficient')}</Label>
               <Input 
                 type="number" 
                 value={formData.coefficient} 
@@ -216,9 +211,9 @@ function MatieresContent() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Annuler</Button>
-            <Button onClick={handleSave} className="bg-primary text-white">Enregistrer</Button>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>{t('matieres.modal.cancel', 'Annuler')}</Button>
+            <Button onClick={handleSave} className="bg-primary text-white">{t('matieres.modal.save', 'Enregistrer')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -227,16 +222,17 @@ function MatieresContent() {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={confirmDelete}
-        title="Confirmer la suppression"
-        description="Voulez-vous vraiment supprimer cette matière ? Cette action est irréversible."
+        title={t('matieres.delete.title', 'Confirmer la suppression')}
+        description={t('matieres.delete.desc', 'Voulez-vous vraiment supprimer cette matière ? Cette action est irréversible.')}
       />
     </div>
   )
 }
 
 export default function MatieresPage() {
+  const { t } = useTranslation()
   return (
-    <Suspense fallback={<div>Chargement des matières...</div>}>
+    <Suspense fallback={<div>{t('action.loading', 'Chargement des matières...')}</div>}>
       <MatieresContent />
     </Suspense>
   )

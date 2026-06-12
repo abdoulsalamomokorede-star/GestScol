@@ -25,6 +25,8 @@ import {
   PhoneCall
 } from 'lucide-react'
 import logoImg from '@/app/logo.png'
+import { useTranslation } from '@/hooks/useTranslation'
+import LanguageToggle from '@/components/layout/LanguageToggle'
 
 const WEST_AFRICAN_COUNTRIES = [
   { label: "Côte d'Ivoire", value: "CI", prefix: "+225", placeholder: "07 48 85 96 12", digits: 10, cities: ["Abidjan", "Yamoussoukro", "Bouaké", "San-Pédro", "Korhogo", "Daloa", "Divo", "Diegonefla", "Oumé", "Gagnoa", "Lakota", "Man", "Agboville", "Aboisso", "Jacqueville", "Odienné", "Dimbokro", "Abengourou", "Anyama", "Autre"] },
@@ -65,13 +67,21 @@ function RegisterSchoolForm() {
   const router = useRouter()
   const { currentUser, setCurrentUser, clearSchoolData } = useSchoolStore()
   const { toast } = useToast()
+  const { t, dir, isAr } = useTranslation()
+
+  const PROVISION_STEPS = [
+    t('provision.step1', "Initialisation de votre serveur d'établissement..."),
+    t('provision.step2', "Création des tables de la base de données scolaire..."),
+    t('provision.step3', "Génération du portail sécurisé GestScol..."),
+    t('provision.step4', "Finalisation de votre abonnement annuel...")
+  ]
 
   // Guard de sécurité au montage : si pas connecté, rediriger vers login
   useEffect(() => {
     if (!currentUser) {
       toast({
-        title: "Authentification requise",
-        description: "Veuillez d'abord créer votre compte directeur pour accéder à cette étape.",
+        title: t('toast.auth_required', "Authentification requise"),
+        description: t('toast.auth_required_desc', "Veuillez d'abord créer votre compte directeur pour accéder à cette étape."),
         variant: "destructive"
       })
       router.push('/register')
@@ -79,7 +89,7 @@ function RegisterSchoolForm() {
       // Déjà configuré, rediriger
       router.push('/dashboard')
     }
-  }, [currentUser, router, toast])
+  }, [currentUser, router, toast, t])
 
   const [step, setStep] = useState<1 | 2 | 3>(1) // 1: Formule, 2: Fiche administrative, 3: Paiement MM (si payant)
   const [plan, setPlan] = useState<'gratuit' | 'standard' | 'premium'>('standard')
@@ -112,7 +122,7 @@ function RegisterSchoolForm() {
   // Dérivations & Helpers pour les Comboboxes de Pays et Villes
   const selectedCountryData = WEST_AFRICAN_COUNTRIES.find(c => c.value === schoolInfo.country) || WEST_AFRICAN_COUNTRIES[0]
   const cityOptions = selectedCountryData.cities.map(city => ({ label: city, value: city }))
-  const countryOptions = WEST_AFRICAN_COUNTRIES.map(c => ({ label: c.label, value: c.value }))
+  const countryOptions = WEST_AFRICAN_COUNTRIES.map(c => ({ label: t(`country.${c.value}`, c.label), value: c.value }))
 
   const handleCountryChange = (countryValue: string) => {
     if (!countryValue) return
@@ -129,21 +139,21 @@ function RegisterSchoolForm() {
   const validateStep2 = (): boolean => {
     const newErrors: Record<string, string> = {}
     if (!schoolInfo.schoolName.trim()) {
-      newErrors.schoolName = "Le nom de l'établissement est requis."
+      newErrors.schoolName = t('errors.school_name_required', "Le nom de l'établissement est requis.")
     }
     if (schoolInfo.levels.length === 0) {
-      newErrors.levels = "Veuillez cocher au moins un niveau d'enseignement."
+      newErrors.levels = t('errors.school_levels_required', "Veuillez cocher au moins un niveau d'enseignement.")
     }
     if (!schoolInfo.address.trim()) {
-      newErrors.address = "L'adresse de l'école est requise."
+      newErrors.address = t('errors.school_address_required', "L'adresse de l'école est requise.")
     }
     const phoneClean = schoolInfo.phoneSec.replace(/\s+/g, '')
     if (!schoolInfo.phoneSec.trim()) {
-      newErrors.phoneSec = "Le numéro du secrétariat est requis."
+      newErrors.phoneSec = t('errors.telephone_required', "Le numéro du secrétariat est requis.")
     } else {
       const countryData = WEST_AFRICAN_COUNTRIES.find(c => c.prefix === schoolInfo.phoneSecPrefix)
       if (countryData && phoneClean.length !== countryData.digits) {
-        newErrors.phoneSec = `Le numéro doit contenir exactement ${countryData.digits} chiffres pour ce pays.`
+        newErrors.phoneSec = t('errors.telephone_digits', "Le numéro doit contenir exactement {digits} chiffres.").replace('{digits}', countryData.digits.toString())
       }
     }
 
@@ -196,7 +206,7 @@ function RegisterSchoolForm() {
     // Validation basique pour l'étape 3 (paiement)
     if (step === 3) {
       if (!paymentInfo.phone.trim()) {
-        setErrors({ paymentPhone: "Le numéro de facturation est requis." })
+        setErrors({ paymentPhone: t('errors.payment_phone_required', "Le numéro de facturation est requis.") })
         return
       }
     }
@@ -246,12 +256,12 @@ function RegisterSchoolForm() {
         submittingRef.current = false
         setIsSubmitting(false)
 
-        let errMsg = result.error || "Échec de l'enregistrement de l'école."
+        let errMsg = result.error || t('toast.registration_failed_desc', "Une erreur est survenue lors de l'inscription.")
         if (errMsg.toLowerCase().includes("rate limit") || errMsg.toLowerCase().includes("too many requests") || errMsg.toLowerCase().includes("once per minute")) {
-          errMsg = "Trop de tentatives. Veuillez patienter quelques minutes."
+          errMsg = t('toast.too_many_attempts_error', "Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes.")
         }
 
-        toast({ title: "Erreur", description: errMsg, variant: "destructive" })
+        toast({ title: t('toast.error', "Erreur"), description: errMsg, variant: "destructive" })
         return
       }
 
@@ -271,8 +281,8 @@ function RegisterSchoolForm() {
         })
 
         toast({
-          title: "Établissement configuré !",
-          description: `Votre établissement ${schoolInfo.schoolName} a été configuré avec succès sous la formule ${plan === 'premium' ? 'Premium' : plan === 'standard' ? 'Standard' : 'Gratuite'}.`,
+          title: t('toast.school_configured', "Établissement configuré !"),
+          description: t('toast.school_configured_desc', "Votre établissement {name} a été configuré avec succès.").replace('{name}', schoolInfo.schoolName),
           variant: "default",
         })
 
@@ -285,19 +295,19 @@ function RegisterSchoolForm() {
       submittingRef.current = false
       setIsSubmitting(false)
 
-      let errMsg = "Veuillez réessayer plus tard."
+      let errMsg = t('toast.try_again_later', "Veuillez réessayer plus tard.")
       if (error && error.message && (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many requests") || error.message.toLowerCase().includes("once per minute"))) {
-        errMsg = "Trop de requêtes. Veuillez patienter."
+        errMsg = t('toast.too_many_attempts_error', "Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes.")
       }
 
-      toast({ title: "Erreur serveur", description: errMsg, variant: "destructive" })
+      toast({ title: t('toast.server_error', "Erreur serveur"), description: errMsg, variant: "destructive" })
     }
   }
 
   // --- Rendu Simulation Provisioning en plein écran ---
   if (isProvisioning) {
     return (
-      <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 p-6 select-none overflow-hidden animate-fadeIn">
+      <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 p-6 select-none overflow-hidden animate-fadeIn" dir={dir}>
         {/* Background Gradients */}
         <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-primary/20 rounded-full blur-[100px] animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-amber-500/10 rounded-full blur-[100px] animate-pulse delay-75" />
@@ -313,19 +323,19 @@ function RegisterSchoolForm() {
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-xl sm:text-2xl font-display font-extrabold text-white">Déploiement en cours...</h3>
+            <h3 className="text-xl sm:text-2xl font-display font-extrabold text-white">{t('provision.title', "Déploiement en cours...")}</h3>
             <p className="text-sm text-slate-400">
-              Veuillez patienter pendant la configuration de l'espace de votre école.
+              {t('provision.subtitle', "Veuillez patienter pendant la configuration de l'espace de votre école.")}
             </p>
           </div>
 
           {/* Liste des étapes de provision */}
-          <div className="text-left space-y-4 pt-4 border-t border-slate-800">
+          <div className="text-start space-y-4 pt-4 border-t border-slate-800">
             {PROVISION_STEPS.map((stepText, idx) => {
               const isDone = idx < provisionStep
               const isActive = idx === provisionStep
               return (
-                <div key={idx} className="flex items-center gap-3 transition-opacity duration-500">
+                <div key={idx} className="flex items-center gap-3 transition-opacity duration-500 rtl:space-x-reverse">
                   {isDone ? (
                     <div className="h-5 w-5 bg-primary/20 text-primary border border-primary/40 rounded-full flex items-center justify-center shrink-0">
                       <Check className="h-3 w-3" />
@@ -348,7 +358,7 @@ function RegisterSchoolForm() {
           </div>
 
           <div className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase bg-slate-950/40 py-2.5 rounded-xl border border-slate-800/60">
-            Période de souscription active : 2026-2027
+            {t('provision.period', "Période de souscription active : 2026-2027")}
           </div>
         </div>
       </div>
@@ -358,7 +368,12 @@ function RegisterSchoolForm() {
   if (!currentUser) return null
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 py-12 relative overflow-hidden" dir={dir}>
+      {/* Sélecteur de langue absolu */}
+      <div className="absolute top-4 right-4 rtl:left-4 rtl:right-auto z-50">
+        <LanguageToggle />
+      </div>
+
       {/* Visual background accents */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -z-10" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-amber-500/5 rounded-full blur-[80px] -z-10" />
@@ -370,28 +385,28 @@ function RegisterSchoolForm() {
         </Link>
         <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-text tracking-wide">GestScol</h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 text-center font-medium max-w-sm">
-          Connecté en tant que <span className="font-semibold text-primary">{currentUser.civilite} {currentUser.nom}</span>
+          {t('register.connected_as', "Connecté en tant que")} <span className="font-semibold text-primary">{currentUser.civilite} {currentUser.nom}</span>
         </p>
       </div>
 
-      <Card className="w-full max-w-2xl shadow-xl border-border/80 dark:border-border/60 bg-white dark:bg-card">
-        <CardHeader className="border-b border-border/60 dark:border-border/60 pb-6">
+      <Card className="w-full max-w-2xl shadow-xl border-border/80 dark:border-border/60 bg-white dark:bg-card text-start">
+        <CardHeader className="border-b border-border/60 dark:border-border/60 pb-6 text-start">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl sm:text-2xl font-bold text-text">
-                {step === 1 && "Étape 2 : Choix de la Formule"}
-                {step === 2 && "Étape 2 : Fiche Administrative de l'École"}
-                {step === 3 && "Étape 2 : Paiement Sécurisé"}
+                {step === 1 && t('register.school.step2_plan', "Étape 2 : Choix de la Formule")}
+                {step === 2 && t('register.school.step2_info', "Étape 2 : Fiche Administrative de l'École")}
+                {step === 3 && t('register.school.step2_payment', "Étape 2 : Paiement Sécurisé")}
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
-                {step === 1 && "Sélectionnez l'abonnement annuel le plus adapté à votre école"}
-                {step === 2 && "Configurez l'identité et les coordonnées de l'établissement"}
-                {step === 3 && "Finalisez votre abonnement via Mobile Money"}
+                {step === 1 && t('register.school.step2_plan_desc', "Sélectionnez l'abonnement annuel le plus adapté à votre école")}
+                {step === 2 && t('register.school.step2_info_desc', "Configurez l'identité et les coordonnées de l'établissement")}
+                {step === 3 && t('register.school.step2_payment_desc', "Finalisez votre abonnement via Mobile Money")}
               </CardDescription>
             </div>
 
             {/* Step badges */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               {[1, 2].map(i => (
                 <div key={i} className={`h-2.5 rounded-full transition-all duration-300 ${step >= i ? 'w-8 bg-primary' : 'w-4 bg-slate-200 dark:bg-slate-800'}`} />
               ))}
@@ -408,7 +423,7 @@ function RegisterSchoolForm() {
             {/* ==================================================== */}
             {/* ÉTAPE 1 : CHOIX DU PLAN D'ABONNEMENT */}
             {step === 1 && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2 animate-fadeIn">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2 animate-fadeIn text-start">
                 {/* Carte Formule Gratuite */}
                 <div
                   onClick={() => setPlan('gratuit')}
@@ -421,23 +436,23 @@ function RegisterSchoolForm() {
                   )}
                   <div className="space-y-4">
                     <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'gratuit' ? 'bg-primary/20 text-primary-dark dark:text-primary-light' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400'}`}>
-                      Formule Gratuite
+                      {t('pricing.free', "Formule Gratuite")}
                     </span>
                     <div className="space-y-1">
                       <h4 className="text-3xl font-display font-black text-slate-900 dark:text-slate-100">0 FCFA</h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Gratuit à vie</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{t('pricing.free_lifetime', "Gratuit à vie")}</p>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
-                      Essentiel pour découvrir la plateforme. Limité à 50 élèves.
+                      {t('pricing.free_desc', "Essentiel pour découvrir la plateforme. Limité à 50 élèves.")}
                     </p>
                     <div className="border-t border-slate-100 dark:border-border/60 pt-4 space-y-2.5 text-xs">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'gratuit' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'gratuit' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Jusqu'à 50 élèves</span>
+                        <span className={plan === 'gratuit' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{t('pricing.limit_50', "Jusqu'à 50 élèves")}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'gratuit' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'gratuit' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Fonctionnalités de base</span>
+                        <span className={plan === 'gratuit' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{t('pricing.basic_features', "Fonctionnalités de base")}</span>
                       </div>
                     </div>
                   </div>
@@ -451,7 +466,7 @@ function RegisterSchoolForm() {
                   <div className="absolute top-3 right-3 flex items-center gap-1.5">
                     {plan !== 'standard' && (
                       <span className="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 shadow-sm">
-                        Recommandé
+                        {t('pricing.recommended', "Recommandé")}
                       </span>
                     )}
                     {plan === 'standard' && (
@@ -462,27 +477,27 @@ function RegisterSchoolForm() {
                   </div>
                   <div className="space-y-4">
                     <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'standard' ? 'bg-primary/20 text-primary-dark dark:text-primary-light' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400'}`}>
-                      Formule Standard
+                      {t('pricing.standard_title', "Formule Standard")}
                     </span>
                     <div className="space-y-1">
                       <h4 className="text-3xl font-display font-black text-slate-900 dark:text-slate-100">150 000 FCFA</h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">par établissement / an</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{t('pricing.per_school_year', "par établissement / an")}</p>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
-                      Idéal pour les structures de taille intermédiaire ou en lancement (Recommandé jusqu'à 300 élèves).
+                      {t('pricing.standard_desc', "Idéal pour les structures de taille intermédiaire ou en lancement (Recommandé jusqu'à 300 élèves).")}
                     </p>
                     <div className="border-t border-slate-100 dark:border-border/60 pt-4 space-y-2.5 text-xs">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'standard' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Inscriptions & fiches d'élèves</span>
+                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{t('pricing.student_files', "Inscriptions & fiches d'élèves")}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'standard' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Bulletins A4 conformes MENA</span>
+                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{t('pricing.bulletins_mena', "Bulletins A4 conformes MENA")}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'standard' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Suivi encaissements (FCFA)</span>
+                        <span className={plan === 'standard' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{t('pricing.tuition_fcfa', "Suivi encaissements (FCFA)")}</span>
                       </div>
                     </div>
                   </div>
@@ -495,7 +510,7 @@ function RegisterSchoolForm() {
                 >
                   <div className="absolute top-3 right-3 flex items-center gap-1.5">
                     <span className="bg-amber-500 text-white font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 shadow-sm">
-                      Premium
+                      {t('pricing.premium_badge', "Premium")}
                     </span>
                     {plan === 'premium' && (
                       <div className="bg-primary text-white p-1 rounded-full">
@@ -505,27 +520,27 @@ function RegisterSchoolForm() {
                   </div>
                   <div className="space-y-4">
                     <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${plan === 'premium' ? 'bg-primary/20 text-primary-dark dark:text-primary-light' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400'}`}>
-                      Formule Premium
+                      {t('pricing.premium_title', "Formule Premium")}
                     </span>
                     <div className="space-y-1">
                       <h4 className="text-3xl font-display font-black text-slate-900 dark:text-slate-100">250 000 FCFA</h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">par établissement / an</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{t('pricing.per_school_year', "par établissement / an")}</p>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
-                      Élèves illimités, sauvegardes automatisées, assistance prioritaire 24h/7 via WhatsApp.
+                      {t('pricing.premium_desc_detail', "Élèves illimités, sauvegardes automatisées, assistance prioritaire 24h/7 via WhatsApp.")}
                     </p>
                     <div className="border-t border-slate-100 dark:border-border/60 pt-4 space-y-2.5 text-xs">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'premium' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'premium' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Tout le contenu Standard</span>
+                        <span className={plan === 'premium' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{t('pricing.all_standard', "Tout le contenu Standard")}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'premium' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={`font-semibold ${plan === 'premium' ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>Nombre d'élèves illimité</span>
+                        <span className={`font-semibold ${plan === 'premium' ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>{t('pricing.unlimited_students', "Nombre d'élèves illimité")}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rtl:space-x-reverse">
                         <ShieldCheck className={`h-4.5 w-4.5 shrink-0 ${plan === 'premium' ? 'text-primary' : 'text-slate-400'}`} />
-                        <span className={plan === 'premium' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>Assistance technique 24h/7</span>
+                        <span className={plan === 'premium' ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>{t('pricing.support_247', "Assistance technique 24h/7")}</span>
                       </div>
                     </div>
                   </div>
@@ -537,30 +552,30 @@ function RegisterSchoolForm() {
             {/* ÉTAPE 2 : FICHE ADMINISTRATIVE DE L'ÉCOLE */}
             {/* ==================================================== */}
             {step === 2 && (
-              <div className="space-y-5 pt-2 animate-fadeIn">
+              <div className="space-y-5 pt-2 animate-fadeIn text-start">
                 {/* School Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="schoolName">Nom de l'établissement scolaire *</Label>
+                  <Label htmlFor="schoolName" className="text-start block">{t('register.dir.school_name', "Nom de l'établissement scolaire")} *</Label>
                   <Input
                     id="schoolName"
-                    placeholder="Ex: Groupe Scolaire Les Flamboyants"
+                    placeholder={t('register.dir.school_name_placeholder', "Ex: Groupe Scolaire Les Flamboyants")}
                     value={schoolInfo.schoolName}
                     onChange={(e) => setSchoolInfo(prev => ({ ...prev, schoolName: e.target.value }))}
-                    className={errors.schoolName ? 'border-danger focus-visible:ring-danger' : 'focus-visible:ring-primary'}
+                    className={errors.schoolName ? 'border-danger focus-visible:ring-danger text-start' : 'focus-visible:ring-primary text-start'}
                   />
                   {errors.schoolName && (
-                    <p className="text-xs text-danger font-semibold flex items-center gap-1">
+                    <p className="text-xs text-danger font-semibold flex items-center gap-1 text-start">
                       <AlertCircle className="h-3 w-3" /> {errors.schoolName}
                     </p>
                   )}
                 </div>
 
                 {/* Cycle checkboxes */}
-                <div className="space-y-3">
-                  <Label>Cycle / Niveaux d'enseignement assurés *</Label>
-                  <div className="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-border/60">
+                <div className="space-y-3 text-start">
+                  <Label className="text-start block">{t('register.dir.niveaux', "Cycle / Niveaux d'enseignement assurés")} *</Label>
+                  <div className="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-border/60 rtl:space-x-reverse">
                     {/* Preschool */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Checkbox
                         id="level-preschool"
                         checked={schoolInfo.levels.includes('prescolaire')}
@@ -574,12 +589,12 @@ function RegisterSchoolForm() {
                         }}
                       />
                       <label htmlFor="level-preschool" className="text-xs font-semibold cursor-pointer select-none">
-                        Préscolaire
+                        {t('level.prescolaire', "Préscolaire")}
                       </label>
                     </div>
 
                     {/* Primary */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Checkbox
                         id="level-primary"
                         checked={schoolInfo.levels.includes('primaire')}
@@ -593,12 +608,12 @@ function RegisterSchoolForm() {
                         }}
                       />
                       <label htmlFor="level-primary" className="text-xs font-semibold cursor-pointer select-none">
-                        CM / Primaire
+                        {t('level.primaire', "CM / Primaire")}
                       </label>
                     </div>
 
                     {/* Secondary */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Checkbox
                         id="level-secondary"
                         checked={schoolInfo.levels.includes('secondaire')}
@@ -612,56 +627,56 @@ function RegisterSchoolForm() {
                         }}
                       />
                       <label htmlFor="level-secondary" className="text-xs font-semibold cursor-pointer select-none">
-                        Secondaire
+                        {t('level.secondaire', "Secondaire")}
                       </label>
                     </div>
                   </div>
                   {errors.levels && (
-                    <p className="text-xs text-danger font-semibold flex items-center gap-1">
+                    <p className="text-xs text-danger font-semibold flex items-center gap-1 text-start">
                       <AlertCircle className="h-3 w-3" /> {errors.levels}
                     </p>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-start">
                   {/* Country */}
                   <div className="space-y-2">
-                    <Label>Pays d'implantation *</Label>
+                    <Label className="text-start block">{t('register.school.country', "Pays d'implantation")} *</Label>
                     <Combobox
                       options={countryOptions}
                       value={schoolInfo.country}
                       onChange={handleCountryChange}
-                      placeholder="Sélectionner le pays"
-                      emptyText="Aucun pays trouvé."
+                      placeholder={t('register.school.select_country', "Sélectionner le pays")}
+                      emptyText={t('register.school.no_country_found', "Aucun pays trouvé.")}
                     />
                   </div>
 
                   {/* City */}
                   <div className="space-y-2">
-                    <Label>Ville de résidence administrative *</Label>
+                    <Label className="text-start block">{t('register.school.city', "Ville de résidence administrative")} *</Label>
                     <Combobox
                       options={cityOptions}
                       value={schoolInfo.city}
                       onChange={(val) => {
                         if (val) setSchoolInfo(prev => ({ ...prev, city: val }))
                       }}
-                      placeholder="Sélectionner la ville"
-                      emptyText="Aucune ville trouvée."
+                      placeholder={t('register.school.select_city', "Sélectionner la ville")}
+                      emptyText={t('register.school.no_city_found', "Aucune ville trouvée.")}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-start">
                   {/* Secretariat Phone */}
                   <div className="space-y-2">
-                    <Label htmlFor="phoneSec">Téléphone du Secrétariat *</Label>
+                    <Label htmlFor="phoneSec" className="text-start block">{t('register.dir.school_phone', "Téléphone de l'établissement")} *</Label>
                     <div className="flex gap-2">
                       <Select
                         value={schoolInfo.phoneSecPrefix}
                         onValueChange={(val) => setSchoolInfo(prev => ({ ...prev, phoneSecPrefix: val }))}
                       >
-                        <SelectTrigger className="w-[110px] shrink-0">
-                          <SelectValue placeholder="Devise" />
+                        <SelectTrigger className="w-[110px] shrink-0 text-start">
+                          <SelectValue placeholder="CI" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="+225">CI (+225)</SelectItem>
@@ -681,11 +696,11 @@ function RegisterSchoolForm() {
                         placeholder={getPlaceholderForPrefix(schoolInfo.phoneSecPrefix)}
                         value={schoolInfo.phoneSec}
                         onChange={(e) => setSchoolInfo(prev => ({ ...prev, phoneSec: e.target.value }))}
-                        className={`flex-1 ${errors.phoneSec ? 'border-danger focus-visible:ring-danger' : 'focus-visible:ring-primary'}`}
+                        className={`flex-1 text-start ${errors.phoneSec ? 'border-danger focus-visible:ring-danger' : 'focus-visible:ring-primary'}`}
                       />
                     </div>
                     {errors.phoneSec && (
-                      <p className="text-xs text-danger font-semibold flex items-center gap-1">
+                      <p className="text-xs text-danger font-semibold flex items-center gap-1 text-start">
                         <AlertCircle className="h-3 w-3" /> {errors.phoneSec}
                       </p>
                     )}
@@ -694,16 +709,16 @@ function RegisterSchoolForm() {
 
                 {/* School Address */}
                 <div className="space-y-2">
-                  <Label htmlFor="address">Adresse géographique de l'école *</Label>
+                  <Label htmlFor="address" className="text-start block">{t('register.dir.school_address', "Adresse géographique de l'école")} *</Label>
                   <Input
                     id="address"
-                    placeholder="Ex: Cocody, Riviera 2, Rue des Jardins"
+                    placeholder={t('register.dir.school_address_placeholder', "Ex: Cocody, Riviera 2, Rue des Jardins")}
                     value={schoolInfo.address}
                     onChange={(e) => setSchoolInfo(prev => ({ ...prev, address: e.target.value }))}
-                    className={errors.address ? 'border-danger focus-visible:ring-danger' : 'focus-visible:ring-primary'}
+                    className={errors.address ? 'border-danger focus-visible:ring-danger text-start' : 'focus-visible:ring-primary text-start'}
                   />
                   {errors.address && (
-                    <p className="text-xs text-danger font-semibold flex items-center gap-1">
+                    <p className="text-xs text-danger font-semibold flex items-center gap-1 text-start">
                       <AlertCircle className="h-3 w-3" /> {errors.address}
                     </p>
                   )}
@@ -715,19 +730,19 @@ function RegisterSchoolForm() {
             {/* ÉTAPE 3 : PAIEMENT (Si plan payant) */}
             {/* ==================================================== */}
             {step === 3 && (
-              <div className="space-y-6 pt-2 animate-fadeIn">
-                <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/20 dark:border-primary/30 flex items-start gap-4">
-                  <div className="bg-white dark:bg-slate-900 p-2 rounded-lg shadow-sm">
+              <div className="space-y-6 pt-2 animate-fadeIn text-start">
+                <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/20 dark:border-primary/30 flex items-start gap-4 rtl:space-x-reverse text-start">
+                  <div className="bg-white dark:bg-slate-900 p-2 rounded-lg shadow-sm shrink-0">
                     <Sparkles className="h-6 w-6 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800 dark:text-slate-200">Abonnement {plan === 'premium' ? 'Premium' : 'Standard'}</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Montant à régler : <span className="font-bold text-primary">{plan === 'premium' ? '250 000 FCFA' : '150 000 FCFA'}</span> / an</p>
+                  <div className="text-start">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-200 text-start">{t('pricing.subscription', "Abonnement")} {plan === 'premium' ? t('pricing.premium_badge', 'Premium') : t('pricing.standard_title', 'Standard')}</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 text-start">{t('pricing.amount_to_pay', "Montant à régler : ")} <span className="font-bold text-primary">{plan === 'premium' ? '250 000 FCFA' : '150 000 FCFA'}</span> / {t('pricing.year_suffix', "an")}</p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <Label>Sélectionnez votre moyen de paiement Mobile Money</Label>
+                <div className="space-y-4 text-start">
+                  <Label className="text-start block">{t('pricing.select_method', "Sélectionnez votre moyen de paiement Mobile Money")}</Label>
                   <div className="grid grid-cols-3 gap-3">
                     <div
                       onClick={() => setPaymentInfo(prev => ({ ...prev, method: 'wave' }))}
@@ -753,8 +768,8 @@ function RegisterSchoolForm() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="paymentPhone">Numéro de facturation (Mobile Money) *</Label>
+                <div className="space-y-2 text-start">
+                  <Label htmlFor="paymentPhone" className="text-start block">{t('pricing.billing_phone', "Numéro de facturation (Mobile Money)")} *</Label>
                   <Input
                     id="paymentPhone"
                     placeholder="Ex: 07 48 85 96 12"
@@ -763,15 +778,15 @@ function RegisterSchoolForm() {
                       setPaymentInfo(prev => ({ ...prev, phone: e.target.value }))
                       if (errors.paymentPhone) setErrors(prev => { const { paymentPhone, ...rest } = prev; return rest; })
                     }}
-                    className={errors.paymentPhone ? 'border-danger focus-visible:ring-danger' : 'focus-visible:ring-primary'}
+                    className={errors.paymentPhone ? 'border-danger focus-visible:ring-danger text-start' : 'focus-visible:ring-primary text-start'}
                   />
                   {errors.paymentPhone && (
-                    <p className="text-xs text-danger font-semibold flex items-center gap-1">
+                    <p className="text-xs text-danger font-semibold flex items-center gap-1 text-start">
                       <AlertCircle className="h-3 w-3" /> {errors.paymentPhone}
                     </p>
                   )}
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
-                    <ShieldCheck className="h-3 w-3" /> Vos données de paiement sont cryptées et sécurisées.
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1 text-start">
+                    <ShieldCheck className="h-3 w-3" /> {t('pricing.payment_secured', "Vos données de paiement sont cryptées et sécurisées.")}
                   </p>
                 </div>
               </div>
@@ -790,7 +805,7 @@ function RegisterSchoolForm() {
                   disabled={isSubmitting}
                   className="flex items-center gap-1.5"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Retour
+                  <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> {t('register.dir.back', "Retour")}
                 </Button>
               )}
             </div>
@@ -804,7 +819,7 @@ function RegisterSchoolForm() {
                   disabled={isSubmitting}
                   className="bg-primary hover:bg-primary-dark text-white flex items-center gap-1.5"
                 >
-                  Continuer <ArrowRight className="h-4 w-4" />
+                  {t('register.dir.continue', "Continuer")} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                 </Button>
               ) : (
                 <Button
@@ -815,11 +830,11 @@ function RegisterSchoolForm() {
                 >
                   {isSubmitting ? (
                     <>
-                      Traitement en cours... <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                      {t('register.school.processing', "Traitement en cours...")} <Loader2 className="h-4.5 w-4.5 animate-spin" />
                     </>
                   ) : (
                     <>
-                      {plan !== 'gratuit' ? 'Payer et déployer' : 'Confirmer et déployer'} <Sparkles className="h-4.5 w-4.5" />
+                      {plan !== 'gratuit' ? t('register.school.pay_deploy', "Payer et déployer") : t('register.school.confirm_deploy', "Confirmer et déployer")} <Sparkles className="h-4.5 w-4.5" />
                     </>
                   )}
                 </Button>
@@ -832,7 +847,7 @@ function RegisterSchoolForm() {
       {/* Under footer contact notes */}
       <div className="mt-8 text-center space-y-2 text-xs text-muted-foreground">
         <p className="flex items-center justify-center gap-1 text-[11px] text-slate-400">
-          <PhoneCall className="h-3.5 w-3.5" /> Une question technique ? Contactez l'assistance GestScol au +225 05 86 03 79 74
+          <PhoneCall className="h-3.5 w-3.5" /> {t('register.dir.support_question', "Une question technique ? Contactez l'assistance au +225 05 86 03 79 74")}
         </p>
       </div>
     </div>
@@ -840,12 +855,13 @@ function RegisterSchoolForm() {
 }
 
 export default function RegisterEcolePage() {
+  const { t } = useTranslation()
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-10 w-10 text-primary animate-spin" />
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">Chargement de l'assistant...</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">{t('register.school.loading_assistant', "Chargement de l'assistant...")}</p>
         </div>
       </div>
     }>

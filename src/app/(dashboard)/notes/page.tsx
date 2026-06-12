@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input'
 import NoteInput from '@/components/notes/NoteInput'
 import { Note } from '@/types'
 import { PremiumGuard } from '@/components/ui/PremiumGuard'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function NotesPage() {
   const { classes, eleves, matieres, notes, inscriptions, currentUser, addNote, updateNote, deleteNote, anneesScolaires, activeAnneeScolaire, ecole } = useSchoolStore()
+  const { t, dir, isAr } = useTranslation()
 
   const [selectedClasseId, setSelectedClasseId] = useState<string>('')
   const [selectedTrimestre, setSelectedTrimestre] = useState<1 | 2 | 3>(1)
@@ -45,27 +47,19 @@ export default function NotesPage() {
     }
   }, [filteredClasses, selectedClasseId])
 
-  // Bloquer l'accès si l'établissement utilise la formule gratuite
-  if (ecole?.abonnement?.plan === 'gratuit') {
-    return (
-      <PremiumGuard 
-        title="Gestion des Notes" 
-        description="Saisissez les notes de devoirs et de compositions, configurez les coefficients par matière, et visualisez instantanément le calcul de la moyenne générale pondérée de vos élèves pour chaque trimestre."
-      />
-    )
-  }
+
 
   if (currentUser?.role === 'parent') {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <AlertCircle className="h-12 w-12 text-danger" />
-        <h2 className="text-xl font-bold">Accès Refusé</h2>
-        <p className="text-muted-foreground text-center">Les parents n'ont pas accès à l'interface globale de saisie des notes.<br/>Veuillez consulter le dossier de votre enfant.</p>
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4" dir={dir}>
+        <AlertCircle className="h-12 w-12 text-danger shrink-0" />
+        <h2 className="text-xl font-bold">{t('notes.access_denied', "Accès Refusé")}</h2>
+        <p className="text-muted-foreground text-center">
+          {t('notes.parent_access_denied_desc', "Les parents n'ont pas accès à l'interface globale de saisie des notes. Veuillez consulter le dossier de votre enfant.")}
+        </p>
       </div>
     )
   }
-  
-
 
   const currentClasseEleves = useMemo(() => {
     // Récupérer les élèves qui ont une inscription validée pour cette classe et cette année
@@ -92,9 +86,7 @@ export default function NotesPage() {
   }, [eleves, inscriptions, selectedClasseId, selectedAnneeScolaire, searchTerm])
 
   const classMatieres = useMemo(() => {
-    let mats = matieres.filter(m => m.classeId === selectedClasseId)
-    // Si c'est un enseignant, on pourrait filtrer par les matières qu'il enseigne (à implémenter si besoin)
-    return mats
+    return matieres.filter(m => m.classeId === selectedClasseId)
   }, [matieres, selectedClasseId])
 
   // Obtenir toutes les notes existantes pour la sélection actuelle
@@ -181,32 +173,32 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-text">Saisie des Notes</h2>
-          <p className="text-sm text-muted-foreground">Sélectionnez une classe et une matière pour saisir les notes.</p>
+          <h2 className="text-2xl font-display font-bold text-text text-start">{t('notes.title', "Saisie des Notes")}</h2>
+          <p className="text-sm text-muted-foreground text-start">{t('notes.subtitle', "Sélectionnez une classe et une matière pour saisir les notes.")}</p>
         </div>
       </div>
 
       {/* Filtres */}
-      <div className="bg-card p-4 rounded-lg shadow-sm border border-border/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="bg-card p-4 rounded-lg shadow-sm border border-border/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-start">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Classe</label>
+          <label className="text-sm font-medium">{t('notes.class', "Classe")}</label>
           <Combobox
             options={filteredClasses.map(c => ({ value: c.id, label: `${c.nom} (${c.niveau})` }))}
             value={selectedClasseId}
             onChange={(val) => { setSelectedClasseId(val); setSelectedMatiereId(''); setNumDevoirs(1); }}
-            placeholder="Sélectionner la classe"
-            emptyText="Aucune classe trouvée."
+            placeholder={t('notes.select_class', "Sélectionner la classe")}
+            emptyText={t('inscriptions.no_class_found', "Aucune classe trouvée.")}
           />
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium">Matière</label>
+          <label className="text-sm font-medium">{t('notes.subject', "Matière")}</label>
           <Select value={selectedMatiereId} onValueChange={setSelectedMatiereId} disabled={!selectedClasseId}>
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner la matière" />
+              <SelectValue placeholder={t('notes.select_subject', "Sélectionner la matière")} />
             </SelectTrigger>
             <SelectContent>
               {classMatieres.map(m => (
@@ -217,24 +209,24 @@ export default function NotesPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Trimestre</label>
+          <label className="text-sm font-medium">{t('notes.trimestre', "Trimestre")}</label>
           <Select value={selectedTrimestre.toString()} onValueChange={(val) => setSelectedTrimestre(Number(val) as 1|2|3)}>
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner le trimestre" />
+              <SelectValue placeholder={t('notes.select_trimestre', "Sélectionner le trimestre")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1er Trimestre</SelectItem>
-              <SelectItem value="2">2ème Trimestre</SelectItem>
-              <SelectItem value="3">3ème Trimestre</SelectItem>
+              <SelectItem value="1">{t('notes.t1', "1er Trimestre")}</SelectItem>
+              <SelectItem value="2">{t('notes.t2', "2ème Trimestre")}</SelectItem>
+              <SelectItem value="3">{t('notes.t3', "3ème Trimestre")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Année Scolaire</label>
+          <label className="text-sm font-medium">{t('dashboard.school_year', "Année Scolaire")}</label>
           <Select value={selectedAnneeScolaire} onValueChange={setSelectedAnneeScolaire}>
             <SelectTrigger>
-              <SelectValue placeholder="Année scolaire" />
+              <SelectValue placeholder={t('dashboard.school_year', "Année scolaire")} />
             </SelectTrigger>
             <SelectContent>
               {anneesScolaires.map(annee => (
@@ -248,95 +240,97 @@ export default function NotesPage() {
       {/* Zone de saisie */}
       {!selectedClasseId || !selectedMatiereId ? (
         <div className="bg-muted/30 border border-dashed border-muted p-12 rounded-lg text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
-          <h3 className="text-lg font-medium text-text">Prêt pour la saisie</h3>
-          <p className="text-muted-foreground mt-1">Veuillez sélectionner une classe et une matière pour afficher la grille de notes.</p>
+          <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground mb-3 shrink-0" />
+          <h3 className="text-lg font-medium text-text">{t('notes.ready_to_enter', "Prêt pour la saisie")}</h3>
+          <p className="text-muted-foreground mt-1">{t('notes.enter_filters', "Veuillez sélectionner une classe et une matière pour afficher la grille de notes.")}</p>
         </div>
       ) : currentClasseEleves.length === 0 ? (
         <div className="bg-muted/30 border border-dashed border-muted p-12 rounded-lg text-center">
-          <p className="text-muted-foreground">Aucun élève trouvé dans cette classe.</p>
+          <p className="text-muted-foreground">{t('notes.no_student', "Aucun élève trouvé dans cette classe.")}</p>
         </div>
       ) : (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-3 rounded-lg shadow-sm border border-border/50 gap-4 sm:gap-0">
-            <h3 className="text-lg font-medium text-text flex items-center">
-              <span className="bg-primary/10 text-primary px-3 py-1 rounded-md text-sm mr-3">
+            <h3 className="text-lg font-medium text-text flex items-center gap-2">
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-md text-sm">
                 {matiereSelected?.nom}
               </span>
-              {filteredClasses.find(c => c.id === selectedClasseId)?.nom}
+              <span>{filteredClasses.find(c => c.id === selectedClasseId)?.nom}</span>
             </h3>
             <div className="flex flex-col sm:flex-row w-full sm:w-auto items-start sm:items-center gap-3">
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Rechercher un élève..." 
-                  className="pl-9 h-9"
+                  placeholder={t('eleves.search_placeholder', "Rechercher un élève...")} 
+                  className="ps-9 h-9"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button onClick={handleAddDevoirCol} variant="outline" size="sm" className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary hover:text-white transition-colors">
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter une colonne Devoir
+              <Button onClick={handleAddDevoirCol} variant="outline" size="sm" className="w-full sm:w-auto text-primary border-primary/20 hover:bg-primary hover:text-white transition-colors gap-2">
+                <Plus className="h-4 w-4 shrink-0" />
+                {t('notes.add_devoir_col', "Ajouter une colonne Devoir")}
               </Button>
             </div>
           </div>
 
           <div className="bg-card rounded-lg shadow-sm border border-border/50 overflow-hidden w-full">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left min-w-[800px]">
+              <table className="w-full text-sm text-start min-w-[800px]">
                 <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-medium">
                   <tr>
-                    <th className="px-4 py-3 sticky left-0 bg-muted/90 z-20 w-[200px] border-r border-border/50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Élève</th>
-                  {Array.from({ length: numDevoirs }).map((_, i) => (
-                    <th key={`th-dev-${i}`} className="px-4 py-3 text-center min-w-[100px]">
-                      Devoir {i + 1}
+                    <th className="px-4 py-3 sticky ltr:left-0 rtl:right-0 bg-muted/90 z-20 w-[200px] border-e border-border/50 ltr:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] rtl:shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-start">
+                      {t('notes.table.eleve', "Élève")}
                     </th>
-                  ))}
-                  <th className="px-4 py-3 text-center min-w-[120px] border-l-2 border-border/80 bg-primary/5 text-primary">
-                    Composition
-                  </th>
-                  <th className="px-4 py-3 text-center min-w-[80px] font-bold text-text bg-muted/20 border-l border-border/50">
-                    Moy.
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {currentClasseEleves.map((eleve) => (
-                  <tr key={eleve.id} className="hover:bg-muted/10 transition-colors group">
-                    <td className="px-4 py-3 sticky left-0 bg-card group-hover:bg-muted/10 z-10 border-r border-border/50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors min-w-[150px] max-w-[200px]">
-                      <div className="font-medium text-text truncate w-full">{eleve.prenom} {eleve.nom}</div>
-                      <div className="text-xs text-muted-foreground truncate w-full">{eleve.matricule}</div>
-                    </td>
-                    
                     {Array.from({ length: numDevoirs }).map((_, i) => (
-                      <td key={`td-dev-${eleve.id}-${i}`} className="px-4 py-2 text-center">
+                      <th key={`th-dev-${i}`} className="px-4 py-3 text-center min-w-[100px]">
+                        {t('notes.devoir', "Devoir")} {i + 1}
+                      </th>
+                    ))}
+                    <th className="px-4 py-3 text-center min-w-[120px] border-l-2 border-border/80 bg-primary/5 text-primary">
+                      {t('notes.composition', "Composition")}
+                    </th>
+                    <th className="px-4 py-3 text-center min-w-[80px] font-bold text-text bg-muted/20 border-l border-border/50">
+                      {t('notes.table.moyenne', "Moy.")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {currentClasseEleves.map((eleve) => (
+                    <tr key={eleve.id} className="hover:bg-muted/10 transition-colors group">
+                      <td className="px-4 py-3 sticky ltr:left-0 rtl:right-0 bg-card group-hover:bg-muted/10 z-10 border-e border-border/50 ltr:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] rtl:shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors min-w-[150px] max-w-[200px] text-start">
+                        <div className="font-medium text-text truncate w-full">{eleve.prenom} {eleve.nom}</div>
+                        <div className="text-xs text-muted-foreground truncate w-full">{eleve.matricule}</div>
+                      </td>
+                      
+                      {Array.from({ length: numDevoirs }).map((_, i) => (
+                        <td key={`td-dev-${eleve.id}-${i}`} className="px-4 py-2 text-center">
+                          <NoteInput 
+                            value={getNoteValue(eleve.id, 'devoir', i + 1)} 
+                            onChange={(val) => handleNoteChange(eleve.id, 'devoir', i + 1, val)}
+                          />
+                        </td>
+                      ))}
+
+                      <td className="px-4 py-2 text-center border-l-2 border-border/80 bg-primary/[0.02]">
                         <NoteInput 
-                          value={getNoteValue(eleve.id, 'devoir', i + 1)} 
-                          onChange={(val) => handleNoteChange(eleve.id, 'devoir', i + 1, val)}
+                          value={getNoteValue(eleve.id, 'composition', 1)} 
+                          onChange={(val) => handleNoteChange(eleve.id, 'composition', 1, val)}
                         />
                       </td>
-                    ))}
 
-                    <td className="px-4 py-2 text-center border-l-2 border-border/80 bg-primary/[0.02]">
-                      <NoteInput 
-                        value={getNoteValue(eleve.id, 'composition', 1)} 
-                        onChange={(val) => handleNoteChange(eleve.id, 'composition', 1, val)}
-                      />
-                    </td>
-
-                    <td className="px-4 py-3 text-center font-bold text-text bg-muted/10 border-l border-border/50">
-                      {getMoyenneMatiere(eleve.id)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <td className="px-4 py-3 text-center font-bold text-text bg-muted/10 border-l border-border/50">
+                        {getMoyenneMatiere(eleve.id)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
           
-          <div className="flex justify-end text-xs text-muted-foreground">
-            * Sauvegarde automatique : vos notes sont enregistrées dès que vous quittez le champ.
+          <div className="flex justify-end text-xs text-muted-foreground text-start">
+            {t('notes.auto_save_desc', "* Sauvegarde automatique : vos notes sont enregistrées dès que vous quittez le champ.")}
           </div>
         </div>
       )}

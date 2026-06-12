@@ -4,6 +4,18 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { AbonnementEcole } from '@/types'
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
+
+const AbonnementUpdateSchema = z.object({
+  plan: z.enum(['gratuit', 'standard', 'premium']),
+  statut: z.enum(['actif', 'expire', 'suspendu', 'en_attente']),
+  dateDebut: z.string().optional(),
+  dateFin: z.string().optional(),
+  transactionRef: z.string().optional(),
+  modePaiement: z.string().optional(),
+  montantPaye: z.number().nonnegative().optional(),
+  maxEleves: z.number().int().positive().optional()
+})
 
 /**
  * Server Action pour mettre à jour l'abonnement d'une école de manière hautement sécurisée.
@@ -42,14 +54,21 @@ export async function updateSchoolAbonnement(ecoleId: string, data: Partial<Abon
       return { success: false, error: "Accès refusé. Privilèges de Directeur requis pour cet établissement." }
     }
 
+    // Validation Zod
+    const validation = AbonnementUpdateSchema.partial().safeParse(data)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
+    }
+    const validatedData = validation.data
+
     // Sécurisation AppSec : Validation des paiements simulés en mode démo/prototype
-    if (data.plan && data.plan !== 'gratuit') {
-      if (!data.transactionRef || !data.transactionRef.startsWith('CP-')) {
+    if (validatedData.plan && validatedData.plan !== 'gratuit') {
+      if (!validatedData.transactionRef || !validatedData.transactionRef.startsWith('CP-')) {
         return { success: false, error: "Signature de paiement CinetPay manquante ou invalide (CP- attendu)." }
       }
-      const attendu = data.plan === 'standard' ? 150000 : 250000;
-      if (data.montantPaye !== undefined && data.montantPaye < attendu) {
-        return { success: false, error: `Le montant payé ne correspond pas au tarif annuel du forfait ${data.plan}.` }
+      const attendu = validatedData.plan === 'standard' ? 150000 : 250000;
+      if (validatedData.montantPaye !== undefined && validatedData.montantPaye < attendu) {
+        return { success: false, error: `Le montant payé ne correspond pas au tarif annuel du forfait ${validatedData.plan}.` }
       }
     }
 
@@ -57,14 +76,14 @@ export async function updateSchoolAbonnement(ecoleId: string, data: Partial<Abon
 
     // Préparation des données en snake_case pour Supabase
     const updateData: any = {}
-    if (data.plan !== undefined) updateData.plan = data.plan
-    if (data.statut !== undefined) updateData.statut = data.statut
-    if (data.dateDebut !== undefined) updateData.date_debut = data.dateDebut
-    if (data.dateFin !== undefined) updateData.date_fin = data.dateFin
-    if (data.transactionRef !== undefined) updateData.transaction_ref = data.transactionRef
-    if (data.modePaiement !== undefined) updateData.mode_paiement = data.modePaiement
-    if (data.montantPaye !== undefined) updateData.montant_paye = data.montantPaye
-    if (data.maxEleves !== undefined) updateData.max_eleves = data.maxEleves
+    if (validatedData.plan !== undefined) updateData.plan = validatedData.plan
+    if (validatedData.statut !== undefined) updateData.statut = validatedData.statut
+    if (validatedData.dateDebut !== undefined) updateData.date_debut = validatedData.dateDebut
+    if (validatedData.dateFin !== undefined) updateData.date_fin = validatedData.dateFin
+    if (validatedData.transactionRef !== undefined) updateData.transaction_ref = validatedData.transactionRef
+    if (validatedData.modePaiement !== undefined) updateData.mode_paiement = validatedData.modePaiement
+    if (validatedData.montantPaye !== undefined) updateData.montant_paye = validatedData.montantPaye
+    if (validatedData.maxEleves !== undefined) updateData.max_eleves = validatedData.maxEleves
 
     // Mise à jour de la ligne d'abonnement existante pour l'école
     const { data: resData, error } = await supabase

@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/hooks/useTranslation'
 
 // Types locaux pour le processus de paiement CinetPay
 type PaymentProvider = 'wave' | 'orange' | 'mtn' | 'moov'
@@ -40,6 +41,7 @@ interface PlanInfo {
 export default function AbonnementPage() {
   const router = useRouter()
   const { ecole, eleves, currentUser, updateAbonnement } = useSchoolStore()
+  const { t, dir, isAr } = useTranslation()
   const { toast } = useToast()
   
   // États de la page
@@ -64,8 +66,8 @@ export default function AbonnementPage() {
     if (currentUser.role !== 'directeur') {
       router.push('/dashboard')
       toast({
-        title: "Accès restreint",
-        description: "Seul le directeur de l'école est habilité à gérer l'abonnement.",
+        title: t('pricing.access_restricted', "Accès restreint"),
+        description: t('pricing.access_restricted_desc', "Seul le directeur de l'école est habilité à gérer l'abonnement."),
         variant: "destructive"
       })
     }
@@ -90,46 +92,46 @@ export default function AbonnementPage() {
   const plans: PlanInfo[] = [
     {
       id: 'gratuit',
-      nom: 'Formule Gratuite',
+      nom: t('pricing.free', 'Formule Gratuite'),
       prix: 0,
-      description: 'Essentiel pour découvrir la plateforme. Limité à 50 élèves.',
+      description: t('pricing.free_desc', 'Essentiel pour découvrir la plateforme. Limité à 50 élèves.'),
       maxEleves: 50,
-      maxElevesLabel: 'Jusqu\'à 50 élèves',
+      maxElevesLabel: t('pricing.up_to_50_students', "Jusqu'à 50 élèves"),
       accentColor: 'border-slate-300 text-slate-500',
       bgGradient: 'from-slate-50 to-slate-100/50',
       features: [
-        'Jusqu\'à 50 élèves',
-        'Fonctionnalités de base'
+        t('pricing.up_to_50_students', "Jusqu'à 50 élèves"),
+        t('pricing.basic_features', 'Fonctionnalités de base')
       ]
     },
     {
       id: 'standard',
-      nom: 'Formule Standard',
+      nom: t('pricing.standard', 'Formule Standard'),
       prix: 150000,
-      description: 'Idéal pour les structures de taille intermédiaire ou en lancement (Recommandé jusqu\'à 300 élèves).',
+      description: t('pricing.standard_desc', "Idéal pour les structures de taille intermédiaire ou en lancement (Recommandé jusqu'à 300 élèves)."),
       maxEleves: 300,
-      maxElevesLabel: 'Recommandé jusqu\'à 300 élèves',
+      maxElevesLabel: t('pricing.reco_300_students', "Recommandé jusqu'à 300 élèves"),
       accentColor: 'border-emerald-600 text-emerald-600 ring-2 ring-emerald-500/10',
       bgGradient: 'from-emerald-500/5 to-emerald-500/10',
       features: [
-        'Inscriptions & fiches d\'élèves',
-        'Bulletins A4 conformes MENA',
-        'Suivi encaissements (FCFA)'
+        t('pricing.feature_enrollments', "Inscriptions & fiches d'élèves"),
+        t('pricing.feature_reports', "Bulletins A4 conformes MENA"),
+        t('pricing.feature_payments', "Suivi encaissements (FCFA)")
       ]
     },
     {
       id: 'premium',
-      nom: 'Formule Premium',
+      nom: t('pricing.premium', 'Formule Premium'),
       prix: 250000,
-      description: 'Élèves illimités, sauvegardes automatisées, assistance prioritaire 24h/7 via WhatsApp.',
+      description: t('pricing.premium_desc_page', 'Élèves illimités, sauvegardes automatisées, assistance prioritaire 24h/7 via WhatsApp.'),
       maxEleves: 99999,
-      maxElevesLabel: 'Élèves illimités',
+      maxElevesLabel: t('pricing.unlimited_students', 'Élèves illimités'),
       accentColor: 'border-amber-500 text-amber-600 ring-2 ring-amber-500/30',
       bgGradient: 'from-amber-500/5 to-amber-500/10',
       features: [
-        'Tout le contenu Standard',
-        'Nombre d\'élèves illimité',
-        'Assistance technique 24h/7'
+        t('pricing.feature_all_standard', "Tout le contenu Standard"),
+        t('pricing.unlimited_students', "Nombre d'élèves illimité"),
+        t('pricing.feature_support', "Assistance technique 24h/7")
       ]
     }
   ]
@@ -155,11 +157,11 @@ export default function AbonnementPage() {
     const phoneRegex = /^(?:\+225|225)?(01|05|07|[0-9]{2})[0-9]{8}$/
     
     if (!cleanPhone) {
-      setPhoneError('Le numéro de téléphone est obligatoire.')
+      setPhoneError(t('pricing.cinetpay.phone_required', 'Le numéro de téléphone est obligatoire.'))
       return false
     }
     if (!phoneRegex.test(cleanPhone)) {
-      setPhoneError('Veuillez entrer un numéro ivoirien valide à 10 chiffres (ex: 07 07 07 07 07).')
+      setPhoneError(t('pricing.cinetpay.phone_invalid', 'Veuillez entrer un numéro ivoirien valide à 10 chiffres (ex: 07 07 07 07 07).'))
       return false
     }
     
@@ -175,11 +177,11 @@ export default function AbonnementPage() {
     
     // Séquence de messages de chargement pour faire "réaliste" et premium
     const steps = [
-      'Initialisation de la transaction avec les serveurs CinetPay...',
-      'Génération de la demande de prélèvement Mobile Money...',
-      'Notification envoyée sur votre téléphone portable. En attente de validation...',
-      'Saisie du code PIN détectée... Autorisation en cours...',
-      'Transaction validée ! Enregistrement de l\'abonnement...'
+      t('pricing.cinetpay.initialization', 'Initialisation de la transaction avec les serveurs CinetPay...'),
+      t('pricing.cinetpay.generation', 'Génération de la demande de prélèvement Mobile Money...'),
+      t('pricing.cinetpay.notification', 'Notification envoyée sur votre téléphone portable. En attente de validation...'),
+      t('pricing.cinetpay.pin_detected', 'Saisie du code PIN détectée... Autorisation en cours...'),
+      t('pricing.cinetpay.validated', "Transaction validée ! Enregistrement de l'abonnement...")
     ]
     
     let currentSubStep = 0
@@ -246,24 +248,24 @@ export default function AbonnementPage() {
   return (
     <div className="space-y-8">
       {/* En-tête de la page */}
-      <div>
+      <div className="text-start" dir={dir}>
         <h2 className="text-3xl font-display font-extrabold text-text tracking-tight">
-          Abonnement & Facturation
+          {t('pricing.title_page', "Abonnement & Facturation")}
         </h2>
         <p className="text-muted-foreground mt-1 text-sm md:text-base">
-          Gérez votre forfait, suivez votre quota d'élèves et activez de nouvelles fonctionnalités pour votre établissement.
+          {t('pricing.subtitle_page', "Gérez votre forfait, suivez votre quota d'élèves et activez de nouvelles fonctionnalités pour votre établissement.")}
         </p>
       </div>
 
       {/* État actuel de l'abonnement */}
-      <Card className="border border-border/60 shadow-md bg-card overflow-hidden">
+      <Card className="border border-border/60 shadow-md bg-card overflow-hidden text-start" dir={dir}>
         <div className="h-1.5 bg-gradient-to-r from-primary to-amber-500" />
         <CardContent className="p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
             
             {/* Statut du plan */}
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Formule Active</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('pricing.active_plan', "Formule Active")}</span>
               <div className="flex items-center gap-2">
                 <h3 className="text-2xl font-bold font-display text-text capitalize">
                   {plans.find(p => p.id === activePlan)?.nom || activePlan}
@@ -275,33 +277,33 @@ export default function AbonnementPage() {
                   if (status === 'expire') {
                     return (
                       <Badge className="bg-danger text-white text-[11px] font-bold border-none px-2 py-0.5 animate-pulse">
-                        Expiré
+                        {t('pricing.expired_badge', "Expiré")}
                       </Badge>
                     )
                   }
                   if (status === 'suspendu') {
                     return (
                       <Badge className="bg-danger text-white text-[11px] font-bold border-none px-2 py-0.5">
-                        Suspendu
+                        {t('pricing.suspended_badge', "Suspendu")}
                       </Badge>
                     )
                   }
                   return (
                     <Badge className="bg-success text-white text-[11px] font-bold border-none px-2 py-0.5">
-                      Actif
+                      {t('pricing.active_badge', "Actif")}
                     </Badge>
                   )
                 })()}
               </div>
               <p className="text-xs text-muted-foreground">
                 {activePlan === 'gratuit' 
-                  ? "Idéal pour tester GestScol avec un petit groupe d'élèves." 
+                  ? t('pricing.free_desc', "Idéal pour tester GestScol avec un petit groupe d'élèves.") 
                   : (() => {
                       const isExpired = ecole?.abonnement?.dateFin && new Date(ecole.abonnement.dateFin) < new Date()
                       if (isExpired) {
-                        return `Abonnement expiré le ${new Date(ecole.abonnement!.dateFin!).toLocaleDateString('fr-FR')}.`
+                        return t('pricing.expired_on', "Abonnement expiré le {date}.").replace('{date}', new Date(ecole.abonnement!.dateFin!).toLocaleDateString(isAr ? 'ar-EG' : 'fr-FR'))
                       }
-                      return `Prochaine facturation prévue le ${ecole?.abonnement?.dateFin ? new Date(ecole.abonnement.dateFin).toLocaleDateString('fr-FR') : 'Non définie'}.`
+                      return t('pricing.next_billing', "Prochaine facturation prévue le {date}.").replace('{date}', ecole?.abonnement?.dateFin ? new Date(ecole.abonnement.dateFin).toLocaleDateString(isAr ? 'ar-EG' : 'fr-FR') : t('pricing.not_defined', 'Non définie'))
                     })()
                 }
               </p>
@@ -310,8 +312,11 @@ export default function AbonnementPage() {
             {/* Quota d'élèves */}
             <div className="space-y-3">
               <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
-                <span className="uppercase tracking-wider">Capacité Élèves</span>
-                <span className="text-text font-bold">{elevesCount} / {maxElevesActuel === 99999 ? 'Illimité' : `${maxElevesActuel} élèves`}</span>
+                <span className="uppercase tracking-wider">{t('pricing.student_capacity', "Capacité Élèves")}</span>
+                <span className="text-text font-bold">
+                  <span dir="ltr">{elevesCount} / {maxElevesActuel === 99999 ? '' : maxElevesActuel}</span>
+                  {maxElevesActuel === 99999 ? ` ${t('pricing.unlimited', 'Illimité')}` : ` ${t('pricing.students_count', 'élèves')}`}
+                </span>
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                 <div 
@@ -323,7 +328,7 @@ export default function AbonnementPage() {
               </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5 text-primary" />
-                Quota consommé à <span className="font-bold text-text">{pourcentageOccupation}%</span>.
+                {t('pricing.quota_consumed', "Quota consommé à {percent}%.").replace('{percent}', pourcentageOccupation.toString())}
               </p>
             </div>
 
@@ -333,14 +338,14 @@ export default function AbonnementPage() {
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-700 flex items-start gap-2 max-w-sm">
                   <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
                   <span>
-                    Vous êtes limité à 50 élèves. Passez à la formule **Standard** pour débloquer 300 élèves.
+                    {t('pricing.limit_reached_alert', "Vous êtes limité à 50 élèves. Passez à la formule Standard pour débloquer 300 élèves.")}
                   </span>
                 </div>
               ) : (
                 <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs text-primary-dark flex items-start gap-2 max-w-sm">
                   <ShieldCheck className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                   <span>
-                    Votre école bénéficie de la **{activePlan === 'standard' ? 'Formule Standard' : 'Formule Premium'}**. Quota d'élèves étendu.
+                    {t('pricing.benefit_alert', "Votre école bénéficie de la {plan}. Quota d'élèves étendu.").replace('{plan}', activePlan === 'standard' ? t('pricing.standard', 'Formule Standard') : t('pricing.premium', 'Formule Premium'))}
                   </span>
                 </div>
               )}
@@ -351,17 +356,17 @@ export default function AbonnementPage() {
       </Card>
 
       {/* Titre grille */}
-      <div className="flex flex-col items-center justify-center space-y-2">
+      <div className="flex flex-col items-center justify-center space-y-2" dir={dir}>
         <h3 className="text-2xl font-extrabold font-display text-text text-center">
-          Formules adaptées à votre établissement
+          {t('pricing.grid_title', "Formules adaptées à votre établissement")}
         </h3>
         <p className="text-sm text-muted-foreground text-center max-w-xl">
-          Sélectionnez l'abonnement annuel le plus adapté pour débloquer le potentiel complet de votre école.
+          {t('pricing.grid_subtitle', "Sélectionnez l'abonnement annuel le plus adapté pour débloquer le potentiel complet de votre école.")}
         </p>
       </div>
 
       {/* Grille des Forfaits (100% cohérente avec l'image) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-start" dir={dir}>
         {plans.map((plan) => {
           const isCurrent = plan.id === activePlan
           const isExpired = ecole?.abonnement?.dateFin && new Date(ecole.abonnement.dateFin) < new Date()
@@ -388,18 +393,18 @@ export default function AbonnementPage() {
                     ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30'
                     : 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30'
                 }`}>
-                  {plan.id === 'gratuit' ? 'Formule Gratuite' : plan.id === 'standard' ? 'Formule Standard' : 'Formule Premium'}
+                  {plan.nom}
                 </span>
               </div>
               
               {/* Prix */}
               <CardHeader className="p-6 pt-0">
                 <div className="flex flex-col mt-2">
-                  <span className="text-4xl font-extrabold font-display text-text">
-                    {plan.prix === 0 ? '0 FCFA' : formatCFA(plan.prix)}
+                  <span className="text-4xl font-extrabold font-display text-text" dir="ltr">
+                    {plan.prix === 0 ? t('landing.pricing.free_price', '0 FCFA') : formatCFA(plan.prix)}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
-                    {plan.prix === 0 ? 'Gratuit à vie' : 'par établissement / an'}
+                    {plan.prix === 0 ? t('pricing.free_lifetime', 'Gratuit à vie') : t('pricing.per_school_year', 'par établissement / an')}
                   </span>
                 </div>
                 <CardDescription className="text-xs text-muted-foreground mt-4 leading-relaxed min-h-[40px]">
@@ -442,11 +447,11 @@ export default function AbonnementPage() {
                 >
                   {isCurrent 
                     ? isExpired 
-                      ? `Renouveler la formule ${plan.nom.split(' ')[1]}`
-                      : 'Votre formule actuelle' 
+                      ? t('pricing.renew_plan', "Renouveler la formule {name}").replace('{name}', plan.id === 'standard' ? t('pricing.standard', 'Standard') : t('pricing.premium', 'Premium'))
+                      : t('pricing.current_plan_btn', 'Votre formule actuelle') 
                     : plan.id === 'gratuit'
-                    ? 'Formule par défaut'
-                    : `S'abonner à l'offre ${plan.nom.split(' ')[1]}`
+                    ? t('pricing.default_plan_btn', 'Formule par défaut')
+                    : t('pricing.subscribe_plan', "S'abonner à l'offre {name}").replace('{name}', plan.id === 'standard' ? t('pricing.standard', 'Standard') : t('pricing.premium', 'Premium'))
                   }
                 </Button>
               </CardFooter>
@@ -456,34 +461,34 @@ export default function AbonnementPage() {
       </div>
 
       {/* FAQ */}
-      <div className="bg-card p-6 md:p-8 rounded-2xl border border-border/60 shadow-md">
+      <div className="bg-card p-6 md:p-8 rounded-2xl border border-border/60 shadow-md text-start" dir={dir}>
         <h3 className="text-lg font-bold font-display text-text mb-4 flex items-center gap-2">
           <HelpCircle className="h-5 w-5 text-primary" />
-          Questions Fréquentes sur l'Abonnement
+          {t('pricing.faq_title', "Questions Fréquentes sur l'Abonnement")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed text-muted-foreground">
           <div className="space-y-1.5">
-            <h4 className="font-bold text-text text-sm">Comment s'effectue le paiement ?</h4>
+            <h4 className="font-bold text-text text-sm">{t('pricing.faq.q1', "Comment s'effectue le paiement ?")}</h4>
             <p>
-              Nous intégrons la passerelle ivoirienne de référence **CinetPay** qui vous permet de régler vos factures en toute sécurité via vos comptes mobiles locaux (Wave, Orange Money, MTN MoMo, Moov Money). Aucun compte bancaire ou carte de crédit n'est requis.
+              {t('pricing.faq.a1', "Nous intégrons la passerelle ivoirienne de référence CinetPay qui vous permet de régler vos factures en toute sécurité via vos comptes mobiles locaux (Wave, Orange Money, MTN MoMo, Moov Money). Aucun compte bancaire ou carte de crédit n'est requis.")}
             </p>
           </div>
           <div className="space-y-1.5">
-            <h4 className="font-bold text-text text-sm">Que se passe-t-il si la limite d'élèves est dépassée ?</h4>
+            <h4 className="font-bold text-text text-sm">{t('pricing.faq.q2', "Que se passe-t-il si la limite d'élèves est dépassée ?")}</h4>
             <p>
-              Sous la formule gratuite, dès que le quota de 50 élèves est atteint, la création de nouveaux profils élèves est temporairement bloquée. Toutes vos données existantes restent accessibles. Il vous suffit d'upgrader via CinetPay pour lever immédiatement ce blocage.
+              {t('pricing.faq.a2', "Sous la formule gratuite, dès que le quota de 50 élèves est atteint, la création de nouveaux profils élèves est temporairement bloquée. Toutes vos données existantes restent accessibles. Il vous suffit d'upgrader via CinetPay pour lever immédiatement ce blocage.")}
             </p>
           </div>
           <div className="space-y-1.5">
-            <h4 className="font-bold text-text text-sm">Puis-je changer de formule à tout moment ?</h4>
+            <h4 className="font-bold text-text text-sm">{t('pricing.faq.q3', "Puis-je changer de formule à tout moment ?")}</h4>
             <p>
-              Oui. Vous pouvez passer d'une formule Standard à une formule Premium en cours d'année. Le montant restant de votre forfait actuel sera déduit au prorata de votre prochaine facture.
+              {t('pricing.faq.a3', "Oui. Vous pouvez passer d'une formule Standard à une formule Premium en cours d'année. Le montant restant de votre forfait actuel sera déduit au prorata de votre prochaine facture.")}
             </p>
           </div>
           <div className="space-y-1.5">
-            <h4 className="font-bold text-text text-sm">Besoin d'une formule sur-mesure pour un groupe d'écoles ?</h4>
+            <h4 className="font-bold text-text text-sm">{t('pricing.faq.q4', "Besoin d'une formule sur-mesure pour un groupe d'écoles ?")}</h4>
             <p>
-              Si vous gérez un réseau d'établissements scolaires privées en Côte d'Ivoire, contactez directement notre service commercial GestScol pour obtenir un devis personnalisé et des remises groupées.
+              {t('pricing.faq.a4', "Si vous gérez un réseau d'établissements scolaires privées en Côte d'Ivoire, contactez directement notre service commercial GestScol pour obtenir un devis personnalisé et des remises groupées.")}
             </p>
           </div>
         </div>
@@ -501,15 +506,15 @@ export default function AbonnementPage() {
               </div>
               <div>
                 <DialogTitle className="text-sm font-bold font-display text-white tracking-wide">
-                  CinetPay Secure Payment
+                  {t('pricing.cinetpay.title', "CinetPay Secure Payment")}
                 </DialogTitle>
                 <p className="text-[10px] text-white/60">
-                  Passerelle de paiement agréée UEMOA
+                  {t('pricing.cinetpay.subtitle', "Passerelle de paiement agréée UEMOA")}
                 </p>
               </div>
             </div>
             <div className="bg-amber-500/20 border border-amber-500/30 text-amber-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-              Simulation
+              {t('pricing.cinetpay.simulation', "Simulation")}
             </div>
           </div>
 
@@ -521,15 +526,15 @@ export default function AbonnementPage() {
                 <div>
                   <h4 className="font-bold text-slate-800 dark:text-slate-250 text-xs">{selectedPlan.nom}</h4>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Abonnement Annuel GestScol
+                    {t('pricing.cinetpay.billing_info', "Abonnement Annuel GestScol")}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-extrabold text-sm text-[#1E293B] dark:text-slate-100">
+                  <p className="font-extrabold text-sm text-[#1E293B] dark:text-slate-100" dir="ltr">
                     {formatCFA(selectedPlan.prix)}
                   </p>
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
-                    Montant net
+                    {t('pricing.cinetpay.net_amount', "Montant net")}
                   </p>
                 </div>
               </div>
@@ -537,9 +542,9 @@ export default function AbonnementPage() {
 
             {/* Étape 1 : Choix de l'opérateur mobile */}
             {paymentStep === 'select' && (
-              <div className="space-y-4">
+              <div className="space-y-4 text-start" dir={dir}>
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
-                  1. Choisissez votre moyen de paiement :
+                  {t('pricing.cinetpay.choose_method', "1. Choisissez votre moyen de paiement :")}
                 </label>
                 <div className="grid grid-cols-2 gap-3.5">
                   {/* Wave */}
@@ -603,7 +608,7 @@ export default function AbonnementPage() {
                   onClick={() => setPaymentStep('input')}
                   className="w-full bg-[#1E293B] hover:bg-[#0F172A] text-white py-6 mt-4 font-bold text-xs"
                 >
-                  Suivant
+                  {t('pricing.cinetpay.next', "Suivant")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -611,10 +616,10 @@ export default function AbonnementPage() {
 
             {/* Étape 2 : Numéro de téléphone */}
             {paymentStep === 'input' && (
-              <div className="space-y-4">
+              <div className="space-y-4 text-start" dir={dir}>
                 <div>
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
-                    2. Saisissez votre numéro {paymentProvider.toUpperCase()} :
+                    {t('pricing.cinetpay.enter_number', "2. Saisissez votre numéro {provider} :").replace('{provider}', paymentProvider.toUpperCase())}
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
@@ -638,7 +643,7 @@ export default function AbonnementPage() {
                     </p>
                   )}
                   <p className="text-[9px] text-muted-foreground mt-2 leading-normal">
-                    Assurez-vous de disposer du solde suffisant sur votre portefeuille mobile. Une demande d'approbation vous sera envoyée pour confirmation.
+                    {t('pricing.cinetpay.phone_note', "Assurez-vous de disposer du solde suffisant sur votre portefeuille mobile. Une demande d'approbation vous sera envoyée pour confirmation.")}
                   </p>
                 </div>
 
@@ -648,13 +653,13 @@ export default function AbonnementPage() {
                     onClick={() => setPaymentStep('select')}
                     className="flex-1 py-6 border-slate-200 dark:border-border/60 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-350 font-bold text-xs"
                   >
-                    Retour
+                    {t('pricing.cinetpay.back', "Retour")}
                   </Button>
                   <Button
                     onClick={handleProceedPayment}
                     className="flex-2 py-6 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs"
                   >
-                    Confirmer le règlement
+                    {t('pricing.cinetpay.confirm', "Confirmer le règlement")}
                   </Button>
                 </div>
               </div>
@@ -665,7 +670,7 @@ export default function AbonnementPage() {
               <div className="py-10 flex flex-col items-center justify-center text-center space-y-5">
                 <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
                 <div className="space-y-2 max-w-[320px]">
-                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">Paiement en cours</h4>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{t('pricing.cinetpay.processing', "Paiement en cours")}</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed animate-pulse">
                     {processingStatus}
                   </p>
@@ -680,9 +685,9 @@ export default function AbonnementPage() {
                   <CheckCircle2 className="h-10 w-10 text-success" />
                 </div>
                 <div className="space-y-2 max-w-[300px]">
-                  <h4 className="font-extrabold text-slate-800 dark:text-slate-200 text-lg">Paiement Validé !</h4>
+                  <h4 className="font-extrabold text-slate-800 dark:text-slate-200 text-lg">{t('pricing.cinetpay.success_title', "Paiement Validé !")}</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Votre abonnement à la formule **{selectedPlan.nom}** est maintenant actif ! Votre limite d'élèves est rehaussée à {selectedPlan.maxEleves === 99999 ? 'l\'infini' : selectedPlan.maxEleves}.
+                    {t('pricing.cinetpay.success_desc', "Votre abonnement à la formule **{plan}** est maintenant actif ! Votre limite d'élèves est rehaussée à {max}.").replace('{plan}', selectedPlan.nom).replace('{max}', selectedPlan.maxEleves === 99999 ? t('pricing.unlimited', 'l\'infini') : selectedPlan.maxEleves.toString())}
                   </p>
                 </div>
 
@@ -690,7 +695,7 @@ export default function AbonnementPage() {
                   onClick={() => setIsCinetPayOpen(false)}
                   className="w-full bg-success hover:bg-success-dark text-white py-6 mt-4 font-bold text-xs shadow-lg shadow-success/20"
                 >
-                  Retourner au Tableau de bord
+                  {t('pricing.cinetpay.dashboard_btn', "Retourner au Tableau de bord")}
                 </Button>
               </div>
             )}
@@ -701,10 +706,10 @@ export default function AbonnementPage() {
           <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-t border-slate-200/60 dark:border-border/40 flex items-center justify-between text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <ShieldCheck className="h-4 w-4 text-slate-400" />
-              Cryptage SSL 256 bits
+              {t('pricing.cinetpay.ssl', "Cryptage SSL 256 bits")}
             </span>
             <span className="font-semibold text-slate-500">
-              Powered by CinetPay
+              {t('pricing.cinetpay.powered', "Powered by CinetPay")}
             </span>
           </div>
 

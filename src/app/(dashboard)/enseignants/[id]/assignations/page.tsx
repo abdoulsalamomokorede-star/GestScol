@@ -11,29 +11,24 @@ import { useToast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
 import { PremiumGuard } from '@/components/ui/PremiumGuard'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function AssignationsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params)
   const router = useRouter()
   const { toast } = useToast()
   const { enseignants, classes, matieres, updateClasse, updateMatiere, ecole } = useSchoolStore()
+  const { t, dir, isAr } = useTranslation()
   
-  if (ecole?.abonnement?.plan === 'gratuit') {
-    return (
-      <PremiumGuard 
-        title="Assignation des Enseignants" 
-        description="Assignez vos enseignants aux classes et matières correspondantes, désignez les professeurs principaux (titulaires), et organisez la répartition horaire et pédagogique de votre corps professoral."
-      />
-    )
-  }
+
   
   const enseignant = enseignants.find(e => e.id === unwrappedParams.id)
   
   if (!enseignant) {
     return (
-      <div className="p-6 text-center">
-        <h2 className="text-xl text-danger">Enseignant introuvable</h2>
-        <Button className="mt-4" onClick={() => router.push('/enseignants')}>Retour</Button>
+      <div className="p-6 text-center" dir={dir}>
+        <h2 className="text-xl text-danger">{t('enseignants.not_found', "Enseignant introuvable")}</h2>
+        <Button className="mt-4" onClick={() => router.push('/enseignants')}>{t('action.back', "Retour")}</Button>
       </div>
     )
   }
@@ -52,8 +47,10 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
     updateMatiere(matiere.id, { enseignantIds: newIds })
     
     toast({ 
-      title: "Mise à jour réussie", 
-      description: `Matière ${isAssigned ? 'assignée à' : 'retirée de'} ${enseignant.nom}` 
+      title: t('toast.update_success', "Mise à jour réussie"), 
+      description: isAssigned 
+        ? t('toast.subject_assigned_to', "Matière assignée à {name}").replace('{name}', `${enseignant.prenom} ${enseignant.nom}`)
+        : t('toast.subject_removed_from', "Matière retirée de {name}").replace('{name}', `${enseignant.prenom} ${enseignant.nom}`)
     })
     setPendingAssignment(null)
   }
@@ -83,30 +80,34 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
   const handleAssignProfPrincipal = (classeId: string, isAssigned: boolean) => {
     updateClasse(classeId, { enseignantPrincipalId: isAssigned ? enseignant.id : '' })
     toast({ 
-      title: "Mise à jour réussie", 
-      description: `${enseignant.nom} est ${isAssigned ? 'désormais' : 'n\'est plus'} professeur principal.` 
+      title: t('toast.update_success', "Mise à jour réussie"), 
+      description: isAssigned 
+        ? t('toast.now_principal', "{name} est désormais professeur principal.").replace('{name}', `${enseignant.prenom} ${enseignant.nom}`)
+        : t('toast.no_longer_principal', "{name} n'est plus professeur principal.").replace('{name}', `${enseignant.prenom} ${enseignant.nom}`)
     })
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.push('/enseignants')}>
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Button>
         <div>
-          <h2 className="text-2xl font-display font-bold text-text">
-            Assignations : {enseignant.prenom} {enseignant.nom}
+          <h2 className="text-2xl font-display font-bold text-text text-start">
+            {t('enseignants.assign.title_prefix', "Assignations : ")}{enseignant.prenom} {enseignant.nom}
           </h2>
-          <p className="text-sm text-muted-foreground">Gérez les classes et matières de cet enseignant</p>
+          <p className="text-sm text-muted-foreground text-start">
+            {t('enseignants.assign.subtitle', "Gérez les classes et matières de cet enseignant")}
+          </p>
         </div>
       </div>
 
-      <Tabs defaultValue="matieres" className="w-full">
+      <Tabs defaultValue="matieres" className="w-full" dir={dir}>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="matieres">Matières Enseignées</TabsTrigger>
-            <TabsTrigger value="titulaire">Professeur Principal</TabsTrigger>
+            <TabsTrigger value="matieres">{t('enseignants.assign.tab_subjects', "Matières Enseignées")}</TabsTrigger>
+            <TabsTrigger value="titulaire">{t('enseignants.assign.tab_titulaire', "Professeur Principal")}</TabsTrigger>
           </TabsList>
           
           <div className="w-full sm:w-[250px]">
@@ -119,29 +120,29 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
                   className="w-full justify-between"
                 >
                   {classFilter === 'toutes'
-                    ? "Toutes les classes"
-                    : classes.find((c) => c.id === classFilter)?.nom || "Toutes les classes"}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    ? t('enseignants.assign.all_classes', "Toutes les classes")
+                    : classes.find((c) => c.id === classFilter)?.nom || t('enseignants.assign.all_classes', "Toutes les classes")}
+                  <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[250px] p-0" align="end">
                 <div className="flex flex-col">
                   <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                    <Search className="me-2 h-4 w-4 shrink-0 opacity-50" />
                     <Input
-                      className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0 focus-visible:ring-0 shadow-none"
-                      placeholder="Rechercher une classe..."
+                      className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0 focus-visible:ring-0 shadow-none text-start"
+                      placeholder={t('inscriptions.search_class_placeholder', "Rechercher une classe...")}
                       value={classSearchQuery}
                       onChange={(e) => setClassSearchQuery(e.target.value)}
                     />
                   </div>
-                  <div className="max-h-[300px] overflow-y-auto p-1">
+                  <div className="max-h-[300px] overflow-y-auto p-1 text-start">
                     <div
                       className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground ${classFilter === 'toutes' ? 'bg-accent/50' : ''}`}
                       onClick={() => { setClassFilter('toutes'); setIsClassComboboxOpen(false); }}
                     >
-                      <Check className={`mr-2 h-4 w-4 ${classFilter === 'toutes' ? 'opacity-100' : 'opacity-0'}`} />
-                      Toutes les classes
+                      <Check className={`me-2 h-4 w-4 ${classFilter === 'toutes' ? 'opacity-100' : 'opacity-0'}`} />
+                      {t('enseignants.assign.all_classes', "Toutes les classes")}
                     </div>
                     {classes
                       .filter(c => c.nom.toLowerCase().includes(classSearchQuery.toLowerCase()))
@@ -151,7 +152,7 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
                           className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground ${classFilter === c.id ? 'bg-accent/50' : ''}`}
                           onClick={() => { setClassFilter(c.id); setIsClassComboboxOpen(false); }}
                         >
-                          <Check className={`mr-2 h-4 w-4 ${classFilter === c.id ? 'opacity-100' : 'opacity-0'}`} />
+                          <Check className={`me-2 h-4 w-4 ${classFilter === c.id ? 'opacity-100' : 'opacity-0'}`} />
                           {c.nom}
                         </div>
                       ))}
@@ -163,13 +164,13 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
         </div>
         
         <TabsContent value="matieres" className="mt-6 space-y-6">
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border/50">
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border/50 text-start">
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
               <BookOpen className="h-5 w-5 text-primary" />
-              Matières par classe
+              {t('enseignants.assign.subjects_by_class', "Matières par classe")}
             </h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Cochez les matières que cet enseignant dispense. Cela permet d'avoir plusieurs enseignants dans une même classe.
+              {t('enseignants.assign.subjects_desc', "Cochez les matières que cet enseignant dispense. Cela permet d'avoir plusieurs enseignants dans une même classe.")}
             </p>
 
             <div className="space-y-8">
@@ -180,7 +181,7 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
                 return (
                   <div key={classe.id} className="border border-border/50 rounded-md p-4">
                     <h4 className="font-medium text-text mb-3 bg-muted/30 px-3 py-1 rounded inline-block">
-                      {classe.nom} ({classe.niveau})
+                      {classe.nom} ({t(`classes.level.${classe.niveau.toLowerCase()}`, classe.niveau)})
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
                       {classeMatieres.map(matiere => {
@@ -196,7 +197,7 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
                             <span className={isAssigned ? 'font-medium text-primary-dark' : 'text-text'}>
                               {matiere.nom}
                             </span>
-                            {isAssigned && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                            {isAssigned && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
                           </div>
                         )
                       })}
@@ -209,14 +210,13 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
         </TabsContent>
 
         <TabsContent value="titulaire" className="mt-6">
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border/50">
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border/50 text-start">
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
               <GraduationCap className="h-5 w-5 text-primary" />
-              Classes Titulaires
+              {t('enseignants.assign.principal_classes', "Classes Titulaires")}
             </h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Un enseignant peut être le professeur principal d'une ou plusieurs classes. 
-              Attention : assigner cet enseignant écrasera le professeur principal actuel de la classe.
+              {t('enseignants.assign.principal_desc', "Un enseignant peut être le professeur principal d'une ou plusieurs classes. Attention : assigner cet enseignant écrasera le professeur principal actuel de la classe.")}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -236,21 +236,23 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
                       <span className="font-semibold text-text">{classe.nom}</span>
                       {isTitulaire && <CheckCircle2 className="h-5 w-5 text-primary" />}
                     </div>
-                    <span className="text-xs text-muted-foreground mb-4">Niveau: {classe.niveau}</span>
+                    <span className="text-xs text-muted-foreground mb-4">
+                      {t('enseignants.assign.level_prefix', "Niveau: ")}{t(`classes.level.${classe.niveau.toLowerCase()}`, classe.niveau)}
+                    </span>
                     
                     {hasOtherTitulaire && !isTitulaire && otherTitulaire && (
                       <span className="text-xs text-warning mb-2 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        Titulaire : {otherTitulaire.prenom} {otherTitulaire.nom}
+                        <AlertCircle className="h-3 w-3 shrink-0" />
+                        {t('enseignants.assign.titulaire_prefix', "Titulaire : ")}{otherTitulaire.prenom} {otherTitulaire.nom}
                       </span>
                     )}
 
                     <Button 
                       variant={isTitulaire ? "outline" : "default"}
-                      className={isTitulaire ? "text-danger border-danger/50 hover:bg-danger hover:text-white" : "bg-primary hover:bg-primary-dark text-white"}
+                      className={isTitulaire ? "text-danger border-danger/50 hover:bg-danger hover:text-white mt-auto" : "bg-primary hover:bg-primary-dark text-white mt-auto"}
                       onClick={() => handleAssignProfPrincipal(classe.id, !isTitulaire)}
                     >
-                      {isTitulaire ? 'Retirer le rôle' : 'Définir comme titulaire'}
+                      {isTitulaire ? t('enseignants.assign.btn_remove', "Retirer le rôle") : t('enseignants.assign.btn_set', "Définir comme titulaire")}
                     </Button>
                   </div>
                 )
@@ -263,10 +265,10 @@ export default function AssignationsPage({ params }: { params: Promise<{ id: str
         isOpen={!!pendingAssignment}
         onClose={() => setPendingAssignment(null)}
         onConfirm={() => pendingAssignment && executeAssignation(pendingAssignment.matiere, true)}
-        title="Attention : Co-enseignement"
-        description={`Cette matière est déjà assignée à : ${pendingAssignment?.otherNames}. Voulez-vous vraiment l'assigner également à ${enseignant.prenom} ${enseignant.nom} pour qu'ils l'enseignent ensemble ?`}
-        confirmText="Oui, assigner"
-        cancelText="Annuler"
+        title={t('enseignants.assign.co_teach_title', "Attention : Co-enseignement")}
+        description={t('enseignants.assign.co_teach_desc', "Cette matière est déjà assignée à : {otherNames}. Voulez-vous vraiment l'assigner également à {name} pour qu'ils l'enseignent ensemble ?").replace('{otherNames}', pendingAssignment?.otherNames || '').replace('{name}', `${enseignant.prenom} ${enseignant.nom}`)}
+        confirmText={t('enseignants.assign.btn_confirm_assign', "Oui, assigner")}
+        cancelText={t('action.cancel', "Annuler")}
       />
     </div>
   )

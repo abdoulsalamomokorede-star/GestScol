@@ -4,8 +4,9 @@ import { use, useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useSchoolStore } from '@/store/useSchoolStore'
-import { getInitiales, formatDate, formatCFA, getSafeFilename } from '@/lib/utils'
+import { getInitiales, formatDate, formatCFA, getSafeFilename, formatTelephone } from '@/lib/utils'
 import { ArrowLeft, User, BookOpen, CreditCard, CalendarOff, Phone, Mail, Loader2, Download, Lock, FileText } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ecoleMock } from '@/data/mockData'
 import BulletinPDF from '@/components/bulletins/BulletinPDF'
 import EleveModal from '@/components/eleves/EleveModal'
+import ParentPremiumPaywallModal from '@/components/parent/ParentPremiumPaywallModal'
 
 // Chargement dynamique de PDFDownloadLink pour éviter les erreurs de SSR Next.js
 const PDFDownloadLink = dynamic(
@@ -26,6 +28,7 @@ const PDFDownloadLink = dynamic(
 function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t, dir } = useTranslation()
   const urlAnneeId = searchParams.get('anneeId')
   
   // React 19 / Next 15 "params" must be unwrapped using `use()`
@@ -53,6 +56,9 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
   const eleve = getEleveById(id)
 
   const [selectedTrimestre, setSelectedTrimestre] = useState<'1' | '2' | '3'>('1')
+  const [activeTab, setActiveTab] = useState('infos')
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false)
+  const [paywallTargetTrimestre, setPaywallTargetTrimestre] = useState<'1' | '2' | '3'>('1')
   const [isMounted, setIsMounted] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   
@@ -87,9 +93,9 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
   if (!eleve) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <p className="text-muted-foreground text-lg">Élève introuvable.</p>
+        <p className="text-muted-foreground text-lg">{t('eleves.not_found', 'Élève introuvable.')}</p>
         <Button onClick={() => router.back()} variant="outline">
-          Retour
+          {t('action.back', 'Retour')}
         </Button>
       </div>
     )
@@ -128,10 +134,45 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
   const paiementsEnRetard = paiements.filter(p => p.statut === 'retard').length
   const totalAbsencesNJ = absences.filter(a => !a.justifiee).length
 
+  const getDernierTrimestreValide = () => {
+    const bulletinsStore = useSchoolStore.getState().bulletins
+    const bulletinsEleve = bulletinsStore.filter(
+      b => b.eleveId === eleve.id && 
+           b.anneeScolaire === selectedAnneeId && 
+           b.estValide === true
+    )
+    if (bulletinsEleve.length === 0) return null
+    return [...bulletinsEleve].sort((a, b) => b.trimestre - a.trimestre)[0]
+  }
+
+  const dernierBulletinValide = getDernierTrimestreValide()
+
   const isParent = currentUser?.role === 'parent'
 
+  const aAccesPremium = (trimestre: number) => {
+    if (!isParent) return true
+    const status = currentUser?.parentSubscriptionStatus
+    if (!status || status === 'gratuit') return false
+    
+    // Rétrocompatibilité si pas de séparateur ":" (ancien format sans année)
+    if (status === 'premium') return true
+    if (!status.includes(':')) {
+      return status.split(',').includes(`t${trimestre}`)
+    }
+    
+    // Nouveau format "anneeId:statut;anneeId2:statut2"
+    const abonnements = status.split(';').filter(Boolean)
+    const abonnementAnnee = abonnements.find(a => a.startsWith(`${selectedAnneeId}:`))
+    
+    if (!abonnementAnnee) return false
+    
+    const statutAnnee = abonnementAnnee.split(':')[1]
+    if (statutAnnee === 'premium') return true
+    return statutAnnee.split(',').includes(`t${trimestre}`)
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       {/* En-tête de retour et actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <Button 
@@ -139,21 +180,21 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
           onClick={() => isParent ? router.push('/parent/dashboard') : router.back()} 
           className="text-muted-foreground hover:text-text"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {isParent ? "Retour au tableau de bord" : "Retour"}
+          <ArrowLeft className="me-2 h-4 w-4" />
+          {isParent ? t('eleves.back_to_dashboard', 'Retour au tableau de bord') : t('action.back', 'Retour')}
         </Button>
 
         {/* Sélecteur d'Année Scolaire */}
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Année :</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.school_year', 'Année')} :</span>
           <Select value={selectedAnneeId} onValueChange={setSelectedAnneeId}>
             <SelectTrigger className="w-[150px] bg-card border-border">
-              <SelectValue placeholder="Année Scolaire" />
+              <SelectValue placeholder={t('dashboard.school_year', 'Année Scolaire')} />
             </SelectTrigger>
             <SelectContent>
               {anneesScolaires.map(annee => (
                 <SelectItem key={annee.id} value={annee.id}>
-                  {annee.nom} {annee.statut === 'active' ? '(Courante)' : ''}
+                  {annee.nom} {annee.statut === 'active' ? `(${t('parametres.years.table.status.active', 'Courante')})` : ''}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -166,41 +207,29 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
               className="text-primary border-primary hover:bg-primary hover:text-white transition-colors"
               onClick={() => setIsEditModalOpen(true)}
             >
-              Modifier le dossier
+              {t('eleves.action.edit', 'Modifier le dossier')}
             </Button>
-            {ecole?.abonnement?.plan === 'gratuit' ? (
-              <div
-                className="h-10 px-4 bg-primary/10 text-primary/60 border border-primary/20 cursor-not-allowed font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm select-none"
-                title="Abonnement Standard requis pour générer les bulletins PDF"
-              >
-                <Lock className="h-4 w-4 shrink-0" />
-                <span>Générer Bulletin</span>
-                <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
-                  👑 Premium
-                </span>
-              </div>
-            ) : (
-              <Dialog>
+            <Dialog>
                 <DialogTrigger asChild>
                   <Button className="bg-primary text-white hover:bg-primary-dark font-semibold">
-                    Générer Bulletin
+                    {t('bulletins.generate', 'Générer Bulletin')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px] bg-card border-border">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold font-display text-text">Générer le Bulletin PDF</DialogTitle>
+                    <DialogTitle className="text-xl font-bold font-display text-text">{t('bulletins.generate', 'Générer le Bulletin PDF')}</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trimestre</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.trimestre', 'Trimestre')}</label>
                       <Select value={selectedTrimestre} onValueChange={(val) => setSelectedTrimestre(val as '1' | '2' | '3')}>
                         <SelectTrigger className="w-full border-border">
-                          <SelectValue placeholder="Choisir un trimestre" />
+                          <SelectValue placeholder={t('bulletins.select_trimestre', 'Choisir un trimestre')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1">1er Trimestre</SelectItem>
-                          <SelectItem value="2">2ème Trimestre</SelectItem>
-                          <SelectItem value="3">3ème Trimestre</SelectItem>
+                          <SelectItem value="1">{t('dashboard.t1', '1er Trimestre')}</SelectItem>
+                          <SelectItem value="2">{t('dashboard.t2', '2ème Trimestre')}</SelectItem>
+                          <SelectItem value="3">{t('dashboard.t3', '3ème Trimestre')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -208,21 +237,21 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                     {bulletinEleve && bulletinEleve.notes.length > 0 ? (
                       <div className="bg-slate-50 border border-border p-4 rounded-lg space-y-3">
                         <div className="flex justify-between items-center border-b border-border/55 pb-2">
-                          <span className="text-xs text-muted-foreground font-medium">Moyenne Générale</span>
+                          <span className="text-xs text-muted-foreground font-medium">{t('kpi.moyenne', 'Moyenne Générale')}</span>
                           <span className={`text-sm font-bold font-display px-2 py-0.5 rounded ${
                             bulletinEleve.moyenneGenerale >= 10 ? 'text-emerald-600 bg-emerald-50' : 'text-danger bg-red-50'
                           }`}>
-                            {bulletinEleve.moyenneGenerale.toFixed(2)} / 20
+                            <span dir="ltr">{bulletinEleve.moyenneGenerale.toFixed(2)} / 20</span>
                           </span>
                         </div>
                         <div className="flex justify-between items-center border-b border-border/55 pb-2">
-                          <span className="text-xs text-muted-foreground font-medium">Rang</span>
+                          <span className="text-xs text-muted-foreground font-medium">{t('bulletins.table.rang', 'Rang')}</span>
                           <span className="text-xs font-bold text-text bg-slate-200/60 dark:bg-slate-800/60 px-2 py-0.5 rounded">
-                            {bulletinEleve.rangClasse}e sur {bulletinEleve.effectifClasse}
+                            <span dir="ltr">{bulletinEleve.rangClasse} / {bulletinEleve.effectifClasse}</span>
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground font-medium">Mention</span>
+                          <span className="text-xs text-muted-foreground font-medium">{t('bulletins.table.mention', 'Mention')}</span>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded ${
                             bulletinEleve.moyenneGenerale >= 10 ? 'bg-primary-light text-primary' : 'bg-red-50 text-danger'
                           }`}>
@@ -232,14 +261,14 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                       </div>
                     ) : (
                       <div className="bg-amber-50 border border-amber-200/50 p-4 rounded-lg text-center text-xs text-amber-800">
-                        Aucune note disponible pour ce trimestre ou relevé incomplet.
+                        {t('bulletins.no_notes', 'Aucune note disponible pour ce trimestre ou relevé incomplet.')}
                       </div>
                     )}
                   </div>
                   
                   <div className="flex justify-end gap-3 border-t border-border pt-4 mt-2">
                     <DialogClose asChild>
-                      <Button variant="outline" size="sm">Fermer</Button>
+                      <Button variant="outline" size="sm">{t('action.cancel', 'Fermer')}</Button>
                     </DialogClose>
                     
                     {isMounted && bulletinEleve && bulletinEleve.notes.length > 0 ? (
@@ -288,7 +317,6 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                   </div>
                 </DialogContent>
               </Dialog>
-            )}
           </div>
         )}
       </div>
@@ -313,28 +341,70 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                   <span className="text-sm text-muted-foreground">{eleve.matricule}</span>
                   <span className="text-muted-foreground hidden sm:inline">•</span>
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                    {classe?.nom || 'Sans classe'}
+                    {classe?.nom || t('eleves.no_class', 'Sans classe')}
                   </Badge>
                   <Badge variant="outline" className={
                     eleve.statut === 'actif' ? 'bg-success/10 text-success border-success/20' : 
                     eleve.statut === 'suspendu' ? 'bg-warning/10 text-warning border-warning/20' : 
                     'bg-danger/10 text-danger border-danger/20'
                   }>
-                    {eleve.statut.charAt(0).toUpperCase() + eleve.statut.slice(1)}
+                    {eleve.statut === 'actif' ? t('eleves.status.actif', 'Actif') : eleve.statut === 'suspendu' ? t('eleves.status.suspendu', 'Suspendu') : t('eleves.status.exclu', 'Exclu')}
                   </Badge>
                 </div>
               </div>
             </div>
             
             <div className="flex flex-wrap gap-2 pb-1">
-              {moyenneT1 > 0 && (
-                <Badge variant="outline" className="px-3 py-1 bg-background">
-                  Moy. T1: <strong className="ml-1 text-text">{moyenneT1}/20</strong>
-                </Badge>
-              )}
+              {(() => {
+                if (isParent) {
+                  if (!dernierBulletinValide) return null
+                  const hasPaid = aAccesPremium(dernierBulletinValide.trimestre)
+                  if (!hasPaid) {
+                    return (
+                      <Badge 
+                        variant="outline" 
+                        className="px-3 py-1 bg-amber-50 text-amber-750 border-amber-200/50 cursor-pointer flex items-center gap-1 font-bold text-xs rounded-lg hover:bg-amber-100/60"
+                        onClick={() => {
+                          setPaywallTargetTrimestre(String(dernierBulletinValide.trimestre) as any)
+                          setIsPaywallOpen(true)
+                        }}
+                      >
+                        <Lock className="w-3 h-3 text-amber-600 shrink-0" />
+                        {t('eleves.moy_trimestre', 'Moy. T{trimestre} :').replace('{trimestre}', String(dernierBulletinValide.trimestre))} Premium
+                      </Badge>
+                    )
+                  }
+                  return (
+                    <Badge variant="outline" className="px-3 py-1 bg-background">
+                      {t('eleves.moy_trimestre', 'Moy. T{trimestre} :').replace('{trimestre}', String(dernierBulletinValide.trimestre))}
+                      <strong className="ms-1 text-text">
+                        <span dir="ltr">{dernierBulletinValide.moyenneGenerale.toFixed(2)}/20</span>
+                      </strong>
+                    </Badge>
+                  )
+                } else {
+                  if (dernierBulletinValide) {
+                    return (
+                      <Badge variant="outline" className="px-3 py-1 bg-background">
+                        {t('eleves.moy_trimestre', 'Moy. T{trimestre} :').replace('{trimestre}', String(dernierBulletinValide.trimestre))}
+                        <strong className="ms-1 text-text">
+                          <span dir="ltr">{dernierBulletinValide.moyenneGenerale.toFixed(2)}/20</span>
+                        </strong>
+                      </Badge>
+                    )
+                  } else if (moyenneT1 > 0) {
+                    return (
+                      <Badge variant="outline" className="px-3 py-1 bg-background">
+                        {t('eleves.moy_t1', 'Moy. T1 :')} <strong className="ms-1 text-text"><span dir="ltr">{moyenneT1}/20</span></strong>
+                      </Badge>
+                    )
+                  }
+                  return null
+                }
+              })()}
               {paiementsEnRetard > 0 && (
                 <Badge variant="outline" className="px-3 py-1 bg-danger/10 text-danger border-danger/20">
-                  {paiementsEnRetard} impayé(s)
+                  {paiementsEnRetard} {t('eleves.unpaid_count', 'impayé(s)')}
                 </Badge>
               )}
             </div>
@@ -343,42 +413,41 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
       </Card>
 
       {/* Onglets d'informations */}
-      <Tabs defaultValue="infos" className="w-full">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(val) => {
+          if (isParent && (val === 'notes' || val === 'bulletins') && !aAccesPremium(trimestreNum)) {
+            setPaywallTargetTrimestre(selectedTrimestre)
+            setIsPaywallOpen(true)
+            return
+          }
+          setActiveTab(val)
+        }} 
+        className="w-full"
+        dir={dir}
+      >
         <TabsList className="bg-card border border-border/50 w-full justify-start h-auto p-1 overflow-x-auto flex-nowrap sm:flex-wrap">
           <TabsTrigger value="infos" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <User className="w-4 h-4 mr-2" />
-            Informations
+            <User className="w-4 h-4 me-2" />
+            {t('parametres.tab.general', 'Informations')}
           </TabsTrigger>
-          <TabsTrigger value="notes" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <BookOpen className="w-4 h-4 mr-2 shrink-0" />
-            <span>Notes</span>
-            {ecole?.abonnement?.plan === 'gratuit' && (
-              <span className="ml-1.5 text-[8px] bg-amber-500/20 text-amber-700 font-extrabold px-1 rounded uppercase tracking-wider shrink-0">
-                Premium
-              </span>
-            )}
+          <TabsTrigger value="notes" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary flex items-center gap-1">
+            <BookOpen className="w-4 h-4 me-2 shrink-0" />
+            <span>{t('notes.title', 'Notes')}</span>
+            {isParent && !aAccesPremium(trimestreNum) && <Lock className="w-3 h-3 text-amber-500 shrink-0 ml-1" />}
           </TabsTrigger>
           <TabsTrigger value="paiements" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <CreditCard className="w-4 h-4 mr-2 shrink-0" />
-            Paiements
+            <CreditCard className="w-4 h-4 me-2 shrink-0" />
+            {t('paiements.title', 'Paiements')}
           </TabsTrigger>
           <TabsTrigger value="absences" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <CalendarOff className="w-4 h-4 mr-2 shrink-0" />
-            <span>Absences</span>
-            {ecole?.abonnement?.plan === 'gratuit' && (
-              <span className="ml-1.5 text-[8px] bg-amber-500/20 text-amber-700 font-extrabold px-1 rounded uppercase tracking-wider shrink-0">
-                Premium
-              </span>
-            )}
+            <CalendarOff className="w-4 h-4 me-2 shrink-0" />
+            <span>{t('absences.title', 'Absences')}</span>
           </TabsTrigger>
-          <TabsTrigger value="bulletins" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <FileText className="w-4 h-4 mr-2 shrink-0" />
-            <span>Bulletins</span>
-            {ecole?.abonnement?.plan === 'gratuit' && (
-              <span className="ml-1.5 text-[8px] bg-amber-500/20 text-amber-700 font-extrabold px-1 rounded uppercase tracking-wider shrink-0">
-                Premium
-              </span>
-            )}
+          <TabsTrigger value="bulletins" className="py-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary flex items-center gap-1">
+            <FileText className="w-4 h-4 me-2 shrink-0" />
+            <span>{t('bulletins.title', 'Bulletins')}</span>
+            {isParent && !aAccesPremium(trimestreNum) && <Lock className="w-3 h-3 text-amber-500 shrink-0 ml-1" />}
           </TabsTrigger>
         </TabsList>
 
@@ -387,19 +456,19 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="border-border/50 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg font-display">Identité de l'élève</CardTitle>
+                  <CardTitle className="text-lg font-display">{t('eleves.identity', "Identité de l'élève")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-3 gap-4 border-b border-border/50 pb-4">
-                    <div className="col-span-1 text-sm text-muted-foreground">Date de naissance</div>
-                    <div className="col-span-2 font-medium text-text">{eleve.dateNaissance ? formatDate(eleve.dateNaissance) : 'Non renseignée'}</div>
+                    <div className="col-span-1 text-sm text-muted-foreground">{t('eleves.birthdate', 'Date de naissance')}</div>
+                    <div className="col-span-2 font-medium text-text">{eleve.dateNaissance ? formatDate(eleve.dateNaissance) : t('eleves.not_specified', 'Non renseignée')}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-4 border-b border-border/50 pb-4">
-                    <div className="col-span-1 text-sm text-muted-foreground">Sexe</div>
-                    <div className="col-span-2 font-medium text-text">{eleve.sexe === 'M' ? 'Masculin' : 'Féminin'}</div>
+                    <div className="col-span-1 text-sm text-muted-foreground">{t('inscriptions.filter_gender', 'Sexe')}</div>
+                    <div className="col-span-2 font-medium text-text">{eleve.sexe === 'M' ? t('inscriptions.gender.M', 'Masculin') : t('inscriptions.gender.F', 'Féminin')}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-1 text-sm text-muted-foreground">Date d'inscription</div>
+                    <div className="col-span-1 text-sm text-muted-foreground">{t('eleves.enrollment_date', "Date d'inscription")}</div>
                     <div className="col-span-2 font-medium text-text">{formatDate(eleve.dateInscription)}</div>
                   </div>
                 </CardContent>
@@ -407,28 +476,32 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
 
               <Card className="border-border/50 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg font-display">Contact Parent / Tuteur</CardTitle>
+                  <CardTitle className="text-lg font-display">{t('eleves.parent_contact', 'Contact Parent / Tuteur')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-3 border-b border-border/50 pb-4">
+                  <div className="flex items-center gap-3 border-b border-border/50 pb-4">
                     <div className="p-2 bg-primary/10 rounded-lg text-primary"><User className="w-4 h-4" /></div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Nom complet</p>
-                      <p className="font-medium text-text">{eleve.parentNom || 'Non renseigné'}</p>
+                      <p className="text-sm text-muted-foreground">{t('enseignants.modal.name_label', 'Nom complet')}</p>
+                      <p className="font-medium text-text">{eleve.parentNom || t('eleves.not_specified', 'Non renseigné')}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3 border-b border-border/50 pb-4">
+                  <div className="flex items-center gap-3 border-b border-border/50 pb-4">
                     <div className="p-2 bg-success/10 rounded-lg text-success"><Phone className="w-4 h-4" /></div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Téléphone (WhatsApp)</p>
-                      <p className="font-medium text-text">{eleve.parentTelephone || 'Non renseigné'}</p>
+                      <p className="text-sm text-muted-foreground">{t('enseignants.modal.phone_label', 'Téléphone (WhatsApp)')}</p>
+                      <p className="font-medium text-text">
+                        {eleve.parentTelephone ? (
+                          <span className="inline-block" dir="ltr">{formatTelephone(eleve.parentTelephone)}</span>
+                        ) : t('eleves.not_specified', 'Non renseigné')}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-3">
                     <div className="p-2 bg-warning/10 rounded-lg text-warning"><Mail className="w-4 h-4" /></div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium text-text">{eleve.parentEmail || 'Non renseigné'}</p>
+                      <p className="text-sm text-muted-foreground">{t('enseignants.modal.email_label', 'Email')}</p>
+                      <p className="font-medium text-text">{eleve.parentEmail || t('eleves.not_specified', 'Non renseigné')}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -438,52 +511,72 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
 
           <TabsContent value="notes" className="mt-0">
             <Card className="border-border/50 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-display">Relevé de Notes (Trimestre 1)</CardTitle>
-                {ecole?.abonnement?.plan === 'gratuit' && (
-                  <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
-                    👑 Premium
-                  </span>
-                )}
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <CardTitle className="text-lg font-display">
+                  {t('notes.report_title', 'Relevé de Notes')} - {selectedTrimestre === '1' ? t('dashboard.t1', '1er Trimestre') : selectedTrimestre === '2' ? t('dashboard.t2', '2ème Trimestre') : t('dashboard.t3', '3ème Trimestre')}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-semibold">{t('bulletins.period', 'Période')} :</span>
+                  <Select
+                    value={selectedTrimestre}
+                    onValueChange={(val: '1' | '2' | '3') => {
+                      const targetTrim = Number(val) as 1 | 2 | 3
+                      if (isParent && !aAccesPremium(targetTrim)) {
+                        setPaywallTargetTrimestre(val)
+                        setIsPaywallOpen(true)
+                      } else {
+                        setSelectedTrimestre(val)
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[150px] h-8.5 font-bold text-xs bg-background border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card">
+                      <SelectItem value="1" className="text-xs font-semibold">{t('dashboard.t1', '1er Trimestre')}</SelectItem>
+                      <SelectItem value="2" className="text-xs font-semibold">
+                        <span className="flex items-center gap-1.5">
+                          {t('dashboard.t2', '2ème Trimestre')}
+                          {isParent && !aAccesPremium(2) && <Lock className="w-3 h-3 text-amber-500 shrink-0" />}
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="3" className="text-xs font-semibold">
+                        <span className="flex items-center gap-1.5">
+                          {t('dashboard.t3', '3ème Trimestre')}
+                          {isParent && !aAccesPremium(3) && <Lock className="w-3 h-3 text-amber-500 shrink-0" />}
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
-                {ecole?.abonnement?.plan === 'gratuit' ? (
-                  <div className="text-center py-12 space-y-3">
-                    <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
-                      <Lock className="w-6 h-6" />
-                    </div>
-                    <h4 className="text-sm font-bold text-text">Relevé de Notes Verrouillé</h4>
-                    <p className="text-xs text-muted-foreground max-w-[320px] mx-auto leading-relaxed">
-                      La consultation des devoirs, des compositions et le calcul automatique de la moyenne trimestrielle nécessitent un abonnement payant.
-                    </p>
-                  </div>
-                ) : (
-                  notes.filter(n => n.trimestre === 1).length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">Aucune note enregistrée pour ce trimestre.</p>
+                {notes.filter(n => n.trimestre === trimestreNum).length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">{t('notes.no_notes', 'Aucune note enregistrée pour ce trimestre.')}</p>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left border border-border/50 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm text-start border border-border/50 rounded-lg overflow-hidden">
                         <thead className="bg-muted/50 text-muted-foreground font-medium">
                           <tr>
-                            <th className="px-4 py-3">Matière</th>
-                            <th className="px-4 py-3 text-center">Note /20</th>
-                            <th className="px-4 py-3 text-center">Type</th>
-                            <th className="px-4 py-3 text-center">Coefficient</th>
+                            <th className="px-4 py-3 text-start">{t('matieres.table.name', 'Matière')}</th>
+                            <th className="px-4 py-3 text-center">{t('notes.grade_out_of_20', 'Note /20')}</th>
+                            <th className="px-4 py-3 text-center">{t('notes.grade_type', 'Type')}</th>
+                            <th className="px-4 py-3 text-center">{t('matieres.table.coef', 'Coefficient')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
-                          {notes.filter(n => n.trimestre === 1).map(note => {
+                          {notes.filter(n => n.trimestre === trimestreNum).map(note => {
                             const matiere = matieres.find(m => m.id === note.matiereId)
                             return (
                               <tr key={note.id} className="hover:bg-muted/20">
-                                <td className="px-4 py-3 font-medium">{matiere?.nom || 'Inconnue'}</td>
+                                <td className="px-4 py-3 text-start font-medium">{matiere?.nom || 'Inconnue'}</td>
                                 <td className="px-4 py-3 text-center font-bold text-text">
                                   <span className={note.valeur < 10 ? 'text-danger' : 'text-success'}>
                                     {note.valeur}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 text-center text-muted-foreground">
-                                  {note.type === 'composition' ? 'Composition' : note.type === 'devoir' ? `Devoir ${note.numero || ''}` : 'Oral'}
+                                  {note.type === 'composition' ? t('notes.composition', 'Composition') : note.type === 'devoir' ? `${t('notes.devoir', 'Devoir')} ${note.numero || ''}` : t('notes.oral', 'Oral')}
                                 </td>
                                 <td className="px-4 py-3 text-center text-muted-foreground">{matiere?.coefficient}</td>
                               </tr>
@@ -492,8 +585,7 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                         </tbody>
                       </table>
                     </div>
-                  )
-                )}
+                  )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -501,46 +593,46 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
           <TabsContent value="paiements" className="mt-0">
             <Card className="border-border/50 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg font-display">Historique des Paiements</CardTitle>
+                <CardTitle className="text-lg font-display">{t('paiements.history.title', 'Historique des Paiements')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {paiements.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">Aucun paiement enregistré.</p>
+                  <p className="text-muted-foreground text-center py-8">{t('paiements.no_payments', 'Aucun paiement enregistré.')}</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                    <table className="w-full text-sm text-start">
                       <thead className="bg-muted/50 text-muted-foreground font-medium">
                         <tr>
-                          <th className="px-4 py-3">Libellé</th>
-                          <th className="px-4 py-3">Date Limite</th>
-                          <th className="px-4 py-3">Montant</th>
-                          <th className="px-4 py-3">Statut</th>
-                          <th className="px-4 py-3">Mode</th>
+                          <th className="px-4 py-3 text-start">{t('paiements.history.method', 'Libellé')}</th>
+                          <th className="px-4 py-3 text-start">{t('dashboard.due_date', 'Date Limite')}</th>
+                          <th className="px-4 py-3 text-start">{t('paiements.history.amount', 'Montant')}</th>
+                          <th className="px-4 py-3 text-start">{t('paiements.table.status', 'Statut')}</th>
+                          <th className="px-4 py-3 text-start">{t('paiements.history.method', 'Mode')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/50">
                         {paiements.map(paiement => (
                           <tr key={paiement.id} className="hover:bg-muted/20">
-                            <td className="px-4 py-3 font-medium text-text">{paiement.type.replace('_', ' ').toUpperCase()}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{formatDate(paiement.dateLimite)}</td>
-                            <td className="px-4 py-3 font-bold">
+                            <td className="px-4 py-3 text-start font-medium text-text">{paiement.type.replace('_', ' ').toUpperCase()}</td>
+                            <td className="px-4 py-3 text-start text-muted-foreground">{formatDate(paiement.dateLimite)}</td>
+                            <td className="px-4 py-3 text-start font-bold">
                               {formatCFA(paiement.montant)}
                               {paiement.montantPaye !== undefined && paiement.montantPaye > 0 && (
                                 <div className="text-xs text-muted-foreground font-normal mt-0.5">
-                                  Déjà payé: {formatCFA(paiement.montantPaye)}
+                                  {t('paiements.already_paid', 'Déjà payé')}: {formatCFA(paiement.montantPaye)}
                                 </div>
                               )}
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 text-start">
                               <Badge variant="outline" className={
                                 paiement.statut === 'paye' ? 'bg-success/10 text-success border-success/20' : 
                                 paiement.statut === 'retard' ? 'bg-danger/10 text-danger border-danger/20' : 
                                 'bg-warning/10 text-warning border-warning/20'
                               }>
-                                {paiement.statut === 'paye' ? 'Payé' : paiement.statut === 'retard' ? 'En retard' : 'En attente'}
+                                {paiement.statut === 'paye' ? t('paiements.status.solde', 'Payé') : paiement.statut === 'retard' ? t('dashboard.late', 'En retard') : t('dashboard.pending', 'En attente')}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-muted-foreground uppercase text-xs">
+                            <td className="px-4 py-3 text-start text-muted-foreground uppercase text-xs">
                               {paiement.modePaiement ? paiement.modePaiement.replace('_', ' ') : '-'}
                             </td>
                           </tr>
@@ -556,53 +648,35 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
           <TabsContent value="absences" className="mt-0">
             <Card className="border-border/50 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-display">Relevé des Absences</CardTitle>
-                {ecole?.abonnement?.plan === 'gratuit' ? (
-                  <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
-                    👑 Premium
-                  </span>
-                ) : (
-                  <div className="text-sm font-medium">
-                    Total : <span className="text-danger">{absences.length}</span> absence(s)
-                  </div>
-                )}
+                <CardTitle className="text-lg font-display">{t('absences.report', 'Relevé des Absences')}</CardTitle>
+                <div className="text-sm font-medium">
+                  {t('absences.total', 'Total')} : <span className="text-danger">{absences.length}</span> {t('absences.count_suffix', 'absence(s)')}
+                </div>
               </CardHeader>
               <CardContent>
-                {ecole?.abonnement?.plan === 'gratuit' ? (
-                  <div className="text-center py-12 space-y-3">
-                    <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
-                      <Lock className="w-6 h-6" />
-                    </div>
-                    <h4 className="text-sm font-bold text-text">Relevé d'Assiduité Verrouillé</h4>
-                    <p className="text-xs text-muted-foreground max-w-[320px] mx-auto leading-relaxed">
-                      L'historique détaillé des absences et retards de l'élève est réservé aux formules payantes.
-                    </p>
-                  </div>
-                ) : (
-                  absences.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">Aucune absence enregistrée.</p>
+                {absences.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">{t('absences.no_absences', 'Aucune absence enregistrée.')}</p>
                   ) : (
                     <div className="space-y-4">
                       {absences.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(absence => (
                         <div key={absence.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:border-primary/30 transition-colors">
-                          <div className="flex items-center space-x-4">
+                          <div className="flex items-center gap-4">
                             <div className={`p-3 rounded-full ${absence.justifiee ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                               <CalendarOff className="w-5 h-5" />
                             </div>
                             <div>
                               <p className="font-medium text-text">{formatDate(absence.date)}</p>
-                              <p className="text-sm text-muted-foreground">Séance : {absence.seance}</p>
-                              {absence.motif && <p className="text-sm text-muted-foreground mt-1">Motif : {absence.motif}</p>}
+                              <p className="text-sm text-muted-foreground">{t('absences.seance', 'Séance')} : {absence.seance}</p>
+                              {absence.motif && <p className="text-sm text-muted-foreground mt-1">{t('absences.modal.motif', 'Motif')} : {absence.motif}</p>}
                             </div>
                           </div>
                           <Badge variant="outline" className={absence.justifiee ? 'bg-success/10 text-success border-success/20' : 'bg-danger/10 text-danger border-danger/20'}>
-                            {absence.justifiee ? 'Justifiée' : 'Non justifiée'}
+                            {absence.justifiee ? t('dashboard.excused', 'Justifiée') : t('dashboard.unexcused', 'Non justifiée')}
                           </Badge>
                         </div>
                       ))}
                     </div>
-                  )
-                )}
+                  )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -611,37 +685,19 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
             <Card className="border-border/50 shadow-sm bg-card">
               <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 pb-4">
                 <div>
-                  <CardTitle className="text-lg font-bold font-display text-text">Bulletins Scolaires</CardTitle>
+                  <CardTitle className="text-lg font-bold font-display text-text">{t('bulletins.title', 'Bulletins Scolaires')}</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground mt-1">
-                    Visualisez et téléchargez les relevés de notes officiels de l&apos;année scolaire active.
+                    {t('bulletins.subtitle', "Visualisez et téléchargez les relevés de notes officiels de l'année scolaire active.")}
                   </CardDescription>
                 </div>
-                {ecole?.abonnement?.plan === 'gratuit' && (
-                  <span className="text-[9px] bg-amber-500/20 text-amber-700 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 flex items-center gap-1">
-                    👑 Premium
-                  </span>
-                )}
               </CardHeader>
               <CardContent className="pt-6">
-                {ecole?.abonnement?.plan === 'gratuit' ? (
-                  <div className="text-center py-12 space-y-3">
-                    <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mx-auto">
-                      <Lock className="w-6 h-6" />
-                    </div>
-                    <h4 className="text-sm font-bold text-text">Bulletins Trimestriels Verrouillés</h4>
-                    <p className="text-xs text-muted-foreground max-w-[320px] mx-auto leading-relaxed">
-                      La génération de bulletins officiels et leur accès en téléchargement nécessitent un abonnement payant.
-                    </p>
-                  </div>
-                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((t) => {
-                      // Calculer le bulletin de ce trimestre pour l'élève
+                    {[1, 2, 3].map((tVal) => {
                       const currentAnneeId = selectedAnneeId || activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
                       
-                      // Vérifier s'il est enregistré et validé dans la base
                       const bulletinExistant = useSchoolStore.getState().bulletins.find(
-                        x => x.eleveId === eleve.id && x.trimestre === t && x.anneeScolaire === currentAnneeId
+                        x => x.eleveId === eleve.id && x.trimestre === tVal && x.anneeScolaire === currentAnneeId
                       )
 
                       const studentInscription = useSchoolStore.getState().inscriptions.find(
@@ -651,47 +707,80 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
 
                       const bulletinsCalculesT = (isParent && bulletinExistant)
                         ? [bulletinExistant]
-                        : (targetClasseId ? calculerBulletinsClasse(targetClasseId, t as 1|2|3, currentAnneeId) : [])
+                        : (targetClasseId ? calculerBulletinsClasse(targetClasseId, tVal as 1|2|3, currentAnneeId) : [])
 
-                      const bEleve = bulletinExistant || bulletinsCalculesT.find(b => b.eleveId === eleve.id)
+                      const bEleveCalculé = bulletinsCalculesT.find(b => b.eleveId === eleve.id)
+                      const bEleve = bulletinExistant 
+                        ? { 
+                            ...bulletinExistant, 
+                            rangClasse: bEleveCalculé ? bEleveCalculé.rangClasse : bulletinExistant.rangClasse,
+                            effectifClasse: bEleveCalculé ? bEleveCalculé.effectifClasse : bulletinExistant.effectifClasse,
+                            moyenneGenerale: bEleveCalculé ? bEleveCalculé.moyenneGenerale : bulletinExistant.moyenneGenerale,
+                            moyenneClasse: bEleveCalculé ? bEleveCalculé.moyenneClasse : bulletinExistant.moyenneClasse,
+                            notes: bEleveCalculé ? bEleveCalculé.notes : bulletinExistant.notes,
+                            appreciation: bEleveCalculé ? bEleveCalculé.appreciation : bulletinExistant.appreciation
+                          } 
+                        : bEleveCalculé
                       const isValide = bulletinExistant?.estValide === true
                       const hasNotes = bEleve && bEleve.notes.length > 0
 
                       return (
-                        <div key={`trim-${t}`} className="border border-border/50 p-5 rounded-xl bg-card space-y-4 flex flex-col justify-between shadow-sm hover:border-primary/20 transition-all">
+                        <div key={`trim-${tVal}`} className="border border-border/50 p-5 rounded-xl bg-card space-y-4 flex flex-col justify-between shadow-sm hover:border-primary/20 transition-all">
                           <div className="space-y-3">
                             <div className="flex justify-between items-center pb-2 border-b border-border/40">
-                              <h4 className="font-bold text-text">{t}er Trimestre</h4>
+                              <h4 className="font-bold text-text">{tVal} {t('dashboard.trimestre', 'Trimestre')}</h4>
                               {isValide ? (
                                 <Badge className="bg-emerald-500 text-white border-none font-bold text-[9px] px-1.5 py-0 rounded">
-                                  ✓ Validé
+                                  ✓ {t('bulletins.status.validated', 'Validé')}
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-bold text-[9px] px-1.5 py-0 rounded">
-                                  En attente
+                                  {t('bulletins.status.draft', 'En attente')}
                                 </Badge>
                               )}
                             </div>
 
-                            {isValide || !isParent ? (
+                            {isParent && !aAccesPremium(tVal) ? (
+                              <div className="py-4 text-center space-y-3">
+                                <div className="mx-auto w-8 h-8 bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center">
+                                  <Lock className="w-4 h-4" />
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="font-bold text-[11px] text-text">{t('parent.paywall.bulletin_locked_title', "Contenu Premium")}</p>
+                                  <p className="text-[10px] text-muted-foreground max-w-[170px] mx-auto leading-relaxed">
+                                    {t('parent.paywall.bulletin_locked_desc', "Débloquez les notes, le rang et le bulletin PDF de ce trimestre.")}
+                                  </p>
+                                </div>
+                                <Button 
+                                  size="sm" 
+                                  className="text-[10px] h-7 px-2.5 bg-transparent border border-amber-600/35 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:text-amber-700 dark:hover:text-amber-400 rounded-lg font-bold transition-colors shadow-none"
+                                  onClick={() => {
+                                    setPaywallTargetTrimestre(tVal.toString() as any)
+                                    setIsPaywallOpen(true)
+                                  }}
+                                >
+                                  {t('parent.paywall.bulletin_locked_unlock_btn', "Débloquer (1 000 F)")}
+                                </Button>
+                              </div>
+                            ) : isValide || !isParent ? (
                               hasNotes && bEleve ? (
                                 <div className="space-y-2.5 text-xs">
                                   <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground font-medium">Moyenne Générale</span>
+                                    <span className="text-muted-foreground font-medium">{t('kpi.moyenne', 'Moyenne Générale')}</span>
                                     <span className={`font-bold font-display px-2 py-0.5 rounded ${
                                       bEleve.moyenneGenerale >= 10 ? 'text-emerald-600 bg-emerald-50' : 'text-danger bg-red-50'
                                     }`}>
-                                      {bEleve.moyenneGenerale.toFixed(2)} / 20
+                                      <span dir="ltr">{bEleve.moyenneGenerale.toFixed(2)} / 20</span>
                                     </span>
                                   </div>
                                   <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground font-medium">Rang</span>
+                                    <span className="text-muted-foreground font-medium">{t('bulletins.table.rang', 'Rang')}</span>
                                     <span className="font-bold text-text bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                                      {bEleve.rangClasse}e sur {bEleve.effectifClasse}
+                                      <span dir="ltr">{bEleve.rangClasse} / {bEleve.effectifClasse}</span>
                                     </span>
                                   </div>
                                   <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground font-medium">Appréciation</span>
+                                    <span className="text-muted-foreground font-medium">{t('bulletins.table.mention', 'Appréciation')}</span>
                                     <span className={`font-bold px-2 py-0.5 rounded ${
                                       bEleve.moyenneGenerale >= 10 ? 'bg-primary-light text-primary' : 'bg-red-50 text-danger'
                                     }`}>
@@ -700,7 +789,7 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                                   </div>
                                   {bulletinExistant?.appreciationDirecteur && (
                                     <div className="mt-2 pt-2 border-t border-border/30">
-                                      <span className="text-muted-foreground font-semibold block text-[10px] uppercase">Remarques de la Direction</span>
+                                      <span className="text-muted-foreground font-semibold block text-[10px] uppercase">{t('bulletins.table.appreciation', 'Remarques de la Direction')}</span>
                                       <p className="italic text-slate-600 text-[11px] leading-relaxed mt-1">
                                         &ldquo;{bulletinExistant.appreciationDirecteur}&rdquo;
                                       </p>
@@ -708,16 +797,27 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                                   )}
                                 </div>
                               ) : (
-                                <p className="text-xs text-muted-foreground text-center py-6 italic">Relevé incomplet ou aucune note disponible.</p>
+                                <p className="text-xs text-muted-foreground text-center py-6 italic">{t('bulletins.no_notes', 'Relevé incomplet ou aucune note disponible.')}</p>
                               )
                             ) : (
                               <div className="bg-slate-50 border border-border/40 p-4 rounded-lg text-center text-xs text-slate-500 py-8 leading-relaxed">
-                                Le bulletin de ce trimestre n&apos;a pas encore été validé par la direction.
+                                {t('bulletins.not_validated_yet', "Le bulletin de ce trimestre n'a pas encore été validé par la direction.")}
                               </div>
                             )}
                           </div>
 
-                          {(isValide || !isParent) && hasNotes && bEleve ? (
+                          {isParent && !aAccesPremium(tVal) ? (
+                            <Button
+                              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 h-9 rounded-lg"
+                              onClick={() => {
+                                setPaywallTargetTrimestre(tVal.toString() as any)
+                                setIsPaywallOpen(true)
+                              }}
+                            >
+                              <Lock className="h-3.5 w-3.5" />
+                              {t('parent.paywall.bulletin_locked_unlock_access', "Débloquer l'accès")}
+                            </Button>
+                          ) : (isValide || !isParent) && hasNotes && bEleve ? (
                             isMounted ? (
                               <PDFDownloadLink
                                 document={
@@ -732,9 +832,8 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                                     anneesScolaires={anneesScolaires}
                                   />
                                 }
-                                fileName={`${getSafeFilename(`Bulletin_${eleve.nom}_${eleve.prenom}_T${t}`)}.pdf`}
+                                fileName={`${getSafeFilename(`Bulletin_${eleve.nom}_${eleve.prenom}_T${tVal}`)}.pdf`}
                               >
-                                {/* @ts-ignore */}
                                 {({ loading }) => (
                                   <Button
                                     className="w-full bg-primary hover:bg-primary-dark text-white font-bold text-xs flex items-center justify-center gap-1.5 h-9 rounded-lg"
@@ -743,12 +842,12 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                                     {loading ? (
                                       <>
                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        Génération...
+                                        {t('action.loading', 'Génération...')}
                                       </>
                                     ) : (
                                       <>
                                         <Download className="h-3.5 w-3.5" />
-                                        Télécharger le PDF
+                                        {t('action.download', 'Télécharger le PDF')}
                                       </>
                                     )}
                                   </Button>
@@ -756,23 +855,21 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                               </PDFDownloadLink>
                             ) : (
                               <Button size="sm" disabled className="w-full text-xs">
-                                Chargement...
+                                {t('action.loading', 'Chargement...')}
                               </Button>
                             )
                           ) : (
                             <Button size="sm" disabled className="w-full text-xs bg-slate-100 border border-border text-slate-400 font-semibold shadow-none">
-                              Non disponible
+                              {t('bulletins.status.incomplete', 'Non disponible')}
                             </Button>
                           )}
                         </div>
                       )
                     })}
                   </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
-
         </div>
       </Tabs>
 
@@ -783,13 +880,21 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
           eleveToEdit={eleve}
         />
       )}
+
+      <ParentPremiumPaywallModal
+        isOpen={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        initialTrimestre={paywallTargetTrimestre}
+        anneeId={selectedAnneeId}
+      />
     </div>
   )
 }
 
 export default function EleveDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useTranslation()
   return (
-    <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>}>
+    <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />{t('action.loading', 'Chargement...')}</div>}>
       <EleveDetailsPageContent params={params} />
     </Suspense>
   )

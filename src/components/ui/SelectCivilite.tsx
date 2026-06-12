@@ -10,6 +10,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Civilite } from '@/types'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface SelectCiviliteProps {
   value: Civilite | ''
@@ -26,10 +27,12 @@ export function SelectCivilite({
   disabled,
   className,
 }: SelectCiviliteProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor="civilite" className="text-slate-700 dark:text-slate-300">
-        Civilité <span className="text-red-500">*</span>
+      <Label htmlFor="civilite" className="text-slate-700 dark:text-slate-300 text-start">
+        {t('enseignants.modal.civilite_label', "Civilité")} <span className="text-red-500">*</span>
       </Label>
       <Select
         value={value}
@@ -44,17 +47,17 @@ export function SelectCivilite({
             className
           )}
         >
-          <SelectValue placeholder="Sélectionner une civilité" />
+          <SelectValue placeholder={t('civilite.placeholder', "Sélectionner une civilité")} />
         </SelectTrigger>
         <SelectContent className="bg-white dark:bg-slate-900 border-slate-250/20 dark:border-border/60 text-slate-900 dark:text-slate-100">
-          <SelectItem value="M">M. — Monsieur</SelectItem>
-          <SelectItem value="Mme">Mme — Madame</SelectItem>
-          <SelectItem value="Mlle">Mlle — Mademoiselle</SelectItem>
-          <SelectItem value="Dr">Dr — Docteur</SelectItem>
-          <SelectItem value="Pr">Pr — Professeur</SelectItem>
+          <SelectItem value="M">{t('civilite.m', "M. — Monsieur")}</SelectItem>
+          <SelectItem value="Mme">{t('civilite.mme', "Mme — Madame")}</SelectItem>
+          <SelectItem value="Mlle">{t('civilite.mlle', "Mlle — Mademoiselle")}</SelectItem>
+          <SelectItem value="Dr">{t('civilite.dr', "Dr — Docteur")}</SelectItem>
+          <SelectItem value="Pr">{t('civilite.pr', "Pr — Professeur")}</SelectItem>
         </SelectContent>
       </Select>
-      {error && <p className="text-[11px] text-red-500">{error}</p>}
+      {error && <p className="text-[11px] text-red-500 text-start">{error}</p>}
     </div>
   )
 }

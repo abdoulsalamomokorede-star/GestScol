@@ -103,11 +103,19 @@ GestScol/
 │   │       ├── server.tsx                    # Client Supabase pour Server Components / Server Actions
 │   │       └── admin.ts                      # Client Supabase d'administration (bypassant RLS via service role)
 │   ├── proxy.ts                              # Edge Middleware & Proxy natif de Next.js 16 (Remplace middleware.ts)
-│   └── app/actions/
-│       ├── abonnement.ts                     # Actions serveur d'abonnement
-│       ├── ecole.ts                          # Actions serveur de configuration d'établissement (avec Magic Bytes)
-│       ├── notifications.ts                  # Actions serveur de gestion de communiqués
-│       └── register.ts                       # Actions d'inscription, NIST 800-63B et auto-guérison
+│   └── app/
+│       ├── actions/
+│       │   ├── abonnement.ts                 # Actions serveur d'abonnement
+│       │   ├── ecole.ts                      # Actions serveur de configuration d'établissement (avec Magic Bytes)
+│       │   ├── notifications.ts              # Actions serveur de gestion de communiqués
+│       │   └── register.ts                   # Actions d'inscription, NIST 800-63B et auto-guérison
+│       └── api/
+│           └── payment/
+│               └── webhook/
+│                   └── route.ts              # Webhook de paiement sécurisé (CinetPay verification)
+├── supabase/
+│   └── migrations/
+│       └── 20260612_secure_rls_and_privileges.sql # Migration SQL de durcissement RLS et triggers
 ```
 
 ---
@@ -146,18 +154,24 @@ Dans Next.js 16, **`src/proxy.ts`** fait office d'Edge Middleware. Le contrôle 
   * **Enseignant** : Accès bloqué aux pages financières (`/paiements`), bulletins globaux (`/bulletins`), et configurations d'école (`/parametres`). Accès autorisé à `/enseignant/dashboard`, `/notes`, `/absences` et `/aide`.
   * **Accès sans école liée** : Si l'utilisateur connecté ne possède pas d'établissement actif, il est redirigé de force vers la page de choix `/ecoles`.
 
-### 2. Durcissement de la Sécurité de la Base de Données (Supabase RLS)
+### 2. Durcissement de la Sécurité de la Base de Données (Supabase RLS & Triggers)
 L'isolation multi-tenant a été renforcée au niveau de PostgreSQL :
+* **Trigger Anti-Pivoting et Anti-Élévation de Rôle (`tr_check_user_school_association`)** :
+  Un trigger de niveau base de données intercepte toute modification (`UPDATE` ou `INSERT`) sur la table `public.utilisateurs`. Il :
+  - Interdit le changement de `role` et d' `email` par le client (uniquement géré par le serveur admin).
+  - Verrouille la modification de `ecole_id` une fois défini (protection stricte du multi-tenant).
+  - Valide que toute modification de `ecole_courante_id` correspond bien à un établissement auquel l'utilisateur est légitimement lié (soit Directeur propriétaire de l'école, soit Enseignant actif, soit Parent d'un élève inscrit).
 * **RLS Fine-Grained (Polices Restrictives)** :
   * `utilisateurs` : Lecture limitée à l'établissement d'appartenance (`utilisateurs_select`), mais accès en lecture propre (`utilisateurs_self_select` via `auth.uid() = id`) et mise à jour propre (`utilisateurs_self_update`) toujours garanti, y compris si l'école de l'utilisateur n'est pas encore créée (valeur `NULL`). Écriture administrative et suppression globale restreintes aux seuls directeurs authentifiés.
   * `abonnements` : Accès en lecture (`SELECT`) restreint aux seuls membres authentifiés de l'école concernée (`Lecture abonnement école`). Les écritures, modifications et suppressions directes depuis l'API cliente sont strictement interdites (aucune règle RLS en écriture n'est active), forçant l'utilisation des Server Actions sécurisées avec client admin.
   * `audit_suppressions` : Autorise uniquement l'insertion par le directeur de l'école concernée (`directeur_insert_audit` via `directeur_id = auth.uid()`), tout accès direct en lecture client est bloqué par défaut.
   * `paiements` & `bulletins` : Lecture restreinte aux directeurs pour leur école, et aux parents pour leurs enfants uniquement (bulletins visibles uniquement s'ils sont validés via `est_valide = true`).
   * `notes` & `absences` : Lecture isolée par école ; modification limitée aux directeurs et aux enseignants affectés à l'établissement.
-  * `notifications` : Lecture restreinte aux directeurs pour leur école (`lecture_notifications_directeur`) et aux parents/enseignants pour les messages ciblés ou créés par eux-mêmes (`lecture_notifications_autres`). La suppression est réservée aux directeurs authentifiés de l'établissement.
+  * `notifications` & `notifications_lectures` : Lecture restreinte aux membres de l'école. Suppression limitée aux directeurs de l'établissement. Les accusés de lecture sont restreints à `utilisateur_id = auth.uid()`.
 
 ### 3. Protection contre les Attaques Standard (OWASP)
 * **Chiffrement des Mots de Passe & NIST 800-63B** : alignement de la force de mot de passe sur la norme NIST. Toute création de compte exige un mot de passe d'au moins **12 caractères** incluant obligatoirement des majuscules, des minuscules, des chiffres et des caractères spéciaux (validation Zod côté serveur).
+* **Sanitisation systématique XSS (`sanitizeString`)** : Toutes les entrées textuelles utilisateur sensibles subissent un nettoyage HTML/script via regex côté serveur afin d'empêcher les injections de scripts malveillants.
 * **Sécurité HTTP (`next.config.ts`)** : Injection d'en-têtes HTTP stricts pour atténuer le clickjacking, le reniflage MIME et les attaques par canaux auxiliaires :
   * `Cross-Origin-Opener-Policy: same-origin` (COOP) et `Cross-Origin-Resource-Policy: same-site` (CORP).
   * `Content-Security-Policy` (CSP) configuré pour bloquer les scripts malveillants tout en permettant les services légitimes (Supabase, Wave, CinetPay).
@@ -190,7 +204,14 @@ Pour prévenir les injections de caractères spéciaux ou directory traversal vi
 ### 8. Sécurisation des Actions Serveur (Server Actions Anti-Spoofing)
 Afin d'éviter tout contournement des règles de cloisonnement et d'injection de requêtes arbitraires depuis le client :
 * **Vérification d'identité systématique** : Toutes les actions serveurs critiques valident cryptographiquement la session de l'appelant via `supabase.auth.getUser()`. Le paramètre `utilisateurId` fourni par le client n'est jamais cru sur parole ; le serveur vérifie obligatoirement que `user.id === utilisateurId` avant de procéder à toute action (par ex. `markAsRead` et `fetchUserLectures` dans `notifications.ts`).
-* **Cloisonnement multi-tenant des écritures** : Les mutations sur l'abonnement (`updateSchoolAbonnement` dans `abonnement.ts`) s'assurent de la validité de la transaction (comme la présence du préfixe `CP-` pour le simulateur de paiement) et consignent des traces d'audit en base pour parer aux fraudes. Les téléchargements ou modifications de photos d'élèves (`uploadStudentPhoto`) font l'objet d'un double contrôle côté serveur (authentification + vérification que l'élève appartient à l'école du directeur).
+* **Cloisonnement multi-tenant des écritures** : Les mutations sur l'abonnement (`updateSchoolAbonnement` dans `abonnement.ts`) s'assurent de la validité de la transaction et consignent des traces d'audit en base pour parer aux fraudes. Les téléchargements ou modifications de photos d'élèves (`uploadStudentPhoto`) font l'objet d'un double contrôle côté serveur (authentification + vérification que l'élève appartient à l'école du directeur).
+* **Validation par Schémas Zod** : Toutes les données d'entrée des Server Actions d'inscription et d'abonnement sont validées par des schémas Zod stricts côté serveur.
+* **Protection Compile-Time des jetons d'administration** : L'import `import 'server-only'` dans `admin.ts` garantit que le client administrateur Supabase (utilisant la clé privée `service_role`) ne sera jamais inclus par erreur dans les builds client.
+
+### 9. Webhook de Paiement Sécurisé (Anti-Spoofing & CinetPay API Verification)
+La route d'API `/api/payment/webhook` sert à l'activation ou au renouvellement automatique des abonnements :
+* **Appel serveur-à-serveur direct** : Pour éviter toute falsification de transaction (par ex. requêtes POST forgées par le client), le serveur extrait la référence de transaction reçue et interroge directement l'API CinetPay avec ses identifiants secrets.
+* **Activation privilégiée** : Ce n'est qu'une fois le statut validé à 100% par l'API CinetPay que le serveur met à jour l'abonnement dans la base PostgreSQL via le client d'administration privilégié, sans passer par les limitations RLS de l'utilisateur.
 
 ---
 

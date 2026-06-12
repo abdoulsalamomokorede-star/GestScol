@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
+import LanguageInitializer from "@/components/layout/LanguageInitializer"
 
 export const metadata: Metadata = {
   title: "GestScol - Gestion Scolaire de Prestige",
@@ -30,6 +31,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-sans">
+        <LanguageInitializer />
         {children}
         <Toaster />
       </body>

@@ -12,6 +12,96 @@ const PasswordSchema = z.string()
   .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
   .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial")
 
+function sanitizeString(str: string): string {
+  if (typeof str !== 'string') return str
+  return str.replace(/<[^>]*>/g, '').trim()
+}
+
+const RegisterPayloadSchema = z.object({
+  plan: z.enum(['gratuit', 'standard', 'premium']),
+  schoolName: z.string().min(2, "Le nom de l'école est trop court").max(100),
+  address: z.string().min(2, "L'adresse est trop courte").max(200),
+  city: z.string().min(2, "La ville est trop courte").max(100),
+  countryPrefix: z.string().min(1).max(10),
+  phone: z.string().min(5).max(20),
+  levels: z.array(z.string()),
+  adminFirstName: z.string().min(1, "Le prénom est requis").max(100),
+  adminLastName: z.string().min(1, "Le nom est requis").max(100),
+  adminCivilite: z.enum(['M', 'Mme', 'Mlle', 'Dr', 'Pr']),
+  adminEmail: z.string().email("Format d'email invalide"),
+  adminPhonePrefix: z.string().min(1).max(10),
+  adminPhone: z.string().min(5).max(20),
+  adminPassword: PasswordSchema,
+  paymentMethod: z.string().optional(),
+  paymentPhone: z.string().optional()
+})
+
+const RegisterDirectorPayloadSchema = z.object({
+  adminFirstName: z.string().min(1, "Le prénom est requis").max(100),
+  adminLastName: z.string().min(1, "Le nom est requis").max(100),
+  adminCivilite: z.enum(['M', 'Mme', 'Mlle', 'Dr', 'Pr']),
+  adminEmail: z.string().email("Format d'email invalide"),
+  adminPhonePrefix: z.string().min(1).max(10),
+  adminPhone: z.string().min(5).max(20),
+  adminPassword: PasswordSchema
+})
+
+const RegisterSchoolPayloadSchema = z.object({
+  plan: z.enum(['gratuit', 'standard', 'premium']),
+  schoolName: z.string().min(2, "Le nom de l'école est trop court").max(100),
+  address: z.string().min(2, "L'adresse est trop courte").max(200),
+  city: z.string().min(2, "La ville est trop courte").max(100),
+  countryPrefix: z.string().min(1).max(10),
+  phone: z.string().min(5).max(20),
+  levels: z.array(z.string()),
+  paymentMethod: z.string().optional(),
+  paymentPhone: z.string().optional()
+})
+
+const CreateDirecteurAccountSchema = z.object({
+  nom: z.string().min(1, "Le nom est requis").max(100),
+  prenom: z.string().min(1, "Le prénom est requis").max(100),
+  civilite: z.enum(['M', 'Mme', 'Mlle', 'Dr', 'Pr']),
+  email: z.string().email("Format d'email invalide"),
+  telephone: z.string().optional(),
+  motDePasse: PasswordSchema,
+  nomEcole: z.string().optional(),
+  villeEcole: z.string().optional(),
+  adresseEcole: z.string().optional(),
+  telephoneEcole: z.string().optional(),
+  niveauxEcole: z.array(z.string()).optional(),
+  logo: z.string().optional()
+})
+
+const CreateEnseignantAccountSchema = z.object({
+  nom: z.string().min(1, "Le nom est requis").max(100),
+  prenom: z.string().min(1, "Le prénom est requis").max(100),
+  civilite: z.enum(['M', 'Mme', 'Mlle', 'Dr', 'Pr']),
+  email: z.string().email("Format d'email invalide"),
+  telephone: z.string().optional(),
+  motDePasse: PasswordSchema,
+  codeInvitation: z.string().optional()
+})
+
+const CreateParentAccountSchema = z.object({
+  nom: z.string().min(1, "Le nom est requis").max(100),
+  prenom: z.string().min(1, "Le prénom est requis").max(100),
+  civilite: z.enum(['M', 'Mme', 'Mlle', 'Dr', 'Pr']),
+  email: z.string().email("Format d'email invalide"),
+  telephone: z.string().optional(),
+  motDePasse: PasswordSchema
+})
+
+const AjouterEcoleActionSchema = z.object({
+  nom: z.string().min(2, "Le nom de l'école est trop court").max(100),
+  ville: z.string().min(2, "La ville est trop courte").max(100),
+  adresse: z.string().optional(),
+  telephone: z.string().optional(),
+  logo: z.string().optional().nullable(),
+  niveaux: z.array(z.string()),
+  anneeScolaire: z.string().min(4).max(20)
+})
+
 type RegisterPayload = {
   plan: 'gratuit' | 'standard' | 'premium'
   schoolName: string
@@ -33,13 +123,22 @@ type RegisterPayload = {
   paymentPhone?: string
 }
 
-export async function registerSchoolAndAdmin(data: RegisterPayload) {
+export async function registerSchoolAndAdmin(rawPayload: RegisterPayload) {
   try {
-    // Validation de sécurité du mot de passe directeur (NIST 800-63B)
-    const pwdValidation = PasswordSchema.safeParse(data.adminPassword)
-    if (!pwdValidation.success) {
-      return { success: false, error: pwdValidation.error.issues[0].message }
+    const validation = RegisterPayloadSchema.safeParse(rawPayload)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
     }
+    const validated = validation.data
+    const sanitizedData = {
+      ...validated,
+      schoolName: sanitizeString(validated.schoolName),
+      address: sanitizeString(validated.address),
+      city: sanitizeString(validated.city),
+      adminFirstName: sanitizeString(validated.adminFirstName),
+      adminLastName: sanitizeString(validated.adminLastName)
+    }
+    const data = sanitizedData;
 
     const supabase = await createClient()
     const adminSupabase = createAdminClient()
@@ -255,13 +354,19 @@ interface RegisterDirectorPayload {
   adminPassword: string
 }
 
-export async function registerDirectorAccount(data: RegisterDirectorPayload) {
+export async function registerDirectorAccount(rawPayload: RegisterDirectorPayload) {
   try {
-    // 1. Validation de sécurité du mot de passe directeur (NIST 800-63B)
-    const pwdValidation = PasswordSchema.safeParse(data.adminPassword)
-    if (!pwdValidation.success) {
-      return { success: false, error: pwdValidation.error.issues[0].message }
+    const validation = RegisterDirectorPayloadSchema.safeParse(rawPayload)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
     }
+    const validated = validation.data
+    const sanitizedData = {
+      ...validated,
+      adminFirstName: sanitizeString(validated.adminFirstName),
+      adminLastName: sanitizeString(validated.adminLastName)
+    }
+    const data = sanitizedData;
 
     const supabase = await createClient()
     const adminSupabase = createAdminClient()
@@ -387,8 +492,20 @@ interface RegisterSchoolPayload {
   paymentPhone?: string
 }
 
-export async function registerSchoolForDirector(data: RegisterSchoolPayload, userId: string) {
+export async function registerSchoolForDirector(rawPayload: RegisterSchoolPayload, userId: string) {
   try {
+    const validation = RegisterSchoolPayloadSchema.safeParse(rawPayload)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
+    }
+    const validated = validation.data
+    const sanitizedData = {
+      ...validated,
+      schoolName: sanitizeString(validated.schoolName),
+      address: sanitizeString(validated.address),
+      city: sanitizeString(validated.city)
+    }
+    const data = sanitizedData;
     if (!userId) {
       return { success: false, error: "Utilisateur non authentifié." }
     }
@@ -508,19 +625,24 @@ export async function registerSchoolForDirector(data: RegisterSchoolPayload, use
 }
 
 // ── CRÉATION COMPTE DIRECTEUR CONSOLIDE ─────────────────────────
-export async function createDirecteurAccount(data: any) {
+export async function createDirecteurAccount(rawPayload: any) {
   try {
+    const validation = CreateDirecteurAccountSchema.safeParse(rawPayload)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
+    }
+    const validated = validation.data
+    const sanitizedData = {
+      ...validated,
+      nom: sanitizeString(validated.nom),
+      prenom: sanitizeString(validated.prenom),
+      nomEcole: validated.nomEcole ? sanitizeString(validated.nomEcole) : undefined,
+      villeEcole: validated.villeEcole ? sanitizeString(validated.villeEcole) : undefined,
+      adresseEcole: validated.adresseEcole ? sanitizeString(validated.adresseEcole) : undefined,
+      telephoneEcole: validated.telephoneEcole ? sanitizeString(validated.telephoneEcole) : undefined
+    }
+    const data = sanitizedData;
     const adminSupabase = createAdminClient()
-    
-    // 1. Validation de sécurité du mot de passe (NIST 800-63B)
-    const pwdValidation = PasswordSchema.safeParse(data.motDePasse)
-    if (!pwdValidation.success) {
-      return { success: false, error: pwdValidation.error.issues[0].message }
-    }
-
-    if (!data.civilite || !['M', 'Mme', 'Mlle', 'Dr', 'Pr'].includes(data.civilite)) {
-      return { success: false, error: "La civilité est requise et doit être valide." }
-    }
 
     // 2. Vérifier si l'email existe
     const { data: existing } = await adminSupabase
@@ -627,19 +749,20 @@ export async function createDirecteurAccount(data: any) {
 }
 
 // ── CRÉATION COMPTE ENSEIGNANT ──────────────────────────────────
-export async function createEnseignantAccount(data: any) {
+export async function createEnseignantAccount(rawPayload: any) {
   try {
+    const validation = CreateEnseignantAccountSchema.safeParse(rawPayload)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
+    }
+    const validated = validation.data
+    const sanitizedData = {
+      ...validated,
+      nom: sanitizeString(validated.nom),
+      prenom: sanitizeString(validated.prenom)
+    }
+    const data = sanitizedData;
     const adminSupabase = createAdminClient()
-
-    // 1. Validation de sécurité du mot de passe
-    const pwdValidation = PasswordSchema.safeParse(data.motDePasse)
-    if (!pwdValidation.success) {
-      return { success: false, error: pwdValidation.error.issues[0].message }
-    }
-
-    if (!data.civilite || !['M', 'Mme', 'Mlle', 'Dr', 'Pr'].includes(data.civilite)) {
-      return { success: false, error: "La civilité est requise et doit être valide." }
-    }
 
     // 2. Vérifier si l'email existe déjà
     const { data: existing } = await adminSupabase
@@ -749,19 +872,20 @@ export async function createEnseignantAccount(data: any) {
 }
 
 // ── CRÉATION COMPTE PARENT ──────────────────────────────────────
-export async function createParentAccount(data: any) {
+export async function createParentAccount(rawPayload: any) {
   try {
+    const validation = CreateParentAccountSchema.safeParse(rawPayload)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
+    }
+    const validated = validation.data
+    const sanitizedData = {
+      ...validated,
+      nom: sanitizeString(validated.nom),
+      prenom: sanitizeString(validated.prenom)
+    }
+    const data = sanitizedData;
     const adminSupabase = createAdminClient()
-
-    // 1. Validation de sécurité du mot de passe
-    const pwdValidation = PasswordSchema.safeParse(data.motDePasse)
-    if (!pwdValidation.success) {
-      return { success: false, error: pwdValidation.error.issues[0].message }
-    }
-
-    if (!data.civilite || !['M', 'Mme', 'Mlle', 'Dr', 'Pr'].includes(data.civilite)) {
-      return { success: false, error: "La civilité est requise et doit être valide." }
-    }
 
     // 2. Vérifier si l'email existe déjà
     const { data: existing } = await adminSupabase
@@ -846,8 +970,21 @@ export async function createParentAccount(data: any) {
 }
 
 // ── GESTION DES ECOLES ACTIONS ──────────────────────────────────
-export async function ajouterEcoleAction(donnees: any) {
+export async function ajouterEcoleAction(rawDonnees: any) {
   try {
+    const validation = AjouterEcoleActionSchema.safeParse(rawDonnees)
+    if (!validation.success) {
+      return { success: false, error: validation.error.issues[0].message }
+    }
+    const validated = validation.data
+    const sanitizedDonnees = {
+      ...validated,
+      nom: sanitizeString(validated.nom),
+      ville: sanitizeString(validated.ville),
+      adresse: validated.adresse ? sanitizeString(validated.adresse) : undefined,
+      telephone: validated.telephone ? sanitizeString(validated.telephone) : undefined
+    }
+    const donnees = sanitizedDonnees;
     const supabase = await createClient()
     const adminSupabase = createAdminClient()
 

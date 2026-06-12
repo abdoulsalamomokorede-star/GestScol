@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { formatCFA } from "@/lib/utils"
 import { Classe, Eleve, Paiement, Inscription } from "@/types"
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface PaiementsParClasseChartProps {
   classes: Classe[]
@@ -16,6 +17,7 @@ interface PaiementsParClasseChartProps {
 
 export default function PaiementsParClasseChart({ classes, eleves, paiements, inscriptions, anneeScolaire }: PaiementsParClasseChartProps) {
   const [isMounted, setIsMounted] = useState(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     setIsMounted(true)
@@ -48,9 +50,9 @@ export default function PaiementsParClasseChart({ classes, eleves, paiements, in
 
     return {
       name: c.nom,
-      Payé: paye,
-      'En attente': enAttente,
-      'En retard': enRetard,
+      [t('paiements.status.paye', "Payé")]: paye,
+      [t('paiements.status.en_attente', "En attente")]: enAttente,
+      [t('paiements.status.retard', "En retard")]: enRetard,
       total: paye + enAttente + enRetard
     }
   }).filter(d => d.total > 0) // Ne garder que les classes avec des paiements pour cette période
@@ -58,12 +60,12 @@ export default function PaiementsParClasseChart({ classes, eleves, paiements, in
   return (
     <Card className="col-span-1 md:col-span-2 shadow-sm border-border/50">
       <CardHeader>
-        <CardTitle className="text-lg font-display">Statut des Paiements par Classe</CardTitle>
+        <CardTitle className="text-lg font-display text-start">{t('paiements.tariffs.title', "Statut des Paiements par Classe")}</CardTitle>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            Aucune donnée de paiement pour la période sélectionnée
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-center">
+            {t('paiements.no_payments_desc', "Aucune donnée de paiement pour la période sélectionnée")}
           </div>
         ) : (
           <div className="h-[300px] w-full mt-4">
@@ -90,9 +92,9 @@ export default function PaiementsParClasseChart({ classes, eleves, paiements, in
                     formatter={(value: any) => formatCFA(value as number)}
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
-                  <Bar dataKey="Payé" stackId="a" fill="#10B981" radius={[0, 0, 4, 4]} maxBarSize={50} />
-                  <Bar dataKey="En attente" stackId="a" fill="#F59E0B" maxBarSize={50} />
-                  <Bar dataKey="En retard" stackId="a" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                  <Bar dataKey={t('paiements.status.paye', "Payé")} stackId="a" fill="#10B981" radius={[0, 0, 4, 4]} maxBarSize={50} />
+                  <Bar dataKey={t('paiements.status.en_attente', "En attente")} stackId="a" fill="#F59E0B" maxBarSize={50} />
+                  <Bar dataKey={t('paiements.status.retard', "En retard")} stackId="a" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={50} />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import { ecoleMock } from '@/data/mockData'
 import logoImg from '@/app/logo.png'
 import { 
@@ -39,6 +40,7 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
   const router = useRouter()
   const { currentUser, setCurrentUser, activeAnneeScolaire, ecole } = useSchoolStore()
   const supabase = createClient()
+  const { t } = useTranslation()
 
   if (!currentUser) return null
 
@@ -81,36 +83,36 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
       {
         title: 'Général',
         items: [
-          { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard, roles: ['directeur'] },
-          { name: 'Mon Tableau de bord', href: '/enseignant/dashboard', icon: LayoutDashboard, roles: ['enseignant'] },
-          { name: 'Mon Tableau de bord', href: '/parent/dashboard', icon: LayoutDashboard, roles: ['parent'] },
-          { name: 'Inscriptions', href: '/inscriptions', icon: ClipboardList, roles: ['directeur'] },
+          { name: 'Tableau de bord', translationKey: 'nav.dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['directeur'] },
+          { name: 'Mon Tableau de bord', translationKey: 'nav.dashboard', href: '/enseignant/dashboard', icon: LayoutDashboard, roles: ['enseignant'] },
+          { name: 'Mon Tableau de bord', translationKey: 'nav.dashboard', href: '/parent/dashboard', icon: LayoutDashboard, roles: ['parent'] },
+          { name: 'Inscriptions', translationKey: 'nav.inscriptions', href: '/inscriptions', icon: ClipboardList, roles: ['directeur'] },
         ]
       },
       {
         title: 'Établissement',
         items: [
-          { name: 'Enseignants', href: '/enseignants', icon: Briefcase, roles: ['directeur'], premium: true },
-          { name: 'Élèves', href: '/eleves', icon: Users, roles: ['directeur'] },
-          { name: 'Classes', href: '/classes', icon: GraduationCap, roles: ['directeur'] },
+          { name: 'Enseignants', translationKey: 'nav.enseignants', href: '/enseignants', icon: Briefcase, roles: ['directeur'], premium: true },
+          { name: 'Élèves', translationKey: 'nav.eleves', href: '/eleves', icon: Users, roles: ['directeur'] },
+          { name: 'Classes', translationKey: 'nav.classes', href: '/classes', icon: GraduationCap, roles: ['directeur'] },
         ]
       },
       {
         title: 'Pédagogie & Suivi',
         items: [
-          { name: 'Notes', href: '/notes', icon: PenTool, roles: ['directeur', 'enseignant'], premium: true },
-          { name: 'Absences', href: '/absences', icon: CalendarOff, roles: ['directeur', 'enseignant', 'parent'], premium: true },
-          { name: 'Bulletins', href: '/bulletins', icon: FileText, roles: ['directeur'], premium: true },
+          { name: 'Notes', translationKey: 'nav.notes', href: '/notes', icon: PenTool, roles: ['directeur', 'enseignant'], premium: true },
+          { name: 'Absences', translationKey: 'nav.absences', href: '/absences', icon: CalendarOff, roles: ['directeur', 'enseignant', 'parent'], premium: true },
+          { name: 'Bulletins', translationKey: 'nav.bulletins', href: '/bulletins', icon: FileText, roles: ['directeur'], premium: true },
         ]
       },
       {
         title: 'Gestion & Support',
         items: [
-          { name: 'Paiements', href: '/paiements', icon: CreditCard, roles: ['directeur', 'parent'] },
-          { name: 'Support', href: '/support', icon: LifeBuoy, roles: ['directeur'], premium: true },
-          { name: 'Mon Abonnement', href: '/abonnement', icon: Zap, roles: ['directeur'] },
-          { name: 'Paramètres', href: '/parametres', icon: Settings, roles: ['directeur'] },
-          { name: "Guide d'Aide", href: '/aide', icon: HelpCircle, roles: ['directeur', 'enseignant', 'parent'] },
+          { name: 'Paiements', translationKey: 'nav.paiements', href: '/paiements', icon: CreditCard, roles: ['directeur', 'parent'] },
+          { name: 'Support', translationKey: 'nav.support', href: '/support', icon: LifeBuoy, roles: ['directeur'], premium: true },
+          { name: 'Mon Abonnement', translationKey: 'nav.abonnement', href: '/abonnement', icon: Zap, roles: ['directeur'] },
+          { name: 'Paramètres', translationKey: 'nav.parametres', href: '/parametres', icon: Settings, roles: ['directeur'] },
+          { name: "Guide d'Aide", translationKey: 'nav.aide', href: '/aide', icon: HelpCircle, roles: ['directeur', 'enseignant', 'parent'] },
         ]
       }
     ]
@@ -129,8 +131,18 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
   const sections = getNavigationSections()
   const plan = ecole?.abonnement?.plan || 'gratuit'
 
+  const getSectionTitle = (title: string) => {
+    switch (title) {
+      case 'Général': return t('nav.section.general', 'Général')
+      case 'Établissement': return t('nav.section.etablissement', 'Établissement')
+      case 'Pédagogie & Suivi': return t('nav.section.pedagogie', 'Pédagogie & Suivi')
+      case 'Gestion & Support': return t('nav.section.gestion', 'Gestion & Support')
+      default: return title
+    }
+  }
+
   return (
-    <div className={cn("bg-sidebar flex flex-col text-slate-800 dark:text-slate-200 border-r border-slate-200/80 dark:border-slate-800/80 shadow-sm dark:shadow-none flex-shrink-0 h-full", className)}>
+    <div className={cn("bg-sidebar flex flex-col text-slate-800 dark:text-slate-200 border-e border-slate-200/80 dark:border-slate-800/80 shadow-sm dark:shadow-none flex-shrink-0 h-full", className)}>
       {/* Header Sidebar */}
       <div className="p-6 flex flex-col items-center border-b border-slate-100 dark:border-slate-800/40 shrink-0">
         <div className="mb-2 transition-transform duration-300 hover:scale-105">
@@ -162,11 +174,11 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                   onClick={() => toggleSection(section.title)}
                   className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 uppercase tracking-widest font-display transition-colors focus:outline-none"
                 >
-                  <span>{section.title}</span>
+                  <span>{getSectionTitle(section.title)}</span>
                   {isOpen ? (
                     <ChevronDown className="h-3 w-3 shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-300" />
                   ) : (
-                    <ChevronRight className="h-3 w-3 shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-300" />
+                    <ChevronRight className="h-3 w-3 shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-300 rtl:rotate-180" />
                   )}
                 </button>
                 
@@ -175,7 +187,7 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                   <div className="space-y-0.5 animate-in slide-in-from-top-1 duration-200">
                     {section.items.map((item) => {
                       const isActive = pathname.startsWith(item.href)
-                      const isLocked = item.premium && plan === 'gratuit'
+                      const isLocked = false
                       
                       if (isLocked) {
                         return (
@@ -185,8 +197,8 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                             title="Fonctionnalité Premium — Abonnement Standard requis"
                           >
                             <div className="flex items-center">
-                              <item.icon className="mr-3 h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                              <span>{item.name}</span>
+                              <item.icon className="me-3 h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+                              <span>{t(item.translationKey, item.name)}</span>
                             </div>
                             <span className="text-[9px] bg-amber-100 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
                               👑 Premium
@@ -207,8 +219,8 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
                           )}
                         >
-                          <item.icon className={cn('mr-3 h-4 w-4 shrink-0 transition-colors', isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500')} />
-                          <span>{item.name}</span>
+                          <item.icon className={cn('me-3 h-4 w-4 shrink-0 transition-colors', isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500')} />
+                          <span>{t(item.translationKey, item.name)}</span>
                         </Link>
                       )
                     })}
@@ -227,20 +239,20 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
           onClick={onNavigate}
           className="flex items-center w-full px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors"
         >
-          <Building2 className="mr-3 h-5 w-5 text-slate-400 dark:text-slate-500" />
-          {currentUser.role === 'directeur' ? 'Mes écoles' : 'Écoles'}
+          <Building2 className="me-3 h-5 w-5 text-slate-400 dark:text-slate-500" />
+          {currentUser.role === 'directeur' ? t('nav.my_schools', 'Mes écoles') : t('nav.schools', 'Écoles')}
         </Link>
 
         <button 
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-650 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors"
         >
-          <LogOut className="mr-3 h-5 w-5" />
-          Déconnexion
+          <LogOut className="me-3 h-5 w-5" />
+          {t('nav.logout', 'Déconnexion')}
         </button>
 
         {currentUser && (
-          <div className="flex items-center space-x-2.5 px-3 pt-3 mt-1 border-t border-slate-100 dark:border-slate-800/40 select-none min-w-0">
+          <div className="flex items-center gap-2.5 px-3 pt-3 mt-1 border-t border-slate-100 dark:border-slate-800/40 select-none min-w-0">
             <Avatar className="h-7 w-7 border border-slate-200 dark:border-slate-800 shrink-0">
               {currentUser.photoUrl ? (
                 <AvatarImage src={currentUser.photoUrl} className="object-cover" />

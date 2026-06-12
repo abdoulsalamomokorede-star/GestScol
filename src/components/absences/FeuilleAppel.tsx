@@ -29,6 +29,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker'
 import { format } from 'date-fns'
 import { Absence } from '@/types'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface FeuilleAppelProps {
   classeId: string
@@ -37,6 +38,7 @@ interface FeuilleAppelProps {
 export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
   const { eleves, absences, enregistrerAbsences, currentUser, activeAnneeScolaire, inscriptions } = useSchoolStore()
   const { toast } = useToast()
+  const { t, dir, isAr } = useTranslation()
 
   // Filtrer les élèves actifs de la classe qui ont une inscription validée pour l'année en cours
   const elevesClasse = eleves.filter(e => {
@@ -139,8 +141,8 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
     })
     setLocalAttendance(updated)
     toast({
-      title: "Appel de masse",
-      description: "Tous les élèves ont été marqués Présents.",
+      title: t('absences.toast.mass_call', "Appel de masse"),
+      description: t('absences.toast.all_marked_present', "Tous les élèves ont été marqués Présents."),
       variant: "default",
     })
   }
@@ -156,8 +158,8 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
     })
     setLocalAttendance(updated)
     toast({
-      title: "Appel de masse",
-      description: "Tous les élèves ont été marqués Absents.",
+      title: t('absences.toast.mass_call', "Appel de masse"),
+      description: t('absences.toast.all_marked_absent', "Tous les élèves ont été marqués Absents."),
       variant: "default",
     })
   }
@@ -195,14 +197,17 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
         enregistrerAbsences(date, seance, absencesAAjouter, eleveIds)
         
         toast({
-          title: "Feuille d'appel enregistrée",
-          description: `L'appel du ${date} (${seance === 'matin' ? 'Matin' : 'Après-midi'}) a été enregistré avec succès. ${absencesAAjouter.length} absent(s) noté(s).`,
+          title: t('absences.toast.roll_saved', "Feuille d'appel enregistrée"),
+          description: t('absences.toast.roll_saved_desc', "L'appel du {date} ({session}) a été enregistré avec succès. {count} absent(s) noté(s).")
+            .replace('{date}', new Date(date).toLocaleDateString(isAr ? 'ar-EG' : 'fr-FR'))
+            .replace('{session}', seance === 'matin' ? t('absences.seance.matin', 'Matin') : t('absences.seance.apres_midi', 'Après-midi'))
+            .replace('{count}', absencesAAjouter.length.toString()),
           variant: "default",
         })
       } catch (err) {
         toast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de l'enregistrement.",
+          title: t('absences.toast.error', "Erreur"),
+          description: t('absences.toast.error_desc', "Une erreur est survenue lors de l'enregistrement."),
           variant: "destructive",
         })
       } finally {
@@ -215,16 +220,16 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
 
   if (totalEleves === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground flex flex-col items-center bg-card border border-border/50 rounded-2xl">
+      <div className="py-12 text-center text-muted-foreground flex flex-col items-center bg-card border border-border/50 rounded-2xl" dir={dir}>
         <Users className="h-10 w-10 text-muted-foreground/40 mb-3 animate-pulse" />
-        <p className="font-semibold text-text">Aucun élève actif dans cette classe.</p>
-        <p className="text-xs text-muted-foreground mt-1">Veuillez d&apos;abord inscrire ou assigner des élèves.</p>
+        <p className="font-semibold text-text">{t('absences.no_active_student', "Aucun élève actif dans cette classe.")}</p>
+        <p className="text-xs text-muted-foreground mt-1">{t('absences.please_enroll_first', "Veuillez d'abord inscrire ou assigner des élèves.")}</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-start" dir={dir}>
       {/* Barre de contrôles Date & Séance */}
       <Card className="shadow-sm border-border/50 bg-card">
         <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -235,7 +240,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
             </div>
             <div className="flex-1 sm:flex-initial">
               <Label htmlFor="appel-date" className="text-xs font-bold text-muted-foreground uppercase block mb-1">
-                Date de l&apos;appel
+                {t('absences.call_date_label', "Date de l'appel")}
               </Label>
               <DatePicker
                 id="appel-date"
@@ -249,7 +254,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
           {/* Sélection Séance */}
           <div className="w-full sm:w-auto flex flex-col items-start sm:items-end">
             <span className="text-xs font-bold text-muted-foreground uppercase mb-1.5">
-              Séance de la journée
+              {t('absences.daily_session', "Séance de la journée")}
             </span>
             <div className="grid grid-cols-2 p-1 bg-muted/50 border border-border/40 rounded-xl w-full sm:w-[260px]">
               <button
@@ -262,7 +267,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                 }`}
               >
                 <Sun className="h-4 w-4" />
-                <span>Matin (7h - 12h)</span>
+                <span>{t('absences.morning_session', "Matin (7h - 12h)")}</span>
               </button>
               <button
                 type="button"
@@ -274,7 +279,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                 }`}
               >
                 <Moon className="h-4 w-4" />
-                <span>Après-midi (13h - 17h)</span>
+                <span>{t('absences.afternoon_session', "Après-midi (13h - 17h)")}</span>
               </button>
             </div>
           </div>
@@ -288,7 +293,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
             <Users className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase">Total Élèves</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('absences.total_students', "Total Élèves")}</p>
             <p className="text-lg font-bold text-text">{totalEleves}</p>
           </div>
         </div>
@@ -298,7 +303,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
             <Check className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase">Présents</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('absences.presents', "Présents")}</p>
             <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{nbPresents}</p>
           </div>
         </div>
@@ -308,7 +313,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
             <X className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase">Absents</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('absences.absents', "Absents")}</p>
             <p className="text-lg font-bold text-rose-600 dark:text-rose-400">{nbAbsents}</p>
           </div>
         </div>
@@ -318,7 +323,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
             <BookmarkCheck className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] text-white/80 font-bold uppercase">Taux Présence</p>
+            <p className="text-[10px] text-white/80 font-bold uppercase">{t('absences.presence_rate', "Taux Présence")}</p>
             <p className="text-lg font-extrabold">{tauxPresence}%</p>
           </div>
         </div>
@@ -328,29 +333,29 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
       <Card className="shadow-sm border-border/50 bg-card overflow-hidden">
         <div className="p-4 bg-muted/30 border-b border-border/40 flex flex-col sm:flex-row items-center justify-between gap-3">
           <h3 className="font-display font-bold text-sm text-text flex items-center">
-            <Users className="h-4 w-4 text-primary mr-2" />
-            Liste d&apos;appel des élèves
+            <Users className={`h-4 w-4 text-primary ${isAr ? 'ml-2' : 'mr-2'}`} />
+            {t('absences.student_roll_list', "Liste d'appel des élèves")}
           </h3>
-          <div className="flex space-x-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={markAllPresent}
-              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-semibold text-xs flex-1 sm:flex-initial"
+              className="border-emerald-200 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:border-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white transition-colors font-semibold text-xs flex-1 sm:flex-initial"
             >
-              <Check className="mr-1.5 h-3.5 w-3.5" />
-              Tous Présents
+              <Check className={`${isAr ? 'ml-1.5' : 'mr-1.5'} h-3.5 w-3.5`} />
+              {t('absences.all_present', 'Tous Présents')}
             </Button>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={markAllAbsent}
-              className="border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-950/20 font-semibold text-xs flex-1 sm:flex-initial"
+              className="border-rose-200 text-rose-700 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:border-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white transition-colors font-semibold text-xs flex-1 sm:flex-initial"
             >
-              <X className="mr-1.5 h-3.5 w-3.5" />
-              Tous Absents
+              <X className={`${isAr ? 'ml-1.5' : 'mr-1.5'} h-3.5 w-3.5`} />
+              {t('absences.all_absents', 'Tous Absents')}
             </Button>
           </div>
         </div>
@@ -363,7 +368,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
               <div key={e.id} className="p-4 transition-all duration-200 hover:bg-muted/5">
                 {/* Ligne principale de l'élève */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border border-primary/20">
                       {e.photoUrl ? (
                         <AvatarImage src={e.photoUrl} alt={`${e.prenom} ${e.nom}`} className="object-cover" />
@@ -374,7 +379,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                     </Avatar>
                     <div>
                       <p className="font-bold text-text text-sm sm:text-base">{e.prenom} {e.nom}</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground font-mono">Matricule: {e.matricule}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground font-mono">{t('receipt.matricule', 'Matricule')}: {e.matricule}</p>
                     </div>
                   </div>
 
@@ -390,7 +395,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                       }`}
                     >
                       <Check className="h-4 w-4" />
-                      <span>Présent</span>
+                      <span>{t('absences.present', "Présent")}</span>
                     </button>
                     <button
                       type="button"
@@ -402,33 +407,35 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                       }`}
                     >
                       <X className="h-4 w-4" />
-                      <span>Absent</span>
+                      <span>{t('absences.absent', "Absent")}</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Section Justification & Remarques (affichée uniquement si l'élève est Absent) */}
                 {attState.isAbsent && (
-                  <div className="mt-3.5 bg-muted/20 border border-border/40 p-3.5 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="mt-3.5 bg-muted/20 border border-border/40 p-3.5 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-1 duration-200 text-start">
                     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
                         <span className="text-xs font-semibold text-muted-foreground">
-                          Élève absent le {date} ({seance === 'matin' ? 'Matin' : 'Après-midi'})
+                          {t('absences.student_absent_on', "Élève absent le {date} ({session})")
+                            .replace('{date}', new Date(date).toLocaleDateString(isAr ? 'ar-EG' : 'fr-FR'))
+                            .replace('{session}', seance === 'matin' ? t('absences.seance.matin', 'Matin') : t('absences.seance.apres_midi', 'Après-midi'))}
                         </span>
                       </div>
 
                       {/* Statut de la justification */}
                       <div>
                         {isDirecteur ? (
-                          <label className="flex items-center space-x-2 cursor-pointer bg-card px-2.5 py-1 rounded-lg border border-border/50 select-none">
+                          <label className="flex items-center gap-2 cursor-pointer bg-card px-2.5 py-1 rounded-lg border border-border/50 select-none">
                             <input
                               type="checkbox"
                               checked={attState.justifiee}
                               onChange={() => toggleJustification(e.id)}
                               className="rounded text-primary border-border focus:ring-primary h-3.5 w-3.5"
                             />
-                            <span className="text-xs font-bold text-text">Absence justifiée</span>
+                            <span className="text-xs font-bold text-text">{t('absences.justified_absence', "Absence justifiée")}</span>
                           </label>
                         ) : (
                           <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
@@ -436,7 +443,7 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}>
-                            {attState.justifiee ? 'Justifiée (Approuvé)' : 'En attente de justification'}
+                            {attState.justifiee ? t('absences.justified_approved', 'Justifiée (Approuvé)') : t('absences.pending_justification', 'En attente de justification')}
                           </div>
                         )}
                       </div>
@@ -445,21 +452,21 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
                     {/* Champ de saisie du motif */}
                     <div className="space-y-1">
                       <Label htmlFor={`motif-${e.id}`} className="text-xs font-bold text-muted-foreground">
-                        {isDirecteur ? 'Motif de justification officiel' : 'Remarque ou motif signalé par l&apos;enseignant'}
+                        {isDirecteur ? t('absences.official_reason', 'Motif de justification officiel') : t('absences.teacher_comment_label', "Remarque ou motif signalé par l'enseignant")}
                       </Label>
                       <div className="relative">
-                        <FileText className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
+                        <FileText className={`absolute ${isAr ? 'right-3' : 'left-3'} top-2.5 h-4 w-4 text-muted-foreground/60`} />
                         <Input
                           id={`motif-${e.id}`}
                           type="text"
                           placeholder={
                             isDirecteur
-                              ? "ex: Paludisme (Certificat médical fourni par le parent)"
-                              : "ex: Parent a signalé maladie, retard transport..."
+                              ? t('absences.reason_placeholder_director', "ex: Paludisme (Certificat médical fourni par le parent)")
+                              : t('absences.reason_placeholder_teacher', "ex: Parent a signalé maladie, retard transport...")
                           }
                           value={attState.motif}
                           onChange={(evt) => handleMotifChange(e.id, evt.target.value)}
-                          className="pl-9 bg-background border-border text-text placeholder-muted-foreground text-xs h-9"
+                          className="ps-9 bg-background border-border text-text placeholder-muted-foreground text-xs h-9 text-start"
                         />
                       </div>
                     </div>
@@ -482,10 +489,10 @@ export default function FeuilleAppel({ classeId }: FeuilleAppelProps) {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Enregistrement...
+              {t('absences.saving_btn', "Enregistrement...")}
             </>
           ) : (
-            'Enregistrer la feuille d&apos;appel'
+            t('absences.save_roll', "Enregistrer la feuille d'appel")
           )}
         </Button>
       </div>

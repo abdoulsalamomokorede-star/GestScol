@@ -12,6 +12,8 @@ import { createClient } from '@/lib/supabase/client'
 import { User } from '@/types'
 import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
+import LanguageToggle from '@/components/layout/LanguageToggle'
 
 const chargerProfilAvecRetry = async (supabase: any, userId: string, maxAttempts = 3, delay = 500) => {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -49,6 +51,8 @@ export default function EnseignantLoginPage() {
   const currentUser = useSchoolStore(state => state.currentUser)
   const setCurrentUser = useSchoolStore(state => state.setCurrentUser)
   const ecole = useSchoolStore(state => state.ecole)
+  
+  const { t, dir, isAr } = useTranslation()
 
   useEffect(() => {
     const hasCookie = document.cookie.includes('currentUser=')
@@ -136,40 +140,39 @@ export default function EnseignantLoginPage() {
         const status = authError?.status
         
         if (status === 429 || msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("once per minute")) {
-          setLockoutSeconds(300) // Verrouillage temporaire de 5 minutes
+          setLockoutSeconds(300)
           setFailedAttempts(0)
-          setError("Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes.")
+          setError(t('toast.too_many_attempts_error', "Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes."))
         } else if (msg.includes("failed to fetch") || msg.includes("network error") || msg.includes("load failed")) {
-          setError("Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer.")
+          setError(t('toast.network_error', "Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer."))
         } else {
           const nextAttempts = failedAttempts + 1
           if (nextAttempts >= 5) {
             setFailedAttempts(0)
             setLockoutSeconds(300)
-            setError("Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes.")
+            setError(t('toast.too_many_attempts_error', "Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes."))
           } else {
             setFailedAttempts(nextAttempts)
-            setError('E-mail ou mot de passe incorrect.')
+            setError(t('toast.invalid_credentials', 'Email ou mot de passe incorrect.'))
           }
         }
         return
       }
 
-      // Fetch the profile from utilisateurs table with retry
       const { profile, error: retryError } = await chargerProfilAvecRetry(supabase, authData.user.id)
       
       if (retryError || !profile) {
         const msg = retryError?.message?.toLowerCase() || ""
         if (msg.includes("failed to fetch") || msg.includes("network error") || msg.includes("load failed")) {
-          setError("Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer.")
+          setError(t('toast.network_error', "Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer."))
         } else {
-          setError("Profil introuvable. Veuillez contacter l'administrateur.")
+          setError(t('toast.profile_not_found', "Profil introuvable. Veuillez contacter l'administrateur."))
         }
         return
       }
 
       if (profile.role !== 'enseignant') {
-        setError("Accès refusé. Cet espace est réservé aux enseignants.")
+        setError(t('toast.access_denied_role_teacher', "Accès refusé. Cet espace est réservé aux enseignants."))
         await supabase.auth.signOut()
         return
       }
@@ -186,13 +189,10 @@ export default function EnseignantLoginPage() {
         photoUrl: profile.photo_url || undefined
       }
 
-      // Réinitialiser les tentatives infructueuses en cas de succès
       setFailedAttempts(0)
       sessionStorage.removeItem('failedAttempts')
-
       setCurrentUser(userProfile)
       window.location.href = '/ecoles'
-      
     } catch (err: any) {
       console.error(err)
       const msg = err?.message?.toLowerCase() || ""
@@ -201,11 +201,11 @@ export default function EnseignantLoginPage() {
       if (status === 429 || msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("once per minute")) {
         setLockoutSeconds(300)
         setFailedAttempts(0)
-        setError("Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes.")
+        setError(t('toast.too_many_attempts_error', "Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans quelques minutes."))
       } else if (msg.includes("failed to fetch") || msg.includes("network error") || msg.includes("load failed") || err instanceof TypeError) {
-        setError("Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer.")
+        setError(t('toast.network_error', "Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet et réessayer."))
       } else {
-        setError('Une erreur est survenue lors de la connexion.')
+        setError(t('toast.login_error', 'Une erreur est survenue lors de la connexion.'))
       }
     } finally {
       setIsLoading(false)
@@ -214,76 +214,81 @@ export default function EnseignantLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn relative" dir="ltr">
       {/* Panneau Gauche - Photo en plein écran 100% claire, colorée et visible */}
       <div className="hidden md:block md:flex-1 relative">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-100"
           style={{ backgroundImage: `url('/teacher_login_bg.png')` }}
         />
-        {/* Un léger dégradé blanc sur le bord droit uniquement pour fusionner avec la bordure du formulaire */}
         <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-background to-transparent" />
       </div>
 
       {/* Panneau Droit - Formulaire et Identité de marque sur fond blanc clair */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 md:max-w-md lg:max-w-lg xl:max-w-xl bg-white dark:bg-card border-l border-border dark:border-border/40 shadow-sm">
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 md:max-w-md lg:max-w-lg xl:max-w-xl bg-white dark:bg-card border-l border-border dark:border-border/40 shadow-sm text-start relative" dir={dir}>
+        {/* Sélecteur de langue absolu sur le formulaire */}
+        <div className={`absolute top-4 ${dir === 'rtl' ? 'left-4' : 'right-4'} z-50`}>
+          <LanguageToggle />
+        </div>
         <div className="space-y-6 my-auto">
-          <div className="flex flex-col items-center md:items-start">
+          <div className="flex flex-col items-center md:items-start text-center md:text-start">
             <Link href="/" className="mb-4 transition-transform duration-300 hover:scale-105 cursor-pointer">
               <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
             </Link>
             <h1 className="text-3xl font-display font-extrabold text-text tracking-wide mt-2">GestScol</h1>
-            <p className="text-muted-foreground mt-1 font-medium text-center md:text-left text-sm">La gestion scolaire simplifiée en Afrique de l&apos;Ouest</p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/35 text-primary dark:text-emerald-400 text-xs font-semibold border border-primary/20">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Espace Enseignant</span>
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed hidden md:block">
-              Saisissez vos notes en toute simplicité, gérez l'assiduité grâce à la feuille d'appel tactile rapide, et suivez vos classes.
+            <p className="text-muted-foreground mt-1 font-medium text-center md:text-start text-sm">
+              {t('landing.hero.subtitle', "La gestion scolaire simplifiée en Afrique de l'Ouest")}
             </p>
           </div>
 
-          <Card className="w-full shadow-lg border-border/50">
+          <div className="space-y-4 text-start">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/35 text-primary dark:text-emerald-400 text-xs font-semibold border border-primary/20">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{t('login.teacher_space', "Espace Enseignant")}</span>
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed hidden md:block text-start">
+              {t('login.teacher_desc', "Saisissez vos notes en toute simplicité, gérez l'assiduité grâce à la feuille d'appel tactile rapide, et suivez vos classes.")}
+            </p>
+          </div>
+
+          <Card className="w-full shadow-lg border-border/50 text-start">
             <CardHeader className="space-y-1 text-center bg-slate-50 dark:bg-slate-900/50 border-b border-border/50 dark:border-border/30 rounded-t-xl pb-4">
-              <CardTitle className="text-xl font-bold text-primary dark:text-emerald-400">Connexion</CardTitle>
+              <CardTitle className="text-xl font-bold text-primary dark:text-emerald-400">{t('login.title_teacher', "Espace Enseignant")}</CardTitle>
               <CardDescription>
-                Connectez-vous avec votre adresse e-mail professionnelle
+                {t('login.desc_teacher', "Connectez-vous avec votre adresse e-mail professionnelle")}
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleLogin}>
-              <CardContent className="space-y-4 pt-6">
+              <CardContent className="space-y-4 pt-6 text-start">
                 {error && (
-                  <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-md text-sm font-medium">
+                  <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-md text-sm font-medium text-start">
                     {lockoutSeconds > 0 
-                      ? `Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans ${formatLockoutTime(lockoutSeconds)}.`
+                      ? `${t('toast.too_many_attempts_error', "Trop de tentatives de connexion échouées. Par mesure de sécurité, votre compte est temporairement bloqué. Veuillez réessayer dans")} ${formatLockoutTime(lockoutSeconds)}.`
                       : error
                     }
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Adresse e-mail</Label>
+                  <Label htmlFor="email" className="text-start block">{t('login.email', "Adresse e-mail")}</Label>
                   <Input 
                     id="email" 
                     type="email" 
-                    placeholder="ex: enseignant@ecole.com" 
+                    placeholder={t('login.placeholder_email_teacher', "ex: enseignant@ecole.com")} 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="focus-visible:ring-primary"
+                    className="focus-visible:ring-primary text-start"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password" className="text-start block">{t('login.password', "Mot de passe")}</Label>
                   <Input 
                     id="password" 
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="focus-visible:ring-primary"
+                    className="focus-visible:ring-primary text-start"
                   />
                 </div>
               </CardContent>
@@ -293,15 +298,15 @@ export default function EnseignantLoginPage() {
                   className="w-full bg-primary hover:bg-primary-dark text-white font-bold"
                   disabled={isLoading || lockoutSeconds > 0}
                 >
-                  {isLoading ? 'Connexion en cours...' : lockoutSeconds > 0 
-                    ? `Bloqué (Réessayer dans ${Math.floor(lockoutSeconds / 60)}m)` 
-                    : 'Se connecter'}
+                  {isLoading ? t('login.signing_in', 'Connexion en cours...') : lockoutSeconds > 0 
+                    ? `${t('login.locked', "Bloqué")} (Réessayer dans ${Math.floor(lockoutSeconds / 60)}m)` 
+                    : t('login.signin', 'Se connecter')}
                 </Button>
 
                 <div className="text-center text-xs text-muted-foreground pt-4 border-t border-border/40 w-full">
-                  Vous n'êtes pas enseignant ?{" "}
+                  {t('login.not_teacher', "Vous n'êtes pas enseignant ?")}{" "}
                   <Link href="/" className="text-primary hover:underline font-bold">
-                    Retour à l'accueil
+                    {t('login.back_home', "Retour à l'accueil")}
                   </Link>
                 </div>
               </CardFooter>
@@ -309,8 +314,8 @@ export default function EnseignantLoginPage() {
           </Card>
         </div>
 
-        <div className="text-xs text-muted-foreground text-center md:text-left pt-6 border-t border-border/40">
-          <p>© {new Date().getFullYear()} GestScol. Tous droits réservés.</p>
+        <div className="text-xs text-muted-foreground text-center md:text-start pt-6 border-t border-border/40">
+          <p>{t('login.copyright', "© {year} GestScol. Tous droits réservés.").replace('{year}', new Date().getFullYear().toString())}</p>
         </div>
       </div>
     </div>

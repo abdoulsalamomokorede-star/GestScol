@@ -1,22 +1,32 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { useSchoolStore } from "@/store/useSchoolStore"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function formatCFA(montant: number): string {
-  return new Intl.NumberFormat('fr-CI', {
-    style: 'currency',
-    currency: 'XOF',
+  const formatted = new Intl.NumberFormat('fr-FR', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(montant).replace('XOF', 'FCFA')
+  }).format(montant)
+
+  // Use Left-to-Right Mark to force the currency layout order to remain LTR in RTL contexts
+  return `\u200E${formatted} FCFA`
 }
 
 export function formatDate(dateString: string): string {
   const date = new Date(dateString)
-  return new Intl.DateTimeFormat('fr-FR', {
+  let lang = 'fr-FR'
+  try {
+    const state = useSchoolStore.getState()
+    if (state && state.currentLanguage === 'ar') {
+      lang = 'ar-EG'
+    }
+  } catch (e) {}
+
+  return new Intl.DateTimeFormat(lang, {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -24,12 +34,21 @@ export function formatDate(dateString: string): string {
 }
 
 export function formatTelephone(tel: string): string {
-  // Format ivoirien basique: +225 XX XX XX XX XX
+  if (!tel) return tel
   const cleaned = ('' + tel).replace(/\D/g, '')
+  
+  // Si le numéro a 10 chiffres (ex: 0707070707)
   if (cleaned.length === 10) {
-    return `+225 ${cleaned.slice(0, 2)} ${cleaned.slice(2, 4)} ${cleaned.slice(4, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`
+    return `\u200E+225 ${cleaned.slice(0, 2)} ${cleaned.slice(2, 4)} ${cleaned.slice(4, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`
   }
-  return tel
+  // Si le numéro commence déjà par 225
+  if ((cleaned.length === 12 || cleaned.length === 13) && cleaned.startsWith('225')) {
+    const startIdx = cleaned.length === 12 ? 3 : 3
+    const digits = cleaned.slice(3)
+    return `\u200E+225 ${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`
+  }
+  
+  return `\u200E${tel}`
 }
 
 export function getInitiales(nom: string, prenom: string): string {

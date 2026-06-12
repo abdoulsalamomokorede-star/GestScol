@@ -11,10 +11,12 @@ import { useToast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal'
 import { Label } from '@/components/ui/label'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function ClassesPage() {
   const router = useRouter()
   const { classes, eleves, inscriptions, activeAnneeScolaire, addClasse, updateClasse, deleteClasse, isAbonnementExpired, ecole } = useSchoolStore()
+  const { t } = useTranslation()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [niveauFilter, setNiveauFilter] = useState('tous')
@@ -121,71 +123,71 @@ export default function ClassesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-text">Gestion des Classes</h2>
-          <p className="text-sm text-muted-foreground">{filteredClasses.length} classe(s)</p>
+          <h2 className="text-2xl font-display font-bold text-text">{t('classes.title', 'Gestion des Classes')}</h2>
+          <p className="text-sm text-muted-foreground">{filteredClasses.length} {t('classes.found', 'classe(s)')}</p>
         </div>
         <Button onClick={() => handleOpen()} className="bg-primary text-white hover:bg-primary-dark">
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle Classe
+          <Plus className="me-2 h-4 w-4" />
+          {t('classes.new', 'Nouvelle Classe')}
         </Button>
       </div>
 
       <div className="bg-card p-4 rounded-lg shadow-sm border border-border/50 flex flex-col sm:flex-row gap-4">
         <Input 
-          placeholder="Rechercher une classe..." 
+          placeholder={t('classes.search_placeholder', 'Rechercher une classe...')} 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
         />
         <Select value={niveauFilter} onValueChange={setNiveauFilter}>
           <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Filtrer par niveau" />
+            <SelectValue placeholder={t('classes.filter_level', 'Filtrer par niveau')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="tous">Tous les niveaux</SelectItem>
-            <SelectItem value="prescolaire">Préscolaire</SelectItem>
-            <SelectItem value="primaire">Primaire</SelectItem>
-            <SelectItem value="secondaire">Secondaire</SelectItem>
+            <SelectItem value="tous">{t('classes.level.all', 'Tous les niveaux')}</SelectItem>
+            <SelectItem value="prescolaire">{t('classes.level.prescolaire', 'Préscolaire')}</SelectItem>
+            <SelectItem value="primaire">{t('classes.level.primaire', 'Primaire')}</SelectItem>
+            <SelectItem value="secondaire">{t('classes.level.secondaire', 'Secondaire')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="bg-card rounded-lg shadow-sm border border-border/50 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-start">
             <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-medium">
               <tr>
-                <th className="px-6 py-4">Nom de la classe</th>
-                <th className="px-6 py-4">Niveau</th>
-                <th className="px-6 py-4">Effectif</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-start">{t('classes.table.name', 'Nom de la classe')}</th>
+                <th className="px-6 py-4 text-start">{t('classes.table.level', 'Niveau')}</th>
+                <th className="px-6 py-4 text-start">{t('classes.table.effectif', 'Effectif')}</th>
+                <th className="px-6 py-4 text-end">{t('classes.table.actions', 'Actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {filteredClasses.map(classe => (
                 <tr key={classe.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-6 py-4 font-medium flex items-center">
-                    <div className="bg-primary/10 p-2 rounded-md mr-3 text-primary">
+                  <td className="px-6 py-4 font-medium flex items-center text-start">
+                    <div className="bg-primary/10 p-2 rounded-md me-3 text-primary">
                       <GraduationCap className="h-4 w-4" />
                     </div>
                     {classe.nom}
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground">{classe.niveau}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-muted-foreground text-start">{classe.niveau}</td>
+                  <td className="px-6 py-4 text-start">
                     <span className="flex items-center text-text font-medium">
-                      <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                      {inscriptions.filter(i => i.classeId === classe.id && i.anneeScolaire === activeAnneeScolaire?.id && i.statut === 'validee').length} élèves
+                      <Users className="h-4 w-4 me-2 text-muted-foreground" />
+                      {inscriptions.filter(i => i.classeId === classe.id && i.anneeScolaire === activeAnneeScolaire?.id && i.statut === 'validee').length} {t('bulletins.eleves_count', 'élèves')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button onClick={() => router.push(`/matieres?classeId=${classe.id}`)} variant="ghost" size="icon" className="text-primary hover:text-white hover:bg-primary transition-colors" title="Voir les matières">
+                  <td className="px-6 py-4 text-end">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button onClick={() => router.push(`/matieres?classeId=${classe.id}`)} variant="ghost" size="icon" className="text-primary hover:text-white hover:bg-primary transition-colors" title={t('classes.action.view_subjects', 'Voir les matières')}>
                         <BookOpen className="h-4 w-4" />
                       </Button>
-                      <Button onClick={() => handleOpen(classe)} variant="ghost" size="icon" className="text-muted-foreground hover:text-text hover:bg-muted transition-colors" title="Modifier">
+                      <Button onClick={() => handleOpen(classe)} variant="ghost" size="icon" className="text-muted-foreground hover:text-text hover:bg-muted transition-colors" title={t('classes.action.edit', 'Modifier')}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button onClick={() => handleDelete(classe.id)} variant="ghost" size="icon" className="text-destructive hover:text-white hover:bg-destructive transition-colors" title="Supprimer">
+                      <Button onClick={() => handleDelete(classe.id)} variant="ghost" size="icon" className="text-destructive hover:text-white hover:bg-destructive transition-colors" title={t('classes.action.delete', 'Supprimer')}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -200,11 +202,11 @@ export default function ClassesPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingId ? "Modifier la classe" : "Ajouter une classe"}</DialogTitle>
+            <DialogTitle>{editingId ? t('classes.modal.title_edit', 'Modifier la classe') : t('classes.modal.title_add', 'Ajouter une classe')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Nom de la classe</Label>
+              <Label>{t('classes.modal.name_label', 'Nom de la classe')}</Label>
               <Input 
                 value={formData.nom} 
                 onChange={e => setFormData({...formData, nom: e.target.value})} 
@@ -212,21 +214,21 @@ export default function ClassesPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Niveau</Label>
+              <Label>{t('classes.modal.level_label', 'Niveau')}</Label>
               <Select value={formData.niveau} onValueChange={(val) => setFormData({...formData, niveau: val})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le niveau" />
+                  <SelectValue placeholder={t('classes.modal.level_placeholder', 'Sélectionner le niveau')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="prescolaire">Préscolaire</SelectItem>
-                  <SelectItem value="primaire">Primaire</SelectItem>
-                  <SelectItem value="secondaire">Secondaire</SelectItem>
+                  <SelectItem value="prescolaire">{t('classes.level.prescolaire', 'Préscolaire')}</SelectItem>
+                  <SelectItem value="primaire">{t('classes.level.primaire', 'Primaire')}</SelectItem>
+                  <SelectItem value="secondaire">{t('classes.level.secondaire', 'Secondaire')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Frais d'inscription (FCFA)</Label>
+                <Label>{t('classes.modal.fees_enroll_label', "Frais d'inscription (FCFA)")}</Label>
                 <Input 
                   type="number" 
                   value={formData.montantInscription} 
@@ -234,7 +236,7 @@ export default function ClassesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Scolarité (FCFA)</Label>
+                <Label>{t('classes.modal.fees_tuition_label', 'Scolarité (FCFA)')}</Label>
                 <Input 
                   type="number" 
                   value={formData.montantScolarite} 
@@ -243,10 +245,10 @@ export default function ClassesPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isLoading}>Annuler</Button>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isLoading}>{t('classes.modal.cancel', 'Annuler')}</Button>
             <Button onClick={handleSave} className="bg-primary text-white" disabled={isLoading}>
-              {isLoading ? "Enregistrement..." : "Enregistrer"}
+              {isLoading ? t('classes.modal.saving', 'Enregistrement...') : t('classes.modal.save', 'Enregistrer')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -256,8 +258,8 @@ export default function ClassesPage() {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={confirmDelete}
-        title="Confirmer la suppression"
-        description="Voulez-vous vraiment supprimer cette classe ? Cette action est irréversible."
+        title={t('classes.delete.title', 'Confirmer la suppression')}
+        description={t('classes.delete.desc', 'Voulez-vous vraiment supprimer cette classe ? Cette action est irréversible.')}
       />
     </div>
   )

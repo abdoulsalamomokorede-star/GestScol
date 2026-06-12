@@ -3,6 +3,7 @@
 import { EcoleAvecRole } from '@/types'
 import { Building2, Trash2, MapPin, Users, BookOpen, ChevronRight, School } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface CarteEcoleProps {
   ecole: EcoleAvecRole
@@ -12,6 +13,7 @@ interface CarteEcoleProps {
 }
 
 export default function CarteEcole({ ecole, role, onAcceder, onSupprimer }: CarteEcoleProps) {
+  const { t, dir, isAr } = useTranslation()
   // Styles de boutons en fonction du rôle
   const btnStyles = {
     directeur: "bg-emerald-600 hover:bg-emerald-500 text-white focus:ring-emerald-500/20",
@@ -20,9 +22,9 @@ export default function CarteEcole({ ecole, role, onAcceder, onSupprimer }: Cart
   }
 
   const levelsTranslate = {
-    prescolaire: "Préscolaire",
-    primaire: "Primaire",
-    secondaire: "Secondaire"
+    prescolaire: t('classes.level.prescolaire', "Préscolaire"),
+    primaire: t('classes.level.primaire', "Primaire"),
+    secondaire: t('classes.level.secondaire', "Secondaire")
   }
 
   return (
@@ -66,7 +68,7 @@ export default function CarteEcole({ ecole, role, onAcceder, onSupprimer }: Cart
           <div className="flex flex-wrap gap-1 mt-3">
             {ecole.prenomsEnfants.map((p, i) => (
               <span key={i} className="text-[9px] font-bold text-amber-805 dark:text-amber-450 bg-amber-50 dark:bg-amber-955/10 border border-amber-250/20 dark:border-amber-900/25 px-2 py-0.5 rounded-full">
-                Enfant: {p}
+                {t('ecoles.child_prefix', "Enfant: {name}").replace('{name}', p)}
               </span>
             ))}
           </div>
@@ -76,21 +78,25 @@ export default function CarteEcole({ ecole, role, onAcceder, onSupprimer }: Cart
 
       {/* Statistiques en bas de carte */}
       {role === 'directeur' && (
-        <div className="border-t border-slate-100 dark:border-slate-800/60 pt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="border-t border-slate-100 dark:border-slate-800/60 pt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400" dir={dir}>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-              <span><strong>{ecole.nbEleves ?? 0}</strong> élèves</span>
+              <span dangerouslySetInnerHTML={{
+                __html: t('ecoles.nb_students', "<strong>{count}</strong> élèves").replace('{count}', (ecole.nbEleves ?? 0).toString())
+              }} />
             </div>
             <div className="flex items-center gap-1">
               <BookOpen className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-              <span><strong>{ecole.nbClasses ?? 0}</strong> classes</span>
+              <span dangerouslySetInnerHTML={{
+                __html: t('ecoles.nb_classes', "<strong>{count}</strong> classes").replace('{count}', (ecole.nbClasses ?? 0).toString())
+              }} />
             </div>
           </div>
 
           {ecole.tauxRecouvrement !== undefined && (
             <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/25 px-2 py-0.5 rounded border border-emerald-100/30 dark:border-emerald-900/25">
-              {ecole.tauxRecouvrement}% recouvrement
+              {t('ecoles.recovery_rate', "{rate}% recouvrement").replace('{rate}', ecole.tauxRecouvrement.toString())}
             </span>
           )}
         </div>
@@ -102,7 +108,7 @@ export default function CarteEcole({ ecole, role, onAcceder, onSupprimer }: Cart
           onClick={() => onAcceder(ecole.id)}
           className={`flex-1 font-bold text-xs rounded-xl py-2.5 flex items-center justify-center gap-1 shadow-md transition-all duration-200 ${btnStyles[role] || 'bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white'}`}
         >
-          Accéder à l&apos;établissement <ChevronRight className="h-4 w-4" />
+          {t('ecoles.access_btn', "Accéder à l'établissement")} <ChevronRight className={`h-4 w-4 ${isAr ? 'rotate-180' : ''}`} />
         </Button>
 
         {role === 'directeur' && onSupprimer && (

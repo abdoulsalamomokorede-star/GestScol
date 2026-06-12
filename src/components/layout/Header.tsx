@@ -11,6 +11,8 @@ import { Bell, Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Link from 'next/link'
 import ThemeToggle from './ThemeToggle'
+import LanguageToggle from './LanguageToggle'
+import { useTranslation } from '@/hooks/useTranslation'
 
 const getPageTitle = (pathname: string) => {
   if (pathname.startsWith('/dashboard')) return 'Tableau de bord'
@@ -35,6 +37,7 @@ export default function Header() {
   const pathname = usePathname()
   const { currentUser, notifications, eleves, classes, fetchNotifications, suppressedNotificationIds, ecoleId } = useSchoolStore()
   const [open, setOpen] = useState(false)
+  const { t, dir } = useTranslation()
 
   // Actualiser les notifications au montage
   useEffect(() => {
@@ -43,7 +46,23 @@ export default function Header() {
   
   if (!currentUser) return null
 
-  const title = getPageTitle(pathname)
+  const rawTitle = getPageTitle(pathname)
+  const titleKey = pathname.startsWith('/dashboard') ? 'title.dashboard' :
+                   pathname.startsWith('/inscriptions') ? 'title.inscriptions' :
+                   pathname.startsWith('/enseignant/dashboard') ? 'title.dashboard' :
+                   pathname.startsWith('/eleves') ? 'title.eleves' :
+                   pathname.startsWith('/enseignants') ? 'title.enseignants' :
+                   pathname.startsWith('/classes') ? 'title.classes' :
+                   pathname.startsWith('/notes') ? 'title.notes' :
+                   pathname.startsWith('/paiements') ? 'title.paiements' :
+                   pathname.startsWith('/absences') ? 'title.absences' :
+                   pathname.startsWith('/bulletins') ? 'title.bulletins' :
+                   pathname.startsWith('/notifications') ? 'title.notifications' :
+                   pathname.startsWith('/profil') ? 'title.profil' :
+                   pathname.startsWith('/parametres') ? 'title.parametres' :
+                   pathname.startsWith('/aide') ? 'title.aide' : ''
+
+  const title = titleKey ? t(titleKey, rawTitle) : rawTitle
   const roleLabel = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
 
   // Filtrage intelligent identique à la page /notifications pour avoir le compte précis de notifications non lues avec cloisonnement utilisateur
@@ -109,34 +128,37 @@ export default function Header() {
   const unreadCount = displayNotifications.filter(n => !n.lu).length
 
   return (
-    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 shrink-0 z-10 shadow-sm">
-      <div className="flex items-center">
+    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-2.5 xs:px-4 md:px-6 shrink-0 z-10 shadow-sm">
+      <div className="flex items-center min-w-0">
         {/* Menu Mobile */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <button className="md:hidden p-2 mr-2 text-muted-foreground hover:bg-muted rounded-md transition-colors">
+            <button className="md:hidden p-1.5 xs:p-2 me-1 xs:me-2 text-muted-foreground hover:bg-muted rounded-md transition-colors shrink-0">
               <Menu className="h-6 w-6" />
             </button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64 border-r-0">
+          <SheetContent side={dir === 'rtl' ? 'right' : 'left'} className="p-0 w-64 border-r-0">
             <SheetTitle className="sr-only">Menu de navigation</SheetTitle>
             <Sidebar className="w-full" onNavigate={() => setOpen(false)} />
           </SheetContent>
         </Sheet>
         
-        <h1 className="text-xl font-display font-semibold text-text truncate max-w-[200px] md:max-w-none">
+        <h1 className="text-sm xs:text-base sm:text-lg md:text-xl font-display font-semibold text-text truncate max-w-[100px] xs:max-w-[150px] sm:max-w-[200px] md:max-w-none">
           {title}
         </h1>
       </div>
 
-      <div className="flex items-center space-x-2 md:space-x-4">
+      <div className="flex items-center gap-1 xs:gap-2 md:gap-4 shrink-0">
+        {/* Language Selector */}
+        <LanguageToggle />
+
         {/* Theme Toggle Selector */}
         <ThemeToggle />
 
         {/* Notifications avec badge dynamique */}
         <Link 
           href="/notifications"
-          className="relative p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors inline-block"
+          className="relative p-1.5 xs:p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors inline-block shrink-0"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -148,16 +170,16 @@ export default function Header() {
  
         {/* Profil Menu */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center space-x-3 outline-none group">
-            <div className="hidden md:flex flex-col text-right">
+          <DropdownMenuTrigger className="flex items-center gap-1.5 xs:gap-3 outline-none group shrink-0">
+            <div className="hidden md:flex flex-col text-end">
               <span className="text-sm font-medium text-text group-hover:text-primary transition-colors">
                 {currentUser.prenom} {currentUser.nom}
               </span>
               <span className="text-xs text-muted-foreground">
-                {roleLabel}
+                {t('parametres.users.table.role.' + currentUser.role, roleLabel)}
               </span>
             </div>
-            <Avatar className="h-9 w-9 border border-primary/20">
+            <Avatar className="h-8 w-8 xs:h-9 xs:w-9 border border-primary/20 shrink-0">
               {currentUser.photoUrl ? (
                 <AvatarImage src={currentUser.photoUrl} className="object-cover" />
               ) : null}
@@ -167,14 +189,14 @@ export default function Header() {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('header.my_account', 'Mon Compte')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/profil" className="w-full cursor-pointer">Profil</Link>
+              <Link href="/profil" className="w-full cursor-pointer">{t('nav.profil', 'Profil')}</Link>
             </DropdownMenuItem>
             {currentUser.role === 'directeur' && (
               <DropdownMenuItem asChild>
-                <Link href="/parametres" className="w-full cursor-pointer">Paramètres</Link>
+                <Link href="/parametres" className="w-full cursor-pointer">{t('nav.parametres', 'Paramètres')}</Link>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

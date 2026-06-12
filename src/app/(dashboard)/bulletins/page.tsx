@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { useSchoolStore } from '@/store/useSchoolStore'
+import { useTranslation } from '@/hooks/useTranslation'
 import { ecoleMock } from '@/data/mockData'
 import { useToast } from '@/hooks/use-toast'
 import { formatCFA } from '@/lib/utils'
@@ -53,6 +54,7 @@ const PDFViewer = dynamic(
 
 export default function BulletinsPage() {
   const { toast } = useToast()
+  const { t, isAr } = useTranslation()
   
   // Accès au store Zustand
   const { 
@@ -129,15 +131,7 @@ export default function BulletinsPage() {
     )
   }
 
-  // Bloquer l'accès si l'établissement utilise la formule gratuite
-  if (ecole?.abonnement?.plan === 'gratuit') {
-    return (
-      <PremiumGuard 
-        title="Générateur de Bulletins" 
-        description="Générez les bulletins officiels de l'établissement sous format PDF A4 en un clic. Saisissez l'appréciation globale de la direction, calculez les moyennes générales et les moyennes de classe, et déterminez le rang de chaque élève automatiquement."
-      />
-    )
-  }
+
 
   // Filtrer par recherche
   const bulletinsFiltrés = bulletinsCalcules.filter(b => {
@@ -159,10 +153,16 @@ export default function BulletinsPage() {
       const bulletinExistant = bulletins.find(b => b.id === bId)
 
       if (bulletinExistant) {
-        // Mettre à jour le bulletin existant
+        // Mettre à jour le bulletin existant avec l'appréciation ET les données de calcul mises à jour
         await updateBulletin(bId, { 
           appreciationDirecteur: appreciationText,
-          dateGeneration: new Date().toISOString().split('T')[0]
+          dateGeneration: new Date().toISOString().split('T')[0],
+          notes: bData.notes,
+          moyenneGenerale: bData.moyenneGenerale,
+          moyenneClasse: bData.moyenneClasse,
+          rangClasse: bData.rangClasse,
+          effectifClasse: bData.effectifClasse,
+          appreciation: bData.appreciation
         })
       } else {
         // Créer un nouveau bulletin snapshot dans le store
@@ -204,7 +204,13 @@ export default function BulletinsPage() {
         await updateBulletin(bId, { 
           estValide: !isCurrentlyValide,
           appreciationDirecteur: appreciationText,
-          dateGeneration: new Date().toISOString().split('T')[0]
+          dateGeneration: new Date().toISOString().split('T')[0],
+          notes: bData.notes,
+          moyenneGenerale: bData.moyenneGenerale,
+          moyenneClasse: bData.moyenneClasse,
+          rangClasse: bData.rangClasse,
+          effectifClasse: bData.effectifClasse,
+          appreciation: bData.appreciation
         })
       } else {
         const completBulletin = {
@@ -215,9 +221,7 @@ export default function BulletinsPage() {
         }
         await addBulletin(completBulletin)
       }
-
       const storeState = useSchoolStore.getState()
-
       if (isCurrentlyValide) {
         // Supprimer la notification correspondante
         const trimestreLabel = bData.trimestre === 1 ? '1er' : bData.trimestre === 2 ? '2ème' : '3ème';
@@ -264,7 +268,15 @@ export default function BulletinsPage() {
         
         if (bulletinExistant) {
           if (!bulletinExistant.estValide) {
-            await updateBulletin(bulletinExistant.id, { estValide: true })
+            await updateBulletin(bulletinExistant.id, { 
+              estValide: true,
+              notes: b.notes,
+              moyenneGenerale: b.moyenneGenerale,
+              moyenneClasse: b.moyenneClasse,
+              rangClasse: b.rangClasse,
+              effectifClasse: b.effectifClasse,
+              appreciation: b.appreciation
+            })
             validatedCount++
           }
         } else {
@@ -278,7 +290,6 @@ export default function BulletinsPage() {
           validatedCount++
         }
       }
-      
       if (validatedCount > 0) {
         await storeState.addNotification({
           titre: "Bulletins validés en lot",
@@ -316,7 +327,15 @@ export default function BulletinsPage() {
         
         if (bulletinExistant) {
           if (bulletinExistant.estValide) {
-            await updateBulletin(bulletinExistant.id, { estValide: false })
+            await updateBulletin(bulletinExistant.id, { 
+              estValide: false,
+              notes: b.notes,
+              moyenneGenerale: b.moyenneGenerale,
+              moyenneClasse: b.moyenneClasse,
+              rangClasse: b.rangClasse,
+              effectifClasse: b.effectifClasse,
+              appreciation: b.appreciation
+            })
             unvalidatedCount++
 
             // Supprimer la notification correspondante
@@ -368,7 +387,7 @@ export default function BulletinsPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col lg:flex-row gap-4 items-end">
             <div className="w-full lg:w-48 space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Année Scolaire</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('bulletins.school_year.label', 'Année Scolaire')}</label>
               <Select value={selectedAnneeId} onValueChange={setSelectedAnneeId}>
                 <SelectTrigger className="w-full h-11 border-border">
                   <SelectValue placeholder="Choisir une année" />
@@ -382,7 +401,7 @@ export default function BulletinsPage() {
             </div>
 
             <div className="flex-1 space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sélectionner une classe</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('bulletins.select_class.label', 'Sélectionner une classe')}</label>
               <Combobox
                 options={classes.map(c => ({ value: c.id, label: `${c.nom} (${c.niveau})` }))}
                 value={selectedClasseId}
@@ -393,15 +412,15 @@ export default function BulletinsPage() {
             </div>
 
             <div className="w-full lg:w-48 space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trimestre</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('bulletins.trimestre.label', 'Trimestre')}</label>
               <Select value={selectedTrimestre} onValueChange={setSelectedTrimestre}>
                 <SelectTrigger className="w-full h-11 border-border">
-                  <SelectValue placeholder="Choisir un trimestre" />
+                  <SelectValue placeholder={t('bulletins.select_trimestre_placeholder', 'Choisir un trimestre')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1er Trimestre</SelectItem>
-                  <SelectItem value="2">2ème Trimestre</SelectItem>
-                  <SelectItem value="3">3ème Trimestre</SelectItem>
+                  <SelectItem value="1">{t('trimestre.1_st', '1er Trimestre')}</SelectItem>
+                  <SelectItem value="2">{t('trimestre.2_nd', '2ème Trimestre')}</SelectItem>
+                  <SelectItem value="3">{t('trimestre.3_rd', '3ème Trimestre')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -429,7 +448,7 @@ export default function BulletinsPage() {
                       {/* @ts-ignore */}
                       {({ loading, error }) => {
                         if (error) {
-                          return <Button className="w-full h-11 bg-rose-600 text-white font-semibold rounded-xl">Erreur de génération</Button>
+                          return <Button className="w-full h-11 bg-rose-600 text-white font-semibold rounded-xl">{t('bulletins.error_generation', 'Erreur de génération')}</Button>
                         }
                         return (
                           <Button 
@@ -438,13 +457,13 @@ export default function BulletinsPage() {
                           >
                             {loading ? (
                               <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Préparation ({bulletinsAvecNotes.length})...
+                                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                                {t('action.loading', 'Préparation')} ({bulletinsAvecNotes.length})...
                               </>
                             ) : (
                               <>
-                                <Download className="mr-2 h-4 w-4" />
-                                Télécharger le fichier ({bulletinsAvecNotes.length})
+                                <Download className="me-2 h-4 w-4" />
+                                {t('action.download', 'Télécharger le fichier')} ({bulletinsAvecNotes.length})
                               </>
                             )}
                           </Button>
@@ -460,17 +479,17 @@ export default function BulletinsPage() {
                         setTimeout(() => setIsGeneratingGlobal(false), 12000)
                       }}
                     >
-                      <RefreshCw className="mr-2 h-4 w-4 animate-pulse" />
-                      Générer les Bulletins ({bulletinsAvecNotes.length})
+                      <RefreshCw className="me-2 h-4 w-4 animate-pulse" />
+                      {t('bulletins.generate', 'Générer les Bulletins')} ({bulletinsAvecNotes.length})
                     </Button>
                   )
                 ) : (
                   <Button 
                     className="w-full h-11 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-450 shadow-sm flex items-center justify-center font-semibold cursor-not-allowed hover:bg-slate-300 dark:hover:bg-slate-700 rounded-xl border border-transparent dark:border-border/40"
-                    onClick={() => toast({ title: "Bulletins vides", description: "Aucune note n'a été trouvée pour générer les bulletins.", variant: "destructive" })}
+                    onClick={() => toast({ title: t('bulletins.empty', "Bulletins vides"), description: "Aucune note n'a été trouvée pour générer les bulletins.", variant: "destructive" })}
                   >
-                    <Download className="mr-2 h-4 w-4" />
-                    Bulletins vides
+                    <Download className="me-2 h-4 w-4" />
+                    {t('bulletins.empty', "Bulletins vides")}
                   </Button>
                 )
               )}
@@ -483,11 +502,11 @@ export default function BulletinsPage() {
                   className="w-full sm:w-auto h-11 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center justify-center font-bold px-5 rounded-xl transition-colors shrink-0"
                 >
                   {isGeneratingGlobal ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <CheckCircle className="mr-2 h-4 w-4" />
+                    <CheckCircle className="me-2 h-4 w-4" />
                   )}
-                  Tout valider ({bulletinsAvecNotes.length})
+                  {t('bulletins.validate_all', 'Tout valider')} ({bulletinsAvecNotes.length})
                 </Button>
               )}
 
@@ -499,11 +518,11 @@ export default function BulletinsPage() {
                   className="w-full sm:w-auto h-11 bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center justify-center font-bold px-5 rounded-xl transition-colors shrink-0"
                 >
                   {isGeneratingGlobal ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <AlertCircle className="mr-2 h-4 w-4" />
+                    <AlertCircle className="me-2 h-4 w-4" />
                   )}
-                  Tout annuler
+                  {t('bulletins.unvalidate_all', 'Tout annuler')}
                 </Button>
               )}
             </div>
@@ -514,9 +533,9 @@ export default function BulletinsPage() {
       {bulletinsCalcules.length === 0 ? (
         <Card className="py-12 border-dashed border-2 flex flex-col items-center justify-center text-center">
           <FileText className="h-12 w-12 text-muted-foreground mb-4 stroke-1" />
-          <h3 className="text-lg font-bold text-text">Aucun élève trouvé</h3>
+          <h3 className="text-lg font-bold text-text">{t('bulletins.no_student_found', 'Aucun élève trouvé')}</h3>
           <p className="text-sm text-muted-foreground max-w-sm mt-1">
-            Aucun élève n'est actif ou inscrit dans cette classe pour l'instant.
+            {t('bulletins.no_student_desc', "Aucun élève n'est actif ou inscrit dans cette classe pour l'instant.")}
           </p>
         </Card>
       ) : (
@@ -529,8 +548,8 @@ export default function BulletinsPage() {
                   <Users className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Effectif Classé</p>
-                  <h3 className="text-2xl font-bold font-display text-text">{effectifTotal} élèves</h3>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('kpi.effectif', 'Effectif Classé')}</p>
+                  <h3 className="text-2xl font-bold font-display text-text">{effectifTotal} {t('bulletins.eleves_count', 'élèves')}</h3>
                 </div>
               </CardContent>
             </Card>
@@ -541,8 +560,8 @@ export default function BulletinsPage() {
                   <TrendingUp className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Moyenne Classe</p>
-                  <h3 className="text-2xl font-bold font-display text-text">{moyenneClasse.toFixed(2)} /20</h3>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('kpi.moyenne_classe', 'Moyenne Classe')}</p>
+                  <h3 className="text-2xl font-bold font-display text-text"><span dir="ltr">{moyenneClasse.toFixed(2)} / 20</span></h3>
                 </div>
               </CardContent>
             </Card>
@@ -553,8 +572,8 @@ export default function BulletinsPage() {
                   <CheckCircle className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Taux de Réussite</p>
-                  <h3 className="text-2xl font-bold font-display text-text">{tauxReussite}% (≥ 10)</h3>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('kpi.reussite', 'Taux de Réussite')}</p>
+                  <h3 className="text-2xl font-bold font-display text-text"><span dir="ltr">{tauxReussite}% (≥ 10)</span></h3>
                 </div>
               </CardContent>
             </Card>
@@ -565,8 +584,8 @@ export default function BulletinsPage() {
                   <Award className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Major de Classe</p>
-                  <h3 className="text-2xl font-bold font-display text-text">{meilleureMoyenne.toFixed(2)} /20</h3>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('kpi.major', 'Major de Classe')}</p>
+                  <h3 className="text-2xl font-bold font-display text-text"><span dir="ltr">{meilleureMoyenne.toFixed(2)} / 20</span></h3>
                 </div>
               </CardContent>
             </Card>
@@ -577,18 +596,18 @@ export default function BulletinsPage() {
             <CardHeader className="border-b border-border pb-4 bg-slate-50/50 dark:bg-slate-900/50">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <CardTitle className="text-lg font-bold font-display text-text">Bulletins Trimestriels</CardTitle>
+                  <CardTitle className="text-lg font-bold font-display text-text">{t('nav.bulletins', 'Bulletins Trimestriels')}</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground mt-1">
-                    Générez les documents officiels et saisissez les appréciations de la classe {currentClasse?.nom}
+                    {t('bulletins.desc_subtitle', 'Générez les documents officiels et saisissez les appréciations de la classe')} {currentClasse?.nom}
                   </CardDescription>
                 </div>
                 {/* Barre de recherche */}
                 <div className="relative w-full sm:w-72">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Rechercher un élève..."
-                    className="w-full pl-9 pr-4 py-2 border border-border rounded-md text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-550 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    placeholder={t('bulletins.search_placeholder', 'Rechercher un élève...')}
+                    className="w-full ps-9 pe-4 py-2 border border-border rounded-md text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-550 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -600,13 +619,13 @@ export default function BulletinsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-border hover:bg-transparent">
-                      <TableHead className="w-[80px] text-center font-bold text-muted-foreground">Rang</TableHead>
-                      <TableHead className="font-bold text-muted-foreground">Élève</TableHead>
-                      <TableHead className="w-[120px] text-center font-bold text-muted-foreground">Moyenne</TableHead>
-                      <TableHead className="w-[120px] text-center font-bold text-muted-foreground">Mention</TableHead>
-                      <TableHead className="font-bold text-muted-foreground">Appréciation du Directeur</TableHead>
-                      <TableHead className="w-[110px] text-center font-bold text-muted-foreground">Statut</TableHead>
-                      <TableHead className="w-[180px] text-right pr-6 font-bold text-muted-foreground">Actions</TableHead>
+                      <TableHead className="w-[80px] text-center font-bold text-muted-foreground">{t('bulletins.table.rang', 'Rang')}</TableHead>
+                      <TableHead className="font-bold text-muted-foreground">{t('bulletins.table.eleve', 'Élève')}</TableHead>
+                      <TableHead className="w-[120px] text-center font-bold text-muted-foreground">{t('bulletins.table.moyenne', 'Moyenne')}</TableHead>
+                      <TableHead className="w-[120px] text-center font-bold text-muted-foreground">{t('bulletins.table.mention', 'Mention')}</TableHead>
+                      <TableHead className="font-bold text-muted-foreground">{t('bulletins.table.appreciation', 'Appréciation du Directeur')}</TableHead>
+                      <TableHead className="w-[110px] text-center font-bold text-muted-foreground">{t('bulletins.table.statut', 'Statut')}</TableHead>
+                      <TableHead className="w-[180px] text-end pe-6 font-bold text-muted-foreground">{t('bulletins.table.actions', 'Actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -628,7 +647,7 @@ export default function BulletinsPage() {
                           {/* Rang */}
                           <TableCell className="text-center font-medium">
                             <span className={`inline-flex items-center justify-center px-2.5 py-1 text-xs rounded-full ${rangBadge}`}>
-                              {b.rangClasse}e
+                              {b.rangClasse}{isAr ? '' : 'e'}
                             </span>
                           </TableCell>
 
@@ -656,10 +675,10 @@ export default function BulletinsPage() {
                               <span className={`text-sm font-bold font-display px-2 py-0.5 rounded ${
                                 isPassing ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30' : 'text-danger bg-red-50 dark:text-red-400 dark:bg-red-950/30'
                               }`}>
-                                {b.moyenneGenerale.toFixed(2)} /20
+                                <span dir="ltr">{b.moyenneGenerale.toFixed(2)} / 20</span>
                               </span>
                             ) : (
-                              <span className="text-xs text-muted-foreground italic">Aucune note</span>
+                              <span className="text-xs text-muted-foreground italic">{t('bulletins.status.incomplete', 'Aucune note')}</span>
                             )}
                           </TableCell>
 
@@ -681,7 +700,7 @@ export default function BulletinsPage() {
                             <div className="flex gap-2 items-center py-2 max-w-lg">
                               <textarea
                                 className="w-full min-h-[50px] p-2 text-xs border border-border rounded-md bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition-all placeholder:italic disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed dark:disabled:bg-slate-900/50 dark:disabled:text-slate-550"
-                                placeholder={hasMoyenne ? "Saisir les remarques et conseils du Directeur..." : "Aucune note saisie..."}
+                                placeholder={hasMoyenne ? t('bulletins.remarques_placeholder', "Saisir les remarques et conseils du Directeur...") : t('bulletins.status.incomplete', "Aucune note...")}
                                 value={appreciationInputs[b.eleveId] || ''}
                                 onChange={(e) => setAppreciationInputs(prev => ({ ...prev, [b.eleveId]: e.target.value }))}
                                 disabled={!hasMoyenne}
@@ -713,7 +732,7 @@ export default function BulletinsPage() {
                                     {isValide ? (
                                       <>
                                         <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-none font-bold text-[10px] px-2 py-0.5 uppercase tracking-wider shrink-0 flex items-center gap-1">
-                                          ✓ Validé
+                                          ✓ {t('bulletins.status.validated', 'Validé')}
                                         </Badge>
                                         <Button
                                           variant="ghost"
@@ -722,7 +741,7 @@ export default function BulletinsPage() {
                                           className="text-[10px] text-muted-foreground hover:!text-danger hover:!bg-red-50 font-bold px-1.5 h-6 rounded-md transition-colors"
                                           onClick={() => handleToggleValidation(b.id, b, true)}
                                         >
-                                          {loadingMap[b.id] ? <Loader2 className="h-3 w-3 animate-spin text-primary" /> : "Annuler"}
+                                          {loadingMap[b.id] ? <Loader2 className="h-3 w-3 animate-spin text-primary" /> : t('action.cancel', 'Annuler')}
                                         </Button>
                                       </>
                                     ) : (
@@ -738,7 +757,7 @@ export default function BulletinsPage() {
                                         ) : (
                                           <>
                                             <CheckCircle className="h-3 w-3" />
-                                            Valider
+                                            {t('action.validate', 'Valider')}
                                           </>
                                         )}
                                       </Button>
@@ -752,7 +771,7 @@ export default function BulletinsPage() {
                           </TableCell>
 
                           {/* Actions */}
-                          <TableCell className="text-right pr-6">
+                          <TableCell className="text-end pe-6">
                             <div className="flex items-center justify-end gap-2">
                               {/* Visualiser le bulletin */}
                               <Button
@@ -764,7 +783,7 @@ export default function BulletinsPage() {
                                   setPreviewDialogOpen(true)
                                 }}
                                 disabled={!hasMoyenne}
-                                title="Visualiser le bulletin"
+                                title={t('bulletins.view_tooltip', 'Visualiser le bulletin')}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -789,7 +808,7 @@ export default function BulletinsPage() {
                                     {/* @ts-ignore */}
                                     {({ loading, error }) => {
                                       if (error) {
-                                        return <span className="text-xs text-rose-500 font-bold">Erreur</span>
+                                        return <span className="text-xs text-rose-500 font-bold">{t('bulletins.error_generation', 'Erreur')}</span>
                                       }
                                       return (
                                         <Button 
@@ -801,12 +820,12 @@ export default function BulletinsPage() {
                                           {loading ? (
                                             <>
                                               <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                                              Calcul...
+                                              {t('bulletins.calculating', 'Calcul...')}
                                             </>
                                           ) : (
                                             <>
                                               <Download className="mr-1.5 h-3.5 w-3.5" />
-                                              Télécharger
+                                              {t('action.download', 'Télécharger')}
                                             </>
                                           )}
                                         </Button>
@@ -825,12 +844,12 @@ export default function BulletinsPage() {
                                     }}
                                   >
                                     <Download className="mr-1.5 h-3.5 w-3.5" />
-                                    Obtenir PDF
+                                    {t('bulletins.get_pdf', 'Obtenir PDF')}
                                   </Button>
                                 )
                               ) : (
                                 <Button variant="outline" size="sm" disabled className="text-xs shrink-0">
-                                  Incomplet
+                                  {t('bulletins.status.incomplete', 'Incomplet')}
                                 </Button>
                               )}
                             </div>
@@ -851,7 +870,7 @@ export default function BulletinsPage() {
           <DialogHeader className="pb-2 border-b border-border">
             <DialogTitle className="text-lg font-bold text-text flex items-center gap-2">
               <Eye className="h-5.5 w-5.5 text-primary" />
-              Aperçu du Bulletin de Notes — {selectedBulletinForPreview ? eleves.find(e => e.id === selectedBulletinForPreview.eleveId)?.prenom + ' ' + eleves.find(e => e.id === selectedBulletinForPreview.eleveId)?.nom.toUpperCase() : ''}
+              {t('bulletins.preview_title', 'Aperçu du Bulletin de Notes')} — {selectedBulletinForPreview ? eleves.find(e => e.id === selectedBulletinForPreview.eleveId)?.prenom + ' ' + eleves.find(e => e.id === selectedBulletinForPreview.eleveId)?.nom.toUpperCase() : ''}
             </DialogTitle>
           </DialogHeader>
 

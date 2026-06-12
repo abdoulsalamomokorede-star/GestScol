@@ -7,6 +7,8 @@ import { createEnseignantAccount } from '@/app/actions/register'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@/types'
+import { useTranslation } from '@/hooks/useTranslation'
+import LanguageToggle from '@/components/layout/LanguageToggle'
 
 const chargerProfilAvecRetry = async (supabase: any, userId: string, maxAttempts = 3, delay = 500) => {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -50,24 +52,25 @@ import {
 } from 'lucide-react'
 import logoImg from '@/app/logo.png'
 
-const WEST_AFRICAN_COUNTRIES = [
-  { label: "Côte d'Ivoire", value: "CI", prefix: "+225", placeholder: "07 48 85 96 12", digits: 10 },
-  { label: "Sénégal", value: "SN", prefix: "+221", placeholder: "77 123 45 67", digits: 9 },
-  { label: "Mali", value: "ML", prefix: "+223", placeholder: "70 12 34 56", digits: 8 },
-  { label: "Burkina Faso", value: "BF", prefix: "+226", placeholder: "70 12 34 56", digits: 8 },
-  { label: "Togo", value: "TG", prefix: "+228", placeholder: "90 12 34 56", digits: 8 },
-  { label: "Bénin", value: "BJ", prefix: "+229", placeholder: "97 12 34 56", digits: 8 },
-  { label: "Niger", value: "NE", prefix: "+227", placeholder: "90 12 34 56", digits: 8 },
-  { label: "Guinée", value: "GN", prefix: "+224", placeholder: "62 012 34 56", digits: 9 },
-]
-
 export default function RegisterEnseignantPage() {
   const router = useRouter()
   const { toast } = useToast()
   const setCurrentUser = useSchoolStore(state => state.setCurrentUser)
+  const { t, dir, isAr } = useTranslation()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+
+  const WEST_AFRICAN_COUNTRIES = [
+    { label: t('country.CI', "Côte d'Ivoire"), value: "CI", prefix: "+225", placeholder: "07 48 85 96 12", digits: 10 },
+    { label: t('country.SN', "Sénégal"), value: "SN", prefix: "+221", placeholder: "77 123 45 67", digits: 9 },
+    { label: t('country.ML', "Mali"), value: "ML", prefix: "+223", placeholder: "70 12 34 56", digits: 8 },
+    { label: t('country.BF', "Burkina Faso"), value: "BF", prefix: "+226", placeholder: "70 12 34 56", digits: 8 },
+    { label: t('country.TG', "Togo"), value: "TG", prefix: "+228", placeholder: "90 12 34 56", digits: 8 },
+    { label: t('country.BJ', "Bénin"), value: "BJ", prefix: "+229", placeholder: "97 12 34 56", digits: 8 },
+    { label: t('country.NE', "Niger"), value: "NE", prefix: "+227", placeholder: "90 12 34 56", digits: 8 },
+    { label: t('country.GN', "Guinée"), value: "GN", prefix: "+224", placeholder: "62 012 34 56", digits: 9 },
+  ]
 
   const [form, setForm] = useState({
     civilite: '' as Civilite | '',
@@ -93,45 +96,43 @@ export default function RegisterEnseignantPage() {
 
   const handlePasswordRules = () => {
     return [
-      { label: "Au moins 12 caractères", met: hasMinLength },
-      { label: "Une lettre majuscule (A-Z)", met: hasUppercase },
-      { label: "Une lettre minuscule (a-z)", met: hasLowercase },
-      { label: "Un chiffre (0-9)", met: hasDigit },
-      { label: "Un caractère spécial (ex: @, #, $, !)", met: hasSpecial },
+      { label: t('register.dir.rule_min_length', "Au moins 12 caractères"), met: hasMinLength },
+      { label: t('register.dir.rule_uppercase', "Une lettre majuscule (A-Z)"), met: hasUppercase },
+      { label: t('register.dir.rule_lowercase', "Une lettre minuscule (a-z)"), met: hasLowercase },
+      { label: t('register.dir.rule_digit', "Un chiffre (0-9)"), met: hasDigit },
+      { label: t('register.dir.rule_special', "Un caractère spécial (ex: @, #, $, !)"), met: hasSpecial },
     ]
   }
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    if (!form.civilite) newErrors.civilite = "La civilité est requise."
-    if (!form.nom.trim()) newErrors.nom = "Le nom de famille est requis."
-    if (!form.prenom.trim()) newErrors.prenom = "Le prénom est requis."
+    if (!form.civilite) newErrors.civilite = t('errors.civilite_required', "La civilité est requise.")
+    if (!form.nom.trim()) newErrors.nom = t('errors.lastname_required', "Le nom de famille est requis.")
+    if (!form.prenom.trim()) newErrors.prenom = t('errors.firstname_required', "Le prénom est requis.")
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!form.email.trim()) {
-      newErrors.email = "L'adresse e-mail est requise."
+      newErrors.email = t('errors.email_required', "L'adresse e-mail est requise.")
     } else if (!emailRegex.test(form.email)) {
-      newErrors.email = "Veuillez saisir une adresse e-mail valide."
+      newErrors.email = t('errors.email_invalid', "Veuillez saisir une adresse e-mail valide.")
     }
-
-    // Pas de validation obligatoire pour le code d'invitation car il est optionnel
 
     const phoneClean = form.telephone.replace(/\s+/g, '')
     if (!form.telephone.trim()) {
-      newErrors.telephone = "Le numéro de téléphone est requis."
+      newErrors.telephone = t('errors.telephone_required', "Le numéro de téléphone est requis.")
     } else {
       const country = WEST_AFRICAN_COUNTRIES.find(c => c.prefix === form.phonePrefix)
       if (country && phoneClean.length !== country.digits) {
-        newErrors.telephone = `Le numéro doit contenir exactement ${country.digits} chiffres.`
+        newErrors.telephone = t('errors.telephone_digits', "Le numéro doit contenir exactement {digits} chiffres.").replace('{digits}', country.digits.toString())
       }
     }
 
     if (!hasMinLength || !hasUppercase || !hasLowercase || !hasDigit || !hasSpecial) {
-      newErrors.motDePasse = "Le mot de passe ne respecte pas les critères NIST."
+      newErrors.motDePasse = t('errors.password_nist', "Le mot de passe ne respecte pas les critères NIST.")
     }
 
     if (!isMatch) {
-      newErrors.confirmationMotDePasse = "Les mots de passe ne correspondent pas."
+      newErrors.confirmationMotDePasse = t('errors.password_match', "Les mots de passe ne correspondent pas.")
     }
 
     setErrors(newErrors)
@@ -163,16 +164,16 @@ export default function RegisterEnseignantPage() {
       if (!result.success) {
         setIsSubmitting(false)
         toast({
-          title: "Échec de l'inscription",
-          description: result.error || "Une erreur est survenue lors de l'inscription.",
+          title: t('toast.registration_failed', "Échec de l'inscription"),
+          description: result.error || t('toast.registration_failed_desc', "Une erreur est survenue lors de l'inscription."),
           variant: "destructive"
         })
         return
       }
 
       toast({
-        title: "Compte créé !",
-        description: "Connexion automatique en cours...",
+        title: t('toast.account_created', "Compte créé !"),
+        description: t('toast.auto_login', "Connexion automatique en cours..."),
         variant: "default"
       })
 
@@ -186,8 +187,8 @@ export default function RegisterEnseignantPage() {
       if (authError || !authData.user) {
         setIsSuccess(true)
         toast({
-          title: "Compte créé !",
-          description: "Votre compte a été créé avec succès. Veuillez vous connecter manuellement.",
+          title: t('toast.account_created', "Compte créé !"),
+          description: t('toast.manual_login_required', "Votre compte a été créé avec succès. Veuillez vous connecter manuellement."),
           variant: "default"
         })
         return
@@ -198,8 +199,8 @@ export default function RegisterEnseignantPage() {
       if (retryError || !profile) {
         setIsSuccess(true)
         toast({
-          title: "Compte créé !",
-          description: "Votre compte a été créé avec succès. Veuillez vous connecter manuellement.",
+          title: t('toast.account_created', "Compte créé !"),
+          description: t('toast.manual_login_required', "Votre compte a été créé avec succès. Veuillez vous connecter manuellement."),
           variant: "default"
         })
         return
@@ -220,8 +221,8 @@ export default function RegisterEnseignantPage() {
       setCurrentUser(userProfile)
 
       toast({
-        title: "Connexion réussie !",
-        description: "Bienvenue sur GestScol ! Redirection vers vos établissements...",
+        title: t('toast.login_success', "Connexion réussie !"),
+        description: t('toast.welcome_message', "Bienvenue sur GestScol ! Redirection vers vos établissements..."),
         variant: "default"
       })
 
@@ -230,8 +231,8 @@ export default function RegisterEnseignantPage() {
     } catch (err) {
       setIsSubmitting(false)
       toast({
-        title: "Erreur serveur",
-        description: "Veuillez réessayer plus tard.",
+        title: t('toast.server_error', "Erreur serveur"),
+        description: t('toast.try_again_later', "Veuillez réessayer plus tard."),
         variant: "destructive"
       })
     }
@@ -239,26 +240,30 @@ export default function RegisterEnseignantPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 py-12 text-slate-800 dark:text-slate-200 animate-fadeIn">
+      <div className="min-h-screen bg-slate-50 dark:bg-background flex flex-col items-center justify-center p-4 py-12 text-slate-800 dark:text-slate-200 animate-fadeIn relative" dir={dir}>
+        {/* Sélecteur de langue absolu */}
+        <div className="absolute top-4 right-4 rtl:left-4 rtl:right-auto z-50">
+          <LanguageToggle />
+        </div>
         <Card className="w-full max-w-md shadow-2xl border-slate-200 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200 text-center">
           <CardContent className="pt-8 pb-6 flex flex-col items-center space-y-4">
             <div className="h-16 w-16 bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-2 border border-blue-100 dark:border-blue-900/30">
               <CheckCircle2 className="h-10 w-10 animate-bounce" />
             </div>
-            <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100">Inscription Enregistrée !</h1>
+            <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-slate-100">{t('register.teacher.success_title', "Inscription Enregistrée !")}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-2">
-              Votre compte Enseignant a été créé avec succès. Si vous avez saisi un code d&apos;invitation ou si votre Directeur vous a invité par e-mail, vous serez lié automatiquement.
+              {t('register.teacher.success_desc', "Votre compte Enseignant a été créé avec succès. Si vous avez saisi un code d'invitation ou si votre Directeur vous a invité par e-mail, vous serez lié automatiquement.")}
             </p>
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl text-xs text-left text-slate-500 dark:text-slate-400 w-full space-y-1">
-              <p className="font-bold text-slate-700 dark:text-slate-300">Prochaines étapes :</p>
-              <p>1. Le Directeur valide votre demande et vous affecte à vos classes.</p>
-              <p>2. Vous recevrez l&apos;accès complet dès que la validation sera effective.</p>
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl text-xs text-left rtl:text-right text-slate-500 dark:text-slate-400 w-full space-y-1">
+              <p className="font-bold text-slate-700 dark:text-slate-300">{t('register.teacher.next_steps', "Prochaines étapes :")}</p>
+              <p>{t('register.teacher.step_validate', "1. Le Directeur valide votre demande et vous affecte à vos classes.")}</p>
+              <p>{t('register.teacher.step_access', "2. Vous recevrez l'accès complet dès que la validation sera effective.")}</p>
             </div>
             <Button
               onClick={() => router.push('/login/enseignant')}
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold w-full rounded-xl py-2.5 shadow-md transition-all duration-200"
             >
-              Aller à la connexion enseignant
+              {t('register.teacher.go_to_login', "Aller à la connexion enseignant")}
             </Button>
           </CardContent>
         </Card>
@@ -267,7 +272,7 @@ export default function RegisterEnseignantPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background animate-fadeIn relative" dir="ltr">
       {/* Panneau Gauche - Photo en plein écran */}
       <div className="hidden md:block md:flex-1 relative">
         <div 
@@ -278,26 +283,30 @@ export default function RegisterEnseignantPage() {
       </div>
 
       {/* Panneau Droit - Formulaire */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 md:max-w-xl lg:max-w-2xl bg-white dark:bg-background border-l border-border dark:border-border/40 shadow-sm overflow-y-auto max-h-screen">
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 md:max-w-xl lg:max-w-2xl bg-white dark:bg-background border-l border-border dark:border-border/40 shadow-sm overflow-y-auto max-h-screen text-start relative" dir={dir}>
+        {/* Sélecteur de langue absolu sur le formulaire */}
+        <div className={`absolute top-4 ${dir === 'rtl' ? 'left-4' : 'right-4'} z-50`}>
+          <LanguageToggle />
+        </div>
         <div className="space-y-6 my-auto">
           {/* Brand Header */}
-          <div className="flex flex-col items-center md:items-start">
+          <div className="flex flex-col items-center md:items-start text-center md:text-start">
             <Link href="/" className="mb-3 transition-transform duration-300 hover:scale-105 inline-block">
               <img src={logoImg.src} alt="GestScol Logo" className="h-16 w-auto object-contain" />
             </Link>
             <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-wide font-display">GestScol</h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 text-center md:text-left font-medium">
-              Espace Enseignant — Inscription
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 text-center md:text-start font-medium">
+              {t('register.teacher.subtitle', "Espace Enseignant — Inscription")}
             </p>
           </div>
 
-          <Card className="w-full shadow-lg border-slate-200/80 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200">
-            <CardHeader className="border-b border-slate-100 dark:border-border/60 pb-6">
+          <Card className="w-full shadow-lg border-slate-200/80 dark:border-border/60 bg-white dark:bg-card text-slate-800 dark:text-slate-200 text-start">
+            <CardHeader className="border-b border-slate-100 dark:border-border/60 pb-6 text-start">
               <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 font-display">
-                <GraduationCap className="h-6 w-6 text-blue-600 dark:text-blue-450" /> Profil Enseignant
+                <GraduationCap className="h-6 w-6 text-blue-600 dark:text-blue-450" /> {t('register.teacher.card_title', "Profil Enseignant")}
               </CardTitle>
               <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-                Créez votre compte enseignant pour saisir les notes et les absences.
+                {t('register.teacher.card_desc', "Créez votre compte enseignant pour saisir les notes et les absences.")}
               </CardDescription>
             </CardHeader>
 
@@ -313,34 +322,34 @@ export default function RegisterEnseignantPage() {
                 </div>
 
                 {/* Prénom & Nom */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-start">
                   <div className="space-y-2">
-                    <Label htmlFor="prenom" className="text-slate-700 dark:text-slate-300">Prénom *</Label>
+                    <Label htmlFor="prenom" className="text-slate-700 dark:text-slate-300 text-start block">{t('register.teacher.firstname', "Prénom")} *</Label>
                     <Input
                       id="prenom"
-                      placeholder="Ex: Kouame"
+                      placeholder={t('register.teacher.firstname_placeholder', "Ex: Kouame")}
                       value={form.prenom}
                       onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
-                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl text-start"
                     />
                     {errors.prenom && (
-                      <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1 text-start">
                         <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.prenom}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="nom" className="text-slate-700 dark:text-slate-300">Nom de famille *</Label>
+                    <Label htmlFor="nom" className="text-slate-700 dark:text-slate-300 text-start block">{t('register.teacher.lastname', "Nom de famille")} *</Label>
                     <Input
                       id="nom"
-                      placeholder="Ex: N&apos;guessan"
+                      placeholder={t('register.teacher.lastname_placeholder', "Ex: N'guessan")}
                       value={form.nom}
                       onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
-                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl text-start"
                     />
                     {errors.nom && (
-                      <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1 text-start">
                         <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.nom}
                       </p>
                     )}
@@ -348,26 +357,26 @@ export default function RegisterEnseignantPage() {
                 </div>
 
                 {/* Email professionnel */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">Votre adresse e-mail professionnelle *</Label>
+                <div className="space-y-2 text-start">
+                  <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 text-start block">{t('register.teacher.email', "Votre adresse e-mail professionnelle")} *</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="enseignant@ecole.ci"
+                    placeholder={t('register.teacher.email_placeholder', "enseignant@ecole.ci")}
                     value={form.email}
                     onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl text-start"
                   />
                   {errors.email && (
-                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                    <p className="text-[11px] text-rose-600 flex items-center gap-1 text-start">
                       <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.email}
                     </p>
                   )}
                 </div>
 
                 {/* Téléphone */}
-                <div className="space-y-2">
-                  <Label htmlFor="telephone" className="text-slate-700 dark:text-slate-300">Numéro de téléphone mobile *</Label>
+                <div className="space-y-2 text-start">
+                  <Label htmlFor="telephone" className="text-slate-700 dark:text-slate-300 text-start block">{t('register.teacher.phone', "Numéro de téléphone mobile")} *</Label>
                   <div className="flex gap-2">
                     <Select
                       value={form.phonePrefix}
@@ -389,57 +398,57 @@ export default function RegisterEnseignantPage() {
                       placeholder="07 48 85 96 12"
                       value={form.telephone}
                       onChange={(e) => setForm(prev => ({ ...prev, telephone: e.target.value }))}
-                      className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                      className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl text-start"
                     />
                   </div>
                   {errors.telephone && (
-                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                    <p className="text-[11px] text-rose-600 flex items-center gap-1 text-start">
                       <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.telephone}
                     </p>
                   )}
                 </div>
 
                 {/* Code d'invitation (Optionnel) */}
-                <div className="space-y-2">
-                  <Label htmlFor="codeInvitation" className="text-slate-700 dark:text-slate-300">Code d&apos;invitation (Optionnel)</Label>
+                <div className="space-y-2 text-start">
+                  <Label htmlFor="codeInvitation" className="text-slate-700 dark:text-slate-300 text-start block">{t('register.teacher.invite_code', "Code d'invitation (Optionnel)")}</Label>
                   <Input
                     id="codeInvitation"
-                    placeholder="Ex: A1B2C3D4"
+                    placeholder={t('register.teacher.invite_placeholder', "Ex: A1B2C3D4")}
                     value={form.codeInvitation}
                     onChange={(e) => setForm(prev => ({ ...prev, codeInvitation: e.target.value }))}
-                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl text-start"
                   />
-                  <span className="text-[10px] text-slate-400 block leading-tight">
-                    Saisissez le code d&apos;invitation fourni par votre Directeur. Si vous n&apos;en avez pas, vous pourrez être lié à votre école ultérieurement.
+                  <span className="text-[10px] text-slate-400 block leading-tight text-start">
+                    {t('register.teacher.invite_info', "Saisissez le code d'invitation fourni par votre Directeur. Si vous n'en avez pas, vous pourrez être lié à votre école ultérieurement.")}
                   </span>
                 </div>
 
                 {/* Mots de passe */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-start">
                   <div className="space-y-2">
-                    <Label htmlFor="motDePasse" className="text-slate-700 dark:text-slate-300">Mot de passe *</Label>
+                    <Label htmlFor="motDePasse" className="text-slate-700 dark:text-slate-300 text-start block">{t('register.teacher.password', "Mot de passe")} *</Label>
                     <Input
                       id="motDePasse"
                       type="password"
                       placeholder="••••••••"
                       value={form.motDePasse}
                       onChange={(e) => setForm(prev => ({ ...prev, motDePasse: e.target.value }))}
-                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl text-start"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmationMotDePasse" className="text-slate-700 dark:text-slate-300">Confirmer *</Label>
+                    <Label htmlFor="confirmationMotDePasse" className="text-slate-700 dark:text-slate-300 text-start block">{t('register.teacher.confirm_password', "Confirmer")} *</Label>
                     <Input
                       id="confirmationMotDePasse"
                       type="password"
                       placeholder="••••••••"
                       value={form.confirmationMotDePasse}
                       onChange={(e) => setForm(prev => ({ ...prev, confirmationMotDePasse: e.target.value }))}
-                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl"
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-border/60 focus:border-blue-500 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500/20 rounded-xl text-start"
                     />
                     {errors.confirmationMotDePasse && (
-                      <p className="text-[11px] text-rose-600 flex items-center gap-1 mt-1">
+                      <p className="text-[11px] text-rose-600 flex items-center gap-1 mt-1 text-start">
                         <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {errors.confirmationMotDePasse}
                       </p>
                     )}
@@ -447,19 +456,19 @@ export default function RegisterEnseignantPage() {
                 </div>
 
                 {/* Force du mot de passe */}
-                <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl p-4 space-y-2">
-                  <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-                    <ShieldCheck className="h-4.5 w-4.5 text-blue-600 dark:text-blue-450" /> Force du mot de passe
+                <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-border/60 rounded-xl p-4 space-y-2 text-start">
+                  <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider text-start">
+                    <ShieldCheck className="h-4.5 w-4.5 text-blue-600 dark:text-blue-450" /> {t('register.teacher.password_strength', "Force du mot de passe")}
                   </h3>
                   <div className="space-y-1">
                     {handlePasswordRules().map((rule, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs">
+                      <div key={idx} className="flex items-center gap-2 text-xs text-start rtl:space-x-reverse">
                         {rule.met ? (
                           <Check className="h-4 w-4 text-emerald-600 shrink-0" />
                         ) : (
-                          <X className="h-4 w-4 text-slate-350 dark:text-slate-500 shrink-0" />
+                          <X className="h-4 w-4 text-slate-355 dark:text-slate-500 shrink-0" />
                         )}
-                        <span className={rule.met ? "text-slate-700 dark:text-slate-300" : "text-slate-400 dark:text-slate-500"}>
+                        <span className={rule.met ? "text-slate-700 dark:text-slate-300 text-start" : "text-slate-400 dark:text-slate-550 text-start"}>
                           {rule.label}
                         </span>
                       </div>
@@ -468,25 +477,25 @@ export default function RegisterEnseignantPage() {
                 </div>
               </CardContent>
 
-              <CardFooter className="flex items-center justify-between border-t border-slate-100 dark:border-border/60 pt-6">
+              <CardFooter className="flex items-center justify-between border-t border-slate-100 dark:border-border/60 pt-6 text-start">
                 <Link
                   href="/register"
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Autre profil
+                  <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> {t('register.teacher.other_profile', "Autre profil")}
                 </Link>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
-                      Création... <Loader2 className="h-4 w-4 animate-spin" />
+                      {t('register.teacher.creating', "Création...")} <Loader2 className="h-4 w-4 animate-spin" />
                     </>
                   ) : (
                     <>
-                      S&apos;inscrire
+                      {t('register.teacher.register_btn', "S'inscrire")}
                     </>
                   )}
                 </Button>
@@ -495,10 +504,10 @@ export default function RegisterEnseignantPage() {
           </Card>
         </div>
 
-        <div className="mt-8 text-center space-y-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-border/60 pt-4">
-          <p>Déjà inscrit ? <Link href="/login/enseignant" className="text-blue-600 hover:text-blue-700 font-bold hover:underline">Se connecter</Link></p>
-          <p className="flex items-center justify-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-            <PhoneCall className="h-3.5 w-3.5" /> Assistance technique GestScol : +225 05 86 03 79 74
+        <div className="mt-8 text-center space-y-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-border/60 pt-4 text-start">
+          <p className="text-center">{t('register.teacher.already_registered', "Déjà inscrit ?")} <Link href="/login/enseignant" className="text-blue-600 hover:text-blue-700 font-bold hover:underline">{t('register.teacher.login', "Se connecter")}</Link></p>
+          <p className="flex items-center justify-center gap-1 text-[11px] text-slate-400 dark:text-slate-500 text-center">
+            <PhoneCall className="h-3.5 w-3.5" /> {t('register.teacher.assistance', "Assistance technique GestScol : +225 05 86 03 79 74")}
           </p>
         </div>
       </div>

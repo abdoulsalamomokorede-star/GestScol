@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface ConfirmDeleteModalProps {
   isOpen: boolean
@@ -22,25 +23,32 @@ export function ConfirmDeleteModal({
   isOpen,
   onClose,
   onConfirm,
-  title = "Confirmer la suppression",
-  description = "Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible.",
-  confirmText = "Supprimer définitivement",
-  cancelText = "Annuler"
+  title,
+  description,
+  confirmText,
+  cancelText
 }: ConfirmDeleteModalProps) {
+  const { t, dir } = useTranslation()
+
+  const finalTitle = title || t('confirm_delete.title', "Confirmer la suppression")
+  const finalDescription = description || t('confirm_delete.desc', "Voulez-vous vraiment supprimer cet élément ? Cette action est irréversible.")
+  const finalConfirmText = confirmText || t('action.delete_confirm', "Supprimer définitivement")
+  const finalCancelText = cancelText || t('action.cancel', "Annuler")
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent dir={dir}>
         <DialogHeader>
-          <DialogTitle className="text-destructive flex items-center gap-2">
-            {title}
+          <DialogTitle className="text-destructive flex items-center gap-2 text-start">
+            {finalTitle}
           </DialogTitle>
-          <DialogDescription className="pt-2">
-            {description}
+          <DialogDescription className="pt-2 text-start">
+            {finalDescription}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4 flex gap-2 sm:gap-0">
           <Button variant="outline" onClick={onClose}>
-            {cancelText}
+            {finalCancelText}
           </Button>
           <Button 
             variant="destructive" 
@@ -49,7 +57,7 @@ export function ConfirmDeleteModal({
               onClose()
             }}
           >
-            {confirmText}
+            {finalConfirmText}
           </Button>
         </DialogFooter>
       </DialogContent>

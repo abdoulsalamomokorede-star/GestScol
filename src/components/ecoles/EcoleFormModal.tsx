@@ -1,11 +1,12 @@
 'use client'
-
+ 
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, Upload, Loader2, Check } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface EcoleFormModalProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ interface EcoleFormModalProps {
 }
 
 export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormModalProps) {
+  const { t, dir } = useTranslation()
   const [isSaving, setIsSaving] = useState(false)
   const [nom, setNom] = useState('')
   const [ville, setVille] = useState('')
@@ -39,14 +41,14 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
 
     // Vérification de la taille (max 1 Mo)
     if (file.size > 1024 * 1024) {
-      setErrors(prev => ({ ...prev, logo: "L'image ne doit pas dépasser 1 Mo." }))
+      setErrors(prev => ({ ...prev, logo: t('errors.logo_size_limit', "L'image ne doit pas dépasser 1 Mo.") }))
       return
     }
 
     // Vérification du type MIME
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
-      setErrors(prev => ({ ...prev, logo: "Formats autorisés : JPEG, PNG, WebP uniquement." }))
+      setErrors(prev => ({ ...prev, logo: t('errors.logo_format', "Formats autorisés : JPEG, PNG, WebP uniquement.") }))
       return
     }
 
@@ -73,8 +75,8 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    if (!nom.trim()) newErrors.nom = "Le nom de l'établissement est requis."
-    if (!ville.trim()) newErrors.ville = "La ville est requise."
+    if (!nom.trim()) newErrors.nom = t('errors.school_name_required', "Le nom de l'établissement est requis.")
+    if (!ville.trim()) newErrors.ville = t('errors.school_city_required', "La ville est requise.")
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -111,21 +113,28 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto shadow-xl">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Ajouter un établissement</DialogTitle>
+      <DialogContent 
+        className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto shadow-xl"
+        dir={dir}
+      >
+        <DialogHeader className="text-start">
+          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+            {t('ecoles.modal.create_title', "Ajouter un établissement")}
+          </DialogTitle>
           <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-            Configurez les détails administratifs de votre nouvelle école.
+            {t('ecoles.modal.create_desc', "Configurez les détails administratifs de votre nouvelle école.")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 text-start">
           {/* Nom de l'école */}
           <div className="space-y-2">
-            <Label htmlFor="school-nom" className="text-slate-700 dark:text-slate-300 font-medium">Nom de l&apos;établissement *</Label>
+            <Label htmlFor="school-nom" className="text-slate-700 dark:text-slate-300 font-medium">
+              {t('parametres.school.name', "Nom de l'établissement")} *
+            </Label>
             <Input
               id="school-nom"
-              placeholder="Ex: GS Les Flamboyants"
+              placeholder={t('register.dir.school_name_placeholder', "Ex: GS Les Flamboyants")}
               value={nom}
               onChange={(e) => setNom(e.target.value)}
               className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-emerald-500 text-slate-900 dark:text-white focus-visible:ring-emerald-500/20 rounded-xl"
@@ -139,10 +148,12 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
 
           {/* Ville */}
           <div className="space-y-2">
-            <Label htmlFor="school-ville" className="text-slate-700 dark:text-slate-300 font-medium">Ville / Commune *</Label>
+            <Label htmlFor="school-ville" className="text-slate-700 dark:text-slate-300 font-medium">
+              {t('ecoles.modal.city', "Ville / Commune")} *
+            </Label>
             <Input
               id="school-ville"
-              placeholder="Ex: Abidjan Cocody"
+              placeholder={t('register.dir.school_city_placeholder', "Ex: Abidjan Cocody")}
               value={ville}
               onChange={(e) => setVille(e.target.value)}
               className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-emerald-500 text-slate-900 dark:text-white focus-visible:ring-emerald-500/20 rounded-xl"
@@ -156,10 +167,12 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
 
           {/* Adresse */}
           <div className="space-y-2">
-            <Label htmlFor="school-adresse" className="text-slate-700 dark:text-slate-300 font-medium">Adresse géographique complète</Label>
+            <Label htmlFor="school-adresse" className="text-slate-700 dark:text-slate-300 font-medium">
+              {t('register.dir.school_address', "Adresse géographique complète")}
+            </Label>
             <Input
               id="school-adresse"
-              placeholder="Ex: Riviera Palmeraie, Rue Ministre"
+              placeholder={t('register.dir.school_address_placeholder', "Ex: Riviera Palmeraie, Rue Ministre")}
               value={adresse}
               onChange={(e) => setAdresse(e.target.value)}
               className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-emerald-500 text-slate-900 dark:text-white focus-visible:ring-emerald-500/20 rounded-xl"
@@ -168,23 +181,31 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
 
           {/* Téléphone */}
           <div className="space-y-2">
-            <Label htmlFor="school-telephone" className="text-slate-700 dark:text-slate-300 font-medium">Téléphone de l&apos;école</Label>
+            <Label htmlFor="school-telephone" className="text-slate-700 dark:text-slate-300 font-medium">
+              {t('parametres.school.phone', "Téléphone de l'école")}
+            </Label>
             <Input
               id="school-telephone"
-              placeholder="Ex: +225 07 48 85 96 12"
+              placeholder={t('ecoles.modal.phone_placeholder', "Ex: +225 07 48 85 96 12")}
               value={telephone}
               onChange={(e) => setTelephone(e.target.value)}
-              className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-emerald-500 text-slate-900 dark:text-white focus-visible:ring-emerald-500/20 rounded-xl"
+              className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-emerald-500 text-slate-900 dark:text-white focus-visible:ring-emerald-500/20 rounded-xl animate-none"
             />
           </div>
 
           {/* Niveaux enseignés */}
           <div className="space-y-2">
-            <Label className="text-slate-700 dark:text-slate-300 font-medium">Niveaux d&apos;enseignement</Label>
+            <Label className="text-slate-700 dark:text-slate-300 font-medium">
+              {t('ecoles.modal.levels', "Niveaux d'enseignement")}
+            </Label>
             <div className="flex gap-2">
               {['prescolaire', 'primaire', 'secondaire'].map((lvl) => {
                 const isSelected = niveaux.includes(lvl as any)
-                const lvlLabel = lvl === 'prescolaire' ? 'Maternelle' : lvl === 'primaire' ? 'Primaire' : 'Secondaire'
+                const lvlLabel = lvl === 'prescolaire' 
+                  ? t('level.prescolaire', 'Maternelle') 
+                  : lvl === 'primaire' 
+                    ? t('level.primaire', 'Primaire') 
+                    : t('level.secondaire', 'Secondaire')
                 return (
                   <button
                     key={lvl}
@@ -206,7 +227,9 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
 
           {/* Logo upload Base64 */}
           <div className="space-y-2">
-            <Label className="text-slate-700 dark:text-slate-300 font-medium">Logo de l&apos;établissement (Optionnel)</Label>
+            <Label className="text-slate-700 dark:text-slate-300 font-medium">
+              {t('parametres.school.logo', "Logo de l'établissement")} ({t('common.optional', "Optionnel")})
+            </Label>
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
                 {logo ? (
@@ -229,10 +252,10 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
                   onClick={() => document.getElementById('logo-input')?.click()}
                   className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl text-xs"
                 >
-                  Choisir une image
+                  {t('register.dir.choose_image', "Choisir une image")}
                 </Button>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1 leading-normal">
-                  Format JPEG, PNG, WebP uniquement (Max. 1 Mo)
+                  {t('register.dir.logo_formats', "Format JPEG, PNG, WebP uniquement (Max. 1 Mo)")}
                 </span>
               </div>
             </div>
@@ -251,7 +274,7 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
             onClick={onClose}
             className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold"
           >
-            Annuler
+            {t('action.cancel', "Annuler")}
           </Button>
           <Button
             type="button"
@@ -261,10 +284,10 @@ export default function EcoleFormModal({ isOpen, onClose, onSave }: EcoleFormMod
           >
             {isSaving ? (
               <>
-                Création... <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                {t('action.creating', "Création...")} <Loader2 className="h-4.5 w-4.5 animate-spin" />
               </>
             ) : (
-              "Créer l'établissement"
+              t('ecoles.create_btn', "Créer l'établissement")
             )}
           </Button>
         </DialogFooter>

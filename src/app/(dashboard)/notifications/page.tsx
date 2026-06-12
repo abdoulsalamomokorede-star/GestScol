@@ -29,8 +29,10 @@ import {
 import { formatDate } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { NotificationItem, NotificationType } from '@/types'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function NotificationsPage() {
+  const { t, dir } = useTranslation()
   const { 
     currentUser, 
     eleves, 
@@ -146,8 +148,8 @@ export default function NotificationsPage() {
     }
     setSendingState(false)
     toast({
-      title: "Actualisation réussie",
-      description: "Toutes vos notifications ont été marquées comme lues.",
+      title: t('notifications.toast.update_success_title', "Actualisation réussie"),
+      description: t('notifications.toast.update_success_desc', "Toutes vos notifications ont été marquées comme lues."),
     })
   }
 
@@ -157,8 +159,8 @@ export default function NotificationsPage() {
   const handleDelete = async (id: string) => {
     await deleteNotification(id)
     toast({
-      title: "Notification supprimée",
-      description: "Le message a été retiré de votre espace.",
+      title: t('notifications.toast.delete_success_title', "Notification supprimée"),
+      description: t('notifications.toast.delete_success_desc', "Le message a été retiré de votre espace."),
     })
   }
 
@@ -170,8 +172,8 @@ export default function NotificationsPage() {
     await deleteNotifications(ids)
     setSendingState(false)
     toast({
-      title: "Page vidée",
-      description: "Toutes vos notifications ont été supprimées.",
+      title: t('notifications.toast.clear_success_title', "Page vidée"),
+      description: t('notifications.toast.clear_success_desc', "Toutes vos notifications ont été supprimées."),
     })
   }
 
@@ -180,8 +182,8 @@ export default function NotificationsPage() {
     e.preventDefault()
     if (!title.trim() || !description.trim()) {
       toast({
-        title: "Champs obligatoires",
-        description: "Veuillez saisir un titre et un contenu pour votre communiqué.",
+        title: t('notifications.toast.fields_required_title', "Champs obligatoires"),
+        description: t('notifications.toast.fields_required_desc', "Veuillez saisir un titre et un contenu pour votre communiqué."),
         variant: "destructive"
       })
       return
@@ -208,16 +210,16 @@ export default function NotificationsPage() {
       setIsModalOpen(false)
 
       toast({
-        title: "Communiqué publié",
-        description: "Votre annonce a été diffusée avec succès auprès des destinataires cibles.",
+        title: t('notifications.toast.publish_success_title', "Communiqué publié"),
+        description: t('notifications.toast.publish_success_desc', "Votre annonce a été diffusée avec succès auprès des destinataires cibles."),
         className: "bg-success text-white border-none shadow-lg"
       })
 
     } catch (err) {
       console.error(err)
       toast({
-        title: "Erreur de publication",
-        description: "Une erreur est survenue lors de la diffusion de votre message.",
+        title: t('notifications.toast.publish_error_title', "Erreur de publication"),
+        description: t('notifications.toast.publish_error_desc', "Une erreur est survenue lors de la diffusion de votre message."),
         variant: "destructive"
       })
     } finally {
@@ -248,8 +250,8 @@ export default function NotificationsPage() {
       <div className="flex h-[60vh] items-center justify-center">
         <div className="text-center space-y-3">
           <ShieldAlert className="h-12 w-12 text-danger mx-auto animate-bounce" />
-          <h3 className="text-lg font-bold text-text">Session expirée</h3>
-          <p className="text-sm text-muted-foreground">Veuillez vous reconnecter pour accéder aux notifications.</p>
+          <h3 className="text-lg font-bold text-text">{t('notifications.session_expired_title', "Session expirée")}</h3>
+          <p className="text-sm text-muted-foreground">{t('notifications.session_expired_desc', "Veuillez vous reconnecter pour accéder aux notifications.")}</p>
         </div>
       </div>
     )
@@ -258,7 +260,7 @@ export default function NotificationsPage() {
   const unreadCount = displayNotifications.filter(n => !n.lu).length
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300" dir={dir}>
       {/* HEADER DE LA PAGE */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
         <div>
@@ -266,10 +268,10 @@ export default function NotificationsPage() {
             <span className="p-2 rounded-2xl bg-primary/10 text-primary">
               <Bell className="h-8 w-8" />
             </span>
-            Notifications
+            {t('notifications.title', "Notifications")}
           </h1>
           <p className="text-muted-foreground text-sm mt-2">
-            Restez informé de l&apos;actualité administrative et académique de l&apos;établissement en temps réel.
+            {t('notifications.subtitle', "Restez informé de l'actualité administrative et académique de l'établissement en temps réel.")}
           </p>
         </div>
 
@@ -283,7 +285,7 @@ export default function NotificationsPage() {
               className="font-bold text-xs rounded-xl flex items-center gap-2 border border-primary/30 text-primary bg-transparent hover:bg-primary hover:text-white transition-all duration-200"
             >
               {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
-              Tout marquer comme lu
+              {t('notifications.mark_all_read', "Tout marquer comme lu")}
             </Button>
           )}
 
@@ -297,49 +299,37 @@ export default function NotificationsPage() {
               className="font-bold text-xs rounded-xl flex items-center gap-2 border border-rose-200 text-rose-600 bg-transparent hover:bg-rose-50 hover:text-rose-700 transition-all duration-200 dark:border-rose-900/30 dark:hover:bg-rose-950/20"
             >
               {loadingAction ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              Supprimer tout
+              {t('notifications.delete_all', "Supprimer tout")}
             </Button>
           )}
 
-          {/* Bouton Publier un communiqué (Directeur uniquement, visible mais inactif si gratuit) */}
+          {/* Bouton Publier un communiqué (Directeur uniquement) */}
           {currentUser.role === 'directeur' && (
-            ecole?.abonnement?.plan === 'gratuit' ? (
-              <div 
-                className="h-9 px-4 bg-amber-500/10 text-amber-700 border border-amber-500/25 cursor-not-allowed font-bold text-xs rounded-xl flex items-center gap-2 shadow-sm select-none"
-                title="Abonnement Standard requis pour diffuser des communiqués"
-              >
-                <Lock className="h-4 w-4 shrink-0 text-amber-600" />
-                <span>Diffuser un communiqué</span>
-                <span className="text-[9px] bg-amber-500/20 text-amber-800 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">
-                  👑 Premium
-                </span>
-              </div>
-            ) : (
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-primary text-white hover:bg-primary-dark font-bold text-xs rounded-xl flex items-center gap-2 shadow-md">
                     <Megaphone className="h-4 w-4" />
-                    Diffuser un communiqué
+                    {t('notifications.publish_communique', "Diffuser un communiqué")}
                   </Button>
                 </DialogTrigger>
               <DialogContent className="sm:max-w-[500px] border border-border rounded-2xl">
                 <DialogHeader>
                   <DialogTitle className="font-display font-bold text-lg text-text">
-                    Publier un nouveau communiqué
+                    {t('notifications.publish_modal_title', "Publier un nouveau communiqué")}
                   </DialogTitle>
                   <DialogDescription className="text-xs text-muted-foreground">
-                    Rédigez un message à diffuser aux enseignants, aux parents ou à des classes ciblées.
+                    {t('notifications.publish_modal_desc', "Rédigez un message à diffuser aux enseignants, aux parents ou à des classes ciblées.")}
                   </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handlePublish} className="space-y-4 py-3">
                   {/* Titre */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                      Titre du communiqué :
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block text-start">
+                      {t('notifications.communique_title_label', "Titre du communiqué :")}
                     </label>
                     <Input
-                      placeholder="Ex: Convocation réunion des parents"
+                      placeholder={t('notifications.communique_title_placeholder', "Ex: Convocation réunion des parents")}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       className="font-medium text-xs py-5 rounded-lg"
@@ -349,8 +339,8 @@ export default function NotificationsPage() {
 
                   {/* Ciblage */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                      Destinataires cibles :
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block text-start">
+                      {t('notifications.target_label', "Destinataires cibles :")}
                     </label>
                     <Select 
                       value={targetType} 
@@ -360,13 +350,13 @@ export default function NotificationsPage() {
                       }}
                     >
                       <SelectTrigger className="rounded-lg text-xs py-5 font-semibold text-slate-700">
-                        <SelectValue placeholder="Choisir la cible" />
+                        <SelectValue placeholder={t('notifications.target_placeholder', "Choisir la cible")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Tout le monde (Tous)</SelectItem>
-                        <SelectItem value="parent">Tous les Parents</SelectItem>
-                        <SelectItem value="enseignant">Tous les Enseignants</SelectItem>
-                        <SelectItem value="classe">Parents d'une classe spécifique</SelectItem>
+                        <SelectItem value="all">{t('notifications.target_all', "Tout le monde (Tous)")}</SelectItem>
+                        <SelectItem value="parent">{t('notifications.target_parents', "Tous les Parents")}</SelectItem>
+                        <SelectItem value="enseignant">{t('notifications.target_teachers', "Tous les Enseignants")}</SelectItem>
+                        <SelectItem value="classe">{t('notifications.target_class', "Parents d'une classe spécifique")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -374,8 +364,8 @@ export default function NotificationsPage() {
                   {/* Choix de la classe si ciblage classe */}
                   {targetType === 'classe' && (
                     <div className="space-y-1.5 animate-in slide-in-from-top-3 duration-200">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                        Sélectionner la classe ciblée :
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block text-start">
+                        {t('notifications.select_class_label', "Sélectionner la classe ciblée :")}
                       </label>
                       <Select 
                         value={selectedClasseId} 
@@ -383,7 +373,7 @@ export default function NotificationsPage() {
                         required={targetType === 'classe'}
                       >
                         <SelectTrigger className="rounded-lg text-xs py-5 font-semibold text-slate-700">
-                          <SelectValue placeholder="Choisir la classe" />
+                          <SelectValue placeholder={t('notifications.select_class_placeholder', "Choisir la classe")} />
                         </SelectTrigger>
                         <SelectContent>
                           {classes.map(c => (
@@ -396,14 +386,14 @@ export default function NotificationsPage() {
 
                   {/* Description */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                      Contenu de l'annonce :
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block text-start">
+                      {t('notifications.content_label', "Contenu de l'annonce :")}
                     </label>
                     <textarea
-                      placeholder="Rédigez ici les détails de votre annonce pédagogique ou administrative..."
+                      placeholder={t('notifications.content_placeholder', "Rédigez ici les détails de votre annonce pédagogique ou administrative...")}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-medium ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-lg leading-relaxed"
+                      className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-medium ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-lg leading-relaxed text-start"
                       required
                     />
                   </div>
@@ -415,7 +405,7 @@ export default function NotificationsPage() {
                       onClick={() => setIsModalOpen(false)}
                       className="rounded-xl font-bold text-xs"
                     >
-                      Annuler
+                      {t('notifications.cancel', "Annuler")}
                     </Button>
                     <Button
                       type="submit"
@@ -427,13 +417,13 @@ export default function NotificationsPage() {
                       ) : (
                         <Send className="h-3.5 w-3.5" />
                       )}
-                      Diffuser
+                      {t('notifications.publish_btn', "Diffuser")}
                     </Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
             </Dialog>
-          ))}
+          )}
         </div>
       </div>
 
@@ -444,9 +434,9 @@ export default function NotificationsPage() {
             <div className="p-4 rounded-full bg-muted/60 mb-4 text-muted-foreground">
               <Bell className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
             </div>
-            <h3 className="text-lg font-bold text-text">Aucune notification</h3>
+            <h3 className="text-lg font-bold text-text">{t('notifications.empty_title', "Aucune notification")}</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-              Vous êtes complètement à jour ! Aucune alerte académique ou administrative à signaler pour le moment.
+              {t('notifications.empty_desc', "Vous êtes complètement à jour ! Aucune alerte académique ou administrative à signaler pour le moment.")}
             </p>
           </Card>
         ) : (
@@ -475,7 +465,7 @@ export default function NotificationsPage() {
                       </h4>
                       {!notif.lu && (
                         <Badge className="bg-primary/10 text-primary border-none font-bold text-[9px] h-4 uppercase px-1.5 py-0 shrink-0">
-                          Nouveau
+                          {t('notifications.badge_new', "Nouveau")}
                         </Badge>
                       )}
                       
@@ -483,12 +473,12 @@ export default function NotificationsPage() {
                       {currentUser.role === 'directeur' && notif.type === 'communique' && (
                         <Badge variant="outline" className="text-[9px] font-bold text-slate-500 px-1.5 py-0 border-slate-200 shrink-0">
                           {notif.destinataireRole === 'all' 
-                            ? 'Tous' 
+                            ? t('notifications.target_badge_all', 'Tous') 
                             : notif.destinataireRole === 'enseignant'
-                            ? 'Enseignants'
+                            ? t('notifications.target_badge_teachers', 'Enseignants')
                             : notif.classeId
-                            ? `Classe: ${classes.find(c => c.id === notif.classeId)?.nom || 'Classe'}`
-                            : 'Parents'
+                            ? t('notifications.target_badge_class', 'Classe: {name}').replace('{name}', classes.find(c => c.id === notif.classeId)?.nom || 'Classe')
+                            : t('notifications.target_badge_parents', 'Parents')
                           }
                         </Badge>
                       )}
@@ -512,7 +502,7 @@ export default function NotificationsPage() {
                         size="sm"
                         className="font-bold text-xs text-primary hover:text-primary-dark p-0 h-auto"
                       >
-                        Marquer comme lu
+                        {t('notifications.mark_as_read', "Marquer comme lu")}
                       </Button>
                     )}
                     
@@ -520,10 +510,10 @@ export default function NotificationsPage() {
                       onClick={() => handleDelete(notif.id)}
                       variant="ghost" 
                       size="sm"
-                      className="font-bold text-xs text-danger hover:text-danger/80 p-0 h-auto flex items-center gap-1 ml-auto"
+                      className="font-bold text-xs text-danger hover:text-danger/80 p-0 h-auto flex items-center gap-1 ms-auto"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Supprimer
+                      {t('notifications.delete_btn', "Supprimer")}
                     </Button>
                   </div>
                 </div>
@@ -537,9 +527,9 @@ export default function NotificationsPage() {
           <div className="flex gap-3">
             <Info className="h-5 w-5 text-primary shrink-0" />
             <div className="space-y-1">
-              <h4 className="text-xs font-bold text-text uppercase">Canal de transmission officiel</h4>
+              <h4 className="text-xs font-bold text-text uppercase">{t('notifications.channel_title', "Canal de transmission officiel")}</h4>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Les notifications présentées dans cet espace correspondent à l&apos;activité administrative enregistrée sur l&apos;application **GestScol**. Les alertes critiques (scolarité en retard, conseil de classe, urgence de santé) font également l&apos;objet d&apos;un SMS envoyé directement aux numéros ivoiriens (+225) des parents d&apos;élèves.
+                {t('notifications.channel_desc', "Les notifications présentées dans cet espace correspondent à l'activité administrative enregistrée sur l'application **GestScol**. Les alertes critiques (scolarité en retard, conseil de classe, urgence de santé) font également l'objet d'un SMS envoyé directement aux numéros ivoiriens (+225) des parents d'élèves.")}
               </p>
             </div>
           </div>
@@ -552,10 +542,10 @@ export default function NotificationsPage() {
           <DialogHeader>
             <DialogTitle className="font-display font-bold text-lg flex items-center gap-2 text-rose-600">
               <Trash2 className="h-5 w-5" />
-              Supprimer toutes les notifications
+              {t('notifications.delete_all_title', "Supprimer toutes les notifications")}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-2">
-              Êtes-vous sûr de vouloir vider toutes les notifications de votre espace ? Cette action est irréversible.
+              {t('notifications.delete_all_desc', "Êtes-vous sûr de vouloir vider toutes les notifications de votre espace ? Cette action est irréversible.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="pt-4 flex gap-3">
@@ -565,7 +555,7 @@ export default function NotificationsPage() {
               onClick={() => setIsDeleteAllOpen(false)}
               className="rounded-xl font-bold text-xs"
             >
-              Annuler
+              {t('notifications.cancel', "Annuler")}
             </Button>
             <Button
               type="button"
@@ -573,7 +563,7 @@ export default function NotificationsPage() {
               disabled={loadingAction}
               className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs"
             >
-              {loadingAction ? <Loader2 className="h-4 w-4 animate-spin" /> : "Oui, supprimer tout"}
+              {loadingAction ? <Loader2 className="h-4 w-4 animate-spin" /> : t('notifications.delete_all_confirm', "Oui, supprimer tout")}
             </Button>
           </DialogFooter>
         </DialogContent>

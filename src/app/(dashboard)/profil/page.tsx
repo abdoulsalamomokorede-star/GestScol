@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useToast } from '@/hooks/use-toast'
-import { getInitiales } from '@/lib/utils'
+import { getInitiales, formatTelephone } from '@/lib/utils'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   User,
   Mail,
@@ -17,7 +18,6 @@ import {
   MapPin,
   KeyRound,
   ShieldAlert,
-  ShieldCheck,
   Save,
   Camera,
   School,
@@ -29,6 +29,7 @@ import { uploadProfilePhoto } from '@/app/actions/upload'
 export default function ProfilPage() {
   const { currentUser, setCurrentUser } = useSchoolStore()
   const { toast } = useToast()
+  const { t, dir } = useTranslation()
 
   const [loading, setLoading] = useState(false)
   const [phone, setPhone] = useState(currentUser?.telephone || '')
@@ -41,21 +42,21 @@ export default function ProfilPage() {
 
   if (!currentUser) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
+      <div className="flex h-[60vh] items-center justify-center" dir={dir}>
         <div className="text-center space-y-3">
           <ShieldAlert className="h-12 w-12 text-danger mx-auto animate-bounce" />
-          <h3 className="text-lg font-bold text-text">Session expirée</h3>
-          <p className="text-sm text-muted-foreground">Veuillez vous reconnecter pour accéder à votre profil.</p>
+          <h3 className="text-lg font-bold text-text">{t('profil.session_expired', 'Session expirée')}</h3>
+          <p className="text-sm text-muted-foreground">{t('profil.reconnect_desc', 'Veuillez vous reconnecter pour accéder à votre profil.')}</p>
         </div>
       </div>
     )
   }
 
   const roleLabel = currentUser.role === 'directeur'
-    ? 'Directeur de l\'Établissement'
+    ? t('profil.role_director', "Directeur de l'Établissement")
     : currentUser.role === 'enseignant'
-      ? 'Enseignant Principal'
-      : 'Parent d\'Élève'
+      ? t('profil.role_teacher', 'Enseignant Principal')
+      : t('profil.role_parent', "Parent d'Élève")
 
   const handleSaveCoordonnees = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,8 +65,8 @@ export default function ProfilPage() {
     const phoneDigits = phone.replace(/[^0-9]/g, '')
     if (phone.includes('+225') && phoneDigits.replace('225', '').length !== 10) {
       toast({
-        title: "Numéro de téléphone invalide",
-        description: "Le numéro ivoirien doit contenir exactement 10 chiffres après l'indicatif +225 (Ex: +225 07 08 09 10 11).",
+        title: t('profil.toast.invalid_phone_title', "Numéro de téléphone invalide"),
+        description: t('profil.toast.invalid_phone_desc', "Le numéro ivoirien doit contenir exactement 10 chiffres après l'indicatif +225 (Ex: +225 07 08 09 10 11)."),
         variant: "destructive"
       })
       return
@@ -105,8 +106,8 @@ export default function ProfilPage() {
 
       if (emailChanged) {
         toast({
-          title: "Vérification d'email requise",
-          description: "Un lien de confirmation a été envoyé à votre nouvelle adresse. Veuillez le valider.",
+          title: t('profil.toast.email_verification_title', "Vérification d'email requise"),
+          description: t('profil.toast.email_verification_desc', "Un lien de confirmation a été envoyé à votre nouvelle adresse. Veuillez le valider."),
           variant: "default"
         })
       }
@@ -120,15 +121,15 @@ export default function ProfilPage() {
       setCurrentUser(updatedUser)
 
       toast({
-        title: "Profil mis à jour",
-        description: "Vos coordonnées ont été enregistrées avec succès sur GestScol.",
+        title: t('profil.toast.update_success_title', "Profil mis à jour"),
+        description: t('profil.toast.update_success_desc', "Vos coordonnées ont été enregistrées avec succès sur GestScol."),
         variant: "default"
       })
     } catch (err: any) {
       console.error(err)
       toast({
-        title: "Erreur de mise à jour",
-        description: err.message || "Une erreur est survenue lors de la sauvegarde.",
+        title: t('profil.toast.update_error_title', "Erreur de mise à jour"),
+        description: err.message || t('common.save_error_desc', "Une erreur est survenue lors de la sauvegarde."),
         variant: "destructive"
       })
     } finally {
@@ -141,8 +142,8 @@ export default function ProfilPage() {
     if (file) {
       if (file.size > 1024 * 1024) {
         toast({
-          title: "Fichier trop volumineux",
-          description: "La taille de l'image ne doit pas dépasser 1 Mo.",
+          title: t('profil.toast.file_too_large_title', "Fichier trop volumineux"),
+          description: t('profil.toast.file_too_large_desc', "La taille de l'image ne doit pas dépasser 1 Mo."),
           variant: "destructive"
         })
         return
@@ -167,15 +168,15 @@ export default function ProfilPage() {
             })
 
             toast({
-              title: "Photo de profil mise à jour",
-              description: "Votre nouvelle photo a été enregistrée avec succès.",
+              title: t('profil.toast.photo_success_title', "Photo de profil mise à jour"),
+              description: t('profil.toast.photo_success_desc', "Votre nouvelle photo a été enregistrée avec succès."),
               variant: "default"
             })
           } catch (err: any) {
             console.error(err)
             toast({
-              title: "Erreur",
-              description: err.message || "Impossible de sauvegarder la photo.",
+              title: t('profil.toast.error_title', "Erreur"),
+              description: err.message || t('profil.toast.photo_error_desc', "Impossible de sauvegarder la photo."),
               variant: "destructive"
             })
           } finally {
@@ -193,8 +194,8 @@ export default function ProfilPage() {
 
     if (!oldPassword) {
       toast({
-        title: "Erreur",
-        description: "Veuillez renseigner votre mot de passe actuel.",
+        title: t('profil.toast.error_title', "Erreur"),
+        description: t('profil.toast.password_current_required', "Veuillez renseigner votre mot de passe actuel."),
         variant: "destructive"
       })
       return
@@ -207,8 +208,8 @@ export default function ProfilPage() {
 
     if (newPassword.length < 12 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
       toast({
-        title: "Sécurité insuffisante",
-        description: "Le nouveau mot de passe doit contenir au moins 12 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.",
+        title: t('profil.toast.password_security_title', "Sécurité insuffisante"),
+        description: t('profil.toast.password_security_desc', "Le nouveau mot de passe doit contenir au moins 12 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial."),
         variant: "destructive"
       })
       return
@@ -216,8 +217,8 @@ export default function ProfilPage() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Mots de passe différents",
-        description: "La confirmation ne correspond pas au nouveau mot de passe.",
+        title: t('profil.toast.password_mismatch_title', "Mots de passe différents"),
+        description: t('profil.toast.password_mismatch_desc', "La confirmation ne correspond pas au nouveau mot de passe."),
         variant: "destructive"
       })
       return
@@ -254,15 +255,15 @@ export default function ProfilPage() {
       setConfirmPassword('')
 
       toast({
-        title: "Mot de passe modifié",
-        description: "Votre mot de passe a été sécurisé et renouvelé avec succès.",
+        title: t('profil.toast.password_success_title', "Mot de passe modifié"),
+        description: t('profil.toast.password_success_desc', "Votre mot de passe a été sécurisé et renouvelé avec succès."),
         variant: "default"
       })
     } catch (err: any) {
       console.error(err)
       toast({
-        title: "Erreur",
-        description: err.message || "Impossible de modifier le mot de passe.",
+        title: t('profil.toast.error_title', "Erreur"),
+        description: err.message || t('profil.toast.password_error_desc', "Impossible de modifier le mot de passe."),
         variant: "destructive"
       })
     } finally {
@@ -271,17 +272,17 @@ export default function ProfilPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300" dir={dir}>
       {/* HEADER */}
       <div className="border-b border-border/40 pb-5">
         <h1 className="text-3xl font-display font-bold text-text flex items-center gap-3">
           <span className="p-2 rounded-2xl bg-primary/10 text-primary">
             <User className="h-8 w-8" />
           </span>
-          Mon Profil
+          {t('title.profil', 'Mon Profil')}
         </h1>
         <p className="text-muted-foreground text-sm mt-2">
-          Gérez vos informations de compte, vos coordonnées ivoiriennes et la sécurité de votre accès.
+          {t('profil.desc', 'Gérez vos informations de compte, vos coordonnées ivoiriennes et la sécurité de votre accès.')}
         </p>
       </div>
 
@@ -309,25 +310,31 @@ export default function ProfilPage() {
               {currentUser.prenom} {currentUser.nom}
             </h3>
             <p className="text-xs text-muted-foreground font-semibold mt-1 flex items-center gap-1.5 justify-center">
-              <School className="h-3..5 w-3.5 text-primary" />
+              <School className="h-3.5 w-3.5 text-primary" />
               <span>{roleLabel}</span>
             </p>
             <Badge variant="secondary" className="mt-3.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-extrabold text-[10px] rounded-full px-2.5 py-0.5 border border-emerald-200">
-              Compte Actif
+              {t('profil.active_account', 'Compte Actif')}
             </Badge>
 
-            <div className="w-full border-t border-border/50 my-5 pt-4 space-y-3.5 text-left text-xs text-slate-600 dark:text-slate-400 font-medium">
+            <div className="w-full border-t border-border/50 my-5 pt-4 space-y-3.5 text-start text-xs text-slate-600 dark:text-slate-400 font-medium">
               <div className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="truncate">{currentUser.email}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span>{currentUser.telephone || 'Non renseigné'}</span>
+                <span>
+                  {currentUser.telephone ? (
+                    <span dir="ltr">{formatTelephone(currentUser.telephone)}</span>
+                  ) : (
+                    t('profil.not_specified', 'Non renseigné')
+                  )}
+                </span>
               </div>
               <div className="flex items-center gap-2.5">
                 <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span>Abidjan, Côte d&apos;Ivoire</span>
+                <span>{t('profil.location_ivory_coast', "Abidjan, Côte d'Ivoire")}</span>
               </div>
             </div>
           </CardContent>
@@ -340,28 +347,28 @@ export default function ProfilPage() {
             <CardHeader className="pb-3 border-b border-border/40">
               <CardTitle className="text-sm font-bold text-text flex items-center gap-2 uppercase tracking-wide">
                 <User className="h-4.5 w-4.5 text-primary" />
-                Informations de contact
+                {t('profil.contact_info', 'Informations de contact')}
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                Mettez à jour vos informations de liaison administrative.
+                {t('profil.contact_desc', 'Mettez à jour vos informations de liaison administrative.')}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleSaveCoordonnees} className="space-y-4">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label htmlFor="firstname" className="text-xs font-bold text-muted-foreground uppercase">Prénom</Label>
+                    <Label htmlFor="firstname" className="text-xs font-bold text-muted-foreground uppercase">{t('profil.firstname', 'Prénom')}</Label>
                     <Input id="firstname" value={currentUser.prenom} disabled className="bg-muted text-muted-foreground text-xs h-9 font-semibold" />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="lastname" className="text-xs font-bold text-muted-foreground uppercase">Nom de famille</Label>
+                    <Label htmlFor="lastname" className="text-xs font-bold text-muted-foreground uppercase">{t('profil.lastname', 'Nom de famille')}</Label>
                     <Input id="lastname" value={currentUser.nom} disabled className="bg-muted text-muted-foreground text-xs h-9 font-semibold" />
                   </div>
                 </div>
 
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase">Adresse Email</Label>
+                    <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase">{t('profil.email', 'Adresse Email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -372,7 +379,7 @@ export default function ProfilPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="phone" className="text-xs font-bold text-muted-foreground uppercase">Téléphone portable (+225)</Label>
+                    <Label htmlFor="phone" className="text-xs font-bold text-muted-foreground uppercase">{t('profil.phone', 'Téléphone portable (+225)')}</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -380,6 +387,7 @@ export default function ProfilPage() {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+225 07 00 00 00 00"
                       className="text-xs h-9 border-border font-semibold bg-background"
+                      dir="ltr"
                       required
                     />
                   </div>
@@ -388,10 +396,10 @@ export default function ProfilPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shrink-0 ml-auto"
+                  className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shrink-0 ms-auto"
                 >
                   <Save className="h-4 w-4" />
-                  {loading ? 'Sauvegarde...' : 'Enregistrer les modifications'}
+                  {loading ? t('profil.saving', 'Sauvegarde...') : t('profil.save_changes', 'Enregistrer les modifications')}
                 </Button>
               </form>
             </CardContent>
@@ -402,49 +410,52 @@ export default function ProfilPage() {
             <CardHeader className="pb-3 border-b border-border/40">
               <CardTitle className="text-sm font-bold text-text flex items-center gap-2 uppercase tracking-wide">
                 <Lock className="h-4.5 w-4.5 text-primary" />
-                Sécurité du compte
+                {t('profil.security_title', 'Sécurité du compte')}
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                Modifiez régulièrement votre mot de passe pour assurer l&apos;inviolabilité de vos accès.
+                {t('profil.security_desc', "Modifiez régulièrement votre mot de passe pour assurer l'inviolabilité de vos accès.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="old-password" className="text-xs font-bold text-muted-foreground uppercase">Mot de passe actuel</Label>
+                  <Label htmlFor="old-password" className="text-xs font-bold text-muted-foreground uppercase">{t('profil.password_current', 'Mot de passe actuel')}</Label>
                   <Input
                     id="old-password"
                     type="password"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    placeholder="Saisissez votre mot de passe actuel"
+                    placeholder={t('profil.password_current_placeholder', 'Saisissez votre mot de passe actuel')}
                     className="text-xs h-9 border-border bg-background"
+                    dir="ltr"
                     required
                   />
                 </div>
 
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label htmlFor="new-password" className="text-xs font-bold text-muted-foreground uppercase">Nouveau mot de passe</Label>
+                    <Label htmlFor="new-password" className="text-xs font-bold text-muted-foreground uppercase">{t('profil.password_new', 'Nouveau mot de passe')}</Label>
                     <Input
                       id="new-password"
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min. 12 caractères"
+                      placeholder={t('profil.password_new_placeholder', 'Min. 12 caractères')}
                       className="text-xs h-9 border-border bg-background"
+                      dir="ltr"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="confirm-password" className="text-xs font-bold text-muted-foreground uppercase">Confirmer le nouveau mot de passe</Label>
+                    <Label htmlFor="confirm-password" className="text-xs font-bold text-muted-foreground uppercase">{t('profil.password_confirm', 'Confirmer le nouveau mot de passe')}</Label>
                     <Input
                       id="confirm-password"
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirmez à l'identique"
+                      placeholder={t('profil.password_confirm_placeholder', "Confirmez à l'identique")}
                       className="text-xs h-9 border-border bg-background"
+                      dir="ltr"
                       required
                     />
                   </div>
@@ -453,10 +464,10 @@ export default function ProfilPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shrink-0 ml-auto"
+                  className="bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md shrink-0 ms-auto"
                 >
                   <KeyRound className="h-4 w-4" />
-                  {loading ? 'Mise à jour...' : 'Renouveler le mot de passe'}
+                  {loading ? t('profil.updating', 'Mise à jour...') : t('profil.password_renew', 'Renouveler le mot de passe')}
                 </Button>
               </form>
             </CardContent>

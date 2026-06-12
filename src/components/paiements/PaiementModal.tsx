@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { CreditCard, Wallet, Coins, Smartphone, Check, Loader2 } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface PaiementModalProps {
   isOpen: boolean
@@ -34,6 +35,7 @@ export default function PaiementModal({
 }: PaiementModalProps) {
   const { enregistrerPaiementInstallment } = useSchoolStore()
   const { toast } = useToast()
+  const { t, dir } = useTranslation()
   
   const resteAPayer = paiement.montant - (paiement.montantPaye || 0)
   
@@ -46,13 +48,13 @@ export default function PaiementModal({
   const getPaiementTypeLabel = (type: string) => {
     switch (type) {
       case 'inscription':
-        return "Frais d'inscription"
+        return t('paiements.type.inscription', "Frais d'inscription")
       case 'scolarite':
-        return 'Scolarité Globale'
+        return t('paiements.type.scolarite', 'Scolarité Globale')
       case 'cantine':
-        return 'Cantine Scolaire'
+        return t('paiements.type.cantine', 'Cantine Scolaire')
       case 'transport':
-        return 'Transport Scolaire'
+        return t('paiements.type.transport', 'Transport Scolaire')
       default:
         return type
     }
@@ -64,18 +66,21 @@ export default function PaiementModal({
 
     const amt = parseInt(montantSaisi, 10)
     if (isNaN(amt) || amt <= 0) {
-      setError('Veuillez saisir un montant de versement valide.')
+      setError(t('paiements.modal.encaissement.error_invalid_amount', 'Veuillez saisir un montant de versement valide.'))
       return
     }
 
     if (amt > resteAPayer) {
-      setError(`Le montant ne peut pas dépasser le reste à payer (${formatCFA(resteAPayer)}).`)
+      setError(
+        t('paiements.modal.encaissement.error_exceed_remaining', 'Le montant ne peut pas dépasser le reste à payer ({max}).')
+          .replace('{max}', formatCFA(resteAPayer))
+      )
       return
     }
 
     // Validation référence pour paiement mobile
     if (mode !== 'especes' && !reference.trim()) {
-      setError('La référence de transaction est obligatoire pour les paiements mobiles.')
+      setError(t('paiements.modal.encaissement.error_reference_required', 'La référence de transaction est obligatoire pour les paiements mobiles.'))
       return
     }
 
@@ -93,18 +98,23 @@ export default function PaiementModal({
         
         const nouveauReste = resteAPayer - amt
         toast({
-          title: nouveauReste === 0 ? 'Paiement soldé avec succès' : 'Versement enregistré avec succès',
+          title: nouveauReste === 0 
+            ? t('paiements.modal.encaissement.toast_settled_title', 'Paiement soldé avec succès') 
+            : t('paiements.modal.encaissement.toast_success_title', 'Versement enregistré avec succès'),
           description: nouveauReste === 0 
-            ? `Le règlement pour ${eleveName} a été soldé en totalité.`
-            : `Le versement de ${formatCFA(amt)} pour ${eleveName} a été validé. Solde restant : ${formatCFA(nouveauReste)}.`,
+            ? t('paiements.modal.encaissement.toast_settled_desc', 'Le règlement pour {name} a été soldé en totalité.').replace('{name}', eleveName)
+            : t('paiements.modal.encaissement.toast_success_desc', 'Le versement de {amount} pour {name} a été validé. Solde restant : {remaining}.')
+                .replace('{amount}', formatCFA(amt))
+                .replace('{name}', eleveName)
+                .replace('{remaining}', formatCFA(nouveauReste)),
           variant: 'default',
         })
         
         onClose()
       } catch (err) {
         toast({
-          title: 'Erreur',
-          description: "Une erreur est survenue lors de l'enregistrement.",
+          title: t('paiements.modal.encaissement.toast_error_title', 'Erreur'),
+          description: t('paiements.modal.encaissement.toast_error_desc', "Une erreur est survenue lors de l'enregistrement."),
           variant: 'destructive',
         })
       } finally {
@@ -115,37 +125,37 @@ export default function PaiementModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[480px] max-h-[90vh] overflow-y-auto bg-card border-border/50 text-text scrollbar-thin">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[480px] max-h-[90vh] overflow-y-auto bg-card border-border/50 text-text scrollbar-thin" dir={dir}>
         <DialogHeader>
-          <DialogTitle className="text-xl font-display font-bold">Encaisser un règlement</DialogTitle>
+          <DialogTitle className="text-xl font-display font-bold text-start">{t('paiements.modal.encaissement.title', "Encaisser un règlement")}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-2">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-2 text-start">
           {/* Fiche récapitative de la dette */}
           <div className="bg-muted/30 border border-border/50 rounded-xl p-4 space-y-3">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Élève</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('paiements.modal.encaissement.student', "Élève")}</p>
                 <p className="font-bold text-text text-base mt-0.5">{eleveName}</p>
-                <p className="text-xs text-muted-foreground">Classe: <span className="font-medium text-text">{classeNom}</span></p>
+                <p className="text-xs text-muted-foreground">{t('paiements.modal.encaissement.class', "Classe")}: <span className="font-medium text-text">{classeNom}</span></p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Type de frais</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('paiements.modal.encaissement.fees_type', "Type de frais")}</p>
                 <p className="font-medium text-text text-sm mt-0.5">{getPaiementTypeLabel(paiement.type)}</p>
               </div>
             </div>
             
             <div className="pt-2 border-t border-border/40 space-y-1.5 text-sm">
               <div className="flex justify-between items-center text-muted-foreground">
-                <span>Montant total dû :</span>
+                <span>{t('paiements.modal.encaissement.total_due', "Montant total dû :")}</span>
                 <span className="font-semibold text-text">{formatCFA(paiement.montant)}</span>
               </div>
               <div className="flex justify-between items-center text-muted-foreground">
-                <span>Déjà réglé :</span>
+                <span>{t('paiements.modal.encaissement.already_paid', "Déjà réglé :")}</span>
                 <span className="font-semibold text-success">{formatCFA(paiement.montantPaye || 0)}</span>
               </div>
               <div className="flex justify-between items-center pt-1.5 border-t border-dashed border-border/40 font-bold text-text">
-                <span>Reste à payer :</span>
+                <span>{t('paiements.modal.encaissement.remaining', "Reste à payer :")}</span>
                 <span className="text-lg text-danger font-extrabold">{formatCFA(resteAPayer)}</span>
               </div>
             </div>
@@ -154,7 +164,7 @@ export default function PaiementModal({
           {/* Champ de saisie du montant du versement */}
           <div className="space-y-2">
             <Label htmlFor="montantVersement" className="text-sm font-semibold text-text">
-              Montant du versement actuel (FCFA) <span className="text-danger">*</span>
+              {t('paiements.modal.encaissement.current_amount', "Montant du versement actuel (FCFA)")} <span className="text-danger">*</span>
             </Label>
             <Input
               id="montantVersement"
@@ -170,19 +180,19 @@ export default function PaiementModal({
               className="bg-background border-border text-text font-bold"
             />
             <p className="text-[11px] text-muted-foreground">
-              Entrez le montant en FCFA du règlement en cours (maximum {formatCFA(resteAPayer)}).
+              {t('paiements.modal.encaissement.current_amount_desc', "Entrez le montant en FCFA du règlement en cours (maximum {max}).").replace('{max}', formatCFA(resteAPayer))}
             </p>
           </div>
 
           {/* Sélection du mode de paiement */}
           <div className="space-y-3">
-            <Label className="text-sm font-semibold text-text">Mode de règlement</Label>
+            <Label className="text-sm font-semibold text-text">{t('paiements.modal.encaissement.payment_mode', "Mode de règlement")}</Label>
             <div className="grid grid-cols-2 gap-3">
               {/* Wave */}
               <button
                 type="button"
                 onClick={() => { setMode('wave'); setError('') }}
-                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 ${
+                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 rtl:space-x-reverse ${
                   mode === 'wave'
                     ? 'border-[#1E90FF] bg-[#1E90FF]/5 ring-1 ring-[#1E90FF]'
                     : 'border-border/50 hover:bg-muted/10'
@@ -193,7 +203,7 @@ export default function PaiementModal({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-text">Wave</p>
-                  <p className="text-xs text-muted-foreground truncate">Paiement Mobile</p>
+                  <p className="text-xs text-muted-foreground truncate">{t('paiements.modal.encaissement.mobile_payment', "Paiement Mobile")}</p>
                 </div>
                 {mode === 'wave' && <Check className="h-4 w-4 text-[#1E90FF] shrink-0" />}
               </button>
@@ -202,7 +212,7 @@ export default function PaiementModal({
               <button
                 type="button"
                 onClick={() => { setMode('orange_money'); setError('') }}
-                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 ${
+                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 rtl:space-x-reverse ${
                   mode === 'orange_money'
                     ? 'border-[#FF6600] bg-[#FF6600]/5 ring-1 ring-[#FF6600]'
                     : 'border-border/50 hover:bg-muted/10'
@@ -213,7 +223,7 @@ export default function PaiementModal({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-text">Orange Money</p>
-                  <p className="text-xs text-muted-foreground truncate">Paiement Mobile</p>
+                  <p className="text-xs text-muted-foreground truncate">{t('paiements.modal.encaissement.mobile_payment', "Paiement Mobile")}</p>
                 </div>
                 {mode === 'orange_money' && <Check className="h-4 w-4 text-[#FF6600] shrink-0" />}
               </button>
@@ -222,7 +232,7 @@ export default function PaiementModal({
               <button
                 type="button"
                 onClick={() => { setMode('mtn_momo'); setError('') }}
-                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 ${
+                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 rtl:space-x-reverse ${
                   mode === 'mtn_momo'
                     ? 'border-[#FFCC00] bg-[#FFCC00]/5 ring-1 ring-[#FFCC00]'
                     : 'border-border/50 hover:bg-muted/10'
@@ -233,7 +243,7 @@ export default function PaiementModal({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-text">MTN MoMo</p>
-                  <p className="text-xs text-muted-foreground truncate">Paiement Mobile</p>
+                  <p className="text-xs text-muted-foreground truncate">{t('paiements.modal.encaissement.mobile_payment', "Paiement Mobile")}</p>
                 </div>
                 {mode === 'mtn_momo' && <Check className="h-4 w-4 text-[#FFCC00] shrink-0" />}
               </button>
@@ -242,7 +252,7 @@ export default function PaiementModal({
               <button
                 type="button"
                 onClick={() => { setMode('especes'); setError(''); setReference('') }}
-                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 ${
+                className={`flex items-center space-x-3 p-3 rounded-xl border text-left transition-all duration-200 rtl:space-x-reverse ${
                   mode === 'especes'
                     ? 'border-primary bg-primary/5 ring-1 ring-primary'
                     : 'border-border/50 hover:bg-muted/10'
@@ -252,8 +262,8 @@ export default function PaiementModal({
                   <Coins className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-text">Espèces</p>
-                  <p className="text-xs text-muted-foreground truncate">Physique de caisse</p>
+                  <p className="text-sm font-bold text-text">{t('paiements.modal.encaissement.cash', "Espèces")}</p>
+                  <p className="text-xs text-muted-foreground truncate">{t('paiements.modal.encaissement.cash_payment', "Physique de caisse")}</p>
                 </div>
                 {mode === 'especes' && <Check className="h-4 w-4 text-primary shrink-0" />}
               </button>
@@ -264,7 +274,7 @@ export default function PaiementModal({
           {mode !== 'especes' && (
             <div className="space-y-2 animate-in fade-in duration-250">
               <Label htmlFor="ref" className="text-sm font-semibold text-text">
-                Référence de transaction <span className="text-danger">*</span>
+                {t('paiements.modal.encaissement.reference', "Référence de transaction")} <span className="text-danger">*</span>
               </Label>
               <Input
                 id="ref"
@@ -278,7 +288,7 @@ export default function PaiementModal({
                 className="bg-background border-border text-text placeholder-muted-foreground"
               />
               <p className="text-xs text-muted-foreground">
-                Saisissez le code de confirmation reçu par SMS ou sur la console partenaire.
+                {t('paiements.modal.encaissement.reference_desc', "Saisissez le code de confirmation reçu par SMS ou sur la console partenaire.")}
               </p>
             </div>
           )}
@@ -288,11 +298,12 @@ export default function PaiementModal({
           )}
 
           <div className="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-xl p-3 text-xs text-[#B45309] space-y-1">
-            <p className="font-semibold flex items-center">
-              ⚠️ Attention & Contrôle de Sécurité
+            <p className="font-semibold flex items-center gap-1.5">
+              {t('paiements.modal.encaissement.security_warning_title', "⚠️ Attention & Contrôle de Sécurité")}
             </p>
             <p>
-              Avant de valider, veuillez vous assurer que la somme de <strong className="font-bold">{formatCFA(parseInt(montantSaisi, 10) || 0)}</strong> a bien été créditée sur le compte de l&apos;école ou reçue en espèces.
+              {t('paiements.modal.encaissement.security_warning_desc', "Avant de valider, veuillez vous assurer que la somme de {amount} a bien été créditée sur le compte de l'école ou reçue en espèces.")
+                .replace('{amount}', formatCFA(parseInt(montantSaisi, 10) || 0))}
             </p>
           </div>
 
@@ -304,7 +315,7 @@ export default function PaiementModal({
               disabled={loading}
               className="border-border text-text hover:bg-muted hover:text-text w-full sm:w-auto"
             >
-              Annuler
+              {t('action.cancel', "Annuler")}
             </Button>
             <Button
               type="submit"
@@ -313,11 +324,11 @@ export default function PaiementModal({
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Traitement...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />
+                  {t('paiements.modal.encaissement.action_processing', "Traitement...")}
                 </>
               ) : (
-                'Valider l&apos;encaissement'
+                t('paiements.modal.encaissement.action_validate', "Valider l'encaissement")
               )}
             </Button>
           </DialogFooter>
