@@ -656,15 +656,17 @@ export async function createDirecteurAccount(rawPayload: any) {
       return { success: false, error: "Cette adresse email est déjà associée à un compte." }
     }
 
-    // 3. Créer l'utilisateur dans Supabase Auth
-    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
+    // 3. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
+    const supabase = await createClient()
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.motDePasse,
-      email_confirm: false,
-      user_metadata: {
-        nom: data.nom,
-        prenom: data.prenom,
-        role: 'directeur'
+      options: {
+        data: {
+          nom: data.nom,
+          prenom: data.prenom,
+          role: 'directeur'
+        }
       }
     })
 
@@ -802,15 +804,17 @@ export async function createEnseignantAccount(rawPayload: any) {
       invitation = inviteByEmail
     }
 
-    // 4. Créer l'utilisateur dans Supabase Auth
-    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
+    // 4. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
+    const supabase = await createClient()
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.motDePasse,
-      email_confirm: false,
-      user_metadata: {
-        nom: data.nom,
-        prenom: data.prenom,
-        role: 'enseignant'
+      options: {
+        data: {
+          nom: data.nom,
+          prenom: data.prenom,
+          role: 'enseignant'
+        }
       }
     })
 
@@ -899,15 +903,17 @@ export async function createParentAccount(rawPayload: any) {
       return { success: false, error: "Cette adresse email est déjà associée à un compte." }
     }
 
-    // 3. Créer l'utilisateur dans Supabase Auth
-    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
+    // 3. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
+    const supabase = await createClient()
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.motDePasse,
-      email_confirm: false,
-      user_metadata: {
-        nom: data.nom,
-        prenom: data.prenom,
-        role: 'parent'
+      options: {
+        data: {
+          nom: data.nom,
+          prenom: data.prenom,
+          role: 'parent'
+        }
       }
     })
 
