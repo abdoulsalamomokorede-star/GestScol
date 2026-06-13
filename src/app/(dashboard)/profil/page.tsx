@@ -297,8 +297,8 @@ export default function ProfilPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300" dir={dir}>
-      <Button 
-        variant="ghost" 
+      <Button
+        variant="ghost"
         onClick={handleBack}
         className="mb-2 text-slate-500 hover:text-slate-850 flex items-center gap-2 self-start rounded-xl px-4 py-2 border border-slate-200 dark:border-border/60 bg-white dark:bg-card"
       >
