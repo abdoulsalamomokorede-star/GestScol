@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { getInitiales } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
-import { Bell, Menu } from 'lucide-react'
+import { Bell, Menu, LogOut } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import Sidebar from './Sidebar'
 import Link from 'next/link'
 import ThemeToggle from './ThemeToggle'
@@ -35,14 +36,37 @@ const getPageTitle = (pathname: string) => {
 
 export default function Header() {
   const pathname = usePathname()
-  const { currentUser, notifications, eleves, classes, fetchNotifications, suppressedNotificationIds, ecoleId } = useSchoolStore()
+  const router = useRouter()
+  const supabase = createClient()
+  const { currentUser, notifications, eleves, classes, fetchNotifications, suppressedNotificationIds, ecoleId, setCurrentUser } = useSchoolStore()
   const [open, setOpen] = useState(false)
   const { t, dir } = useTranslation()
+
+  const [fromEcoles, setFromEcoles] = useState(false)
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setFromEcoles(window.location.search.includes('from=ecoles'))
+    }
+  }, [pathname])
 
   // Actualiser les notifications au montage
   useEffect(() => {
     fetchNotifications()
   }, [])
+
+  const handleSignOut = async () => {
+    const role = currentUser?.role
+    await supabase.auth.signOut()
+    setCurrentUser(null)
+    if (role === 'enseignant') {
+      router.push('/login/enseignant')
+    } else if (role === 'parent') {
+      router.push('/login/parent')
+    } else {
+      router.push('/login')
+    }
+  }
   
   if (!currentUser) return null
 
@@ -156,17 +180,19 @@ export default function Header() {
         <ThemeToggle />
 
         {/* Notifications avec badge dynamique */}
-        <Link 
-          href="/notifications"
-          className="relative p-1.5 xs:p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors inline-block shrink-0"
-        >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4.5 min-w-[18px] px-1 rounded-full bg-danger text-white text-[9px] font-extrabold flex items-center justify-center border border-card shadow-sm animate-pulse-subtle">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </Link>
+        {ecoleId && !fromEcoles && (
+          <Link 
+            href="/notifications"
+            className="relative p-1.5 xs:p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors inline-block shrink-0"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 h-4.5 min-w-[18px] px-1 rounded-full bg-danger text-white text-[9px] font-extrabold flex items-center justify-center border border-card shadow-sm animate-pulse-subtle">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Link>
+        )}
  
         {/* Profil Menu */}
         <DropdownMenu>
@@ -194,11 +220,16 @@ export default function Header() {
             <DropdownMenuItem asChild>
               <Link href="/profil" className="w-full cursor-pointer">{t('nav.profil', 'Profil')}</Link>
             </DropdownMenuItem>
-            {currentUser.role === 'directeur' && (
+            {currentUser.role === 'directeur' && ecoleId && !fromEcoles && (
               <DropdownMenuItem asChild>
                 <Link href="/parametres" className="w-full cursor-pointer">{t('nav.parametres', 'Paramètres')}</Link>
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer flex items-center gap-2">
+              <LogOut className="h-4 w-4" />
+              <span>{t('nav.logout', 'Se déconnecter')}</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -87,6 +87,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Impossible de vérifier le statut auprès de la passerelle." }, { status: 502 })
       }
     } else {
+      if (process.env.NODE_ENV === 'production') {
+        console.error("[Webhook] Clés CinetPay non configurées en production ! Transaction rejetée par sécurité.")
+        return NextResponse.json({ error: "Configuration de passerelle de paiement invalide." }, { status: 500 })
+      }
+      
       // Mode simulation / développement (sans clés CinetPay en env local)
       console.warn("[Webhook Simulation] Pas de clé API CinetPay configurée. Validation automatique en mode démo.")
       if (transId.startsWith('CP-') || transId.startsWith('SIM-')) {

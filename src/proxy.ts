@@ -97,9 +97,21 @@ export async function proxy(request: NextRequest) {
         // Si on est connecté et qu'on essaie d'aller sur une page d'auth ou la landing page
         if (isAuthPage || pathname === '/') {
           if (ecoleId) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+            let dest = '/dashboard'
+            if (role === 'parent') dest = '/parent/dashboard'
+            else if (role === 'enseignant') dest = '/enseignant/dashboard'
+            return NextResponse.redirect(new URL(dest, request.url))
           } else {
             return NextResponse.redirect(new URL('/ecoles', request.url))
+          }
+        }
+
+        // Redirection du tableau de bord générique vers le tableau de bord spécifique au rôle
+        if (pathname === '/dashboard') {
+          if (role === 'parent') {
+            return NextResponse.redirect(new URL('/parent/dashboard', request.url))
+          } else if (role === 'enseignant') {
+            return NextResponse.redirect(new URL('/enseignant/dashboard', request.url))
           }
         }
 
@@ -139,7 +151,7 @@ export async function proxy(request: NextRequest) {
             pathname.startsWith('/inscriptions') ||
             pathname.startsWith('/notes')
           ) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+            return NextResponse.redirect(new URL('/parent/dashboard', request.url))
           }
         } else if (role === 'enseignant') {
           // Un enseignant n'a aucun droit d'accès aux pages financières, bulletins globaux, ou configurations d'école
@@ -153,7 +165,7 @@ export async function proxy(request: NextRequest) {
             pathname.startsWith('/paiements') ||
             pathname.startsWith('/bulletins')
           ) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+            return NextResponse.redirect(new URL('/enseignant/dashboard', request.url))
           }
         }
       }

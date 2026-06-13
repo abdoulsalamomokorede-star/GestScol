@@ -6,6 +6,7 @@ import { createClient } from '../lib/supabase/client'
 import { updateSchoolAbonnement, getSchoolAbonnement } from '../app/actions/abonnement'
 import { updateSchoolDetails } from '../app/actions/ecole'
 import { createNotification, markAsRead, fetchUserLectures, deleteNotificationDb, deleteNotificationsDb } from '../app/actions/notifications'
+import { ajouterEcoleAction, supprimerEcoleAction } from '../app/actions/register'
 import { toast } from '../hooks/use-toast'
 
 function validateBase64ImageClient(base64DataString: string | undefined): { success: boolean; error?: string } {
@@ -1427,45 +1428,12 @@ export const useSchoolStore = create<SchoolState>()(
           return { success: false, error: 'Abonnement expiré. Impossible d\'ajouter un établissement.' }
         }
 
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from('ecoles')
-          .insert({
-            nom: donnees.nom,
-            ville: donnees.ville,
-            adresse: donnees.adresse || '',
-            telephone: donnees.telephone || '',
-            logo: donnees.logo || null,
-            niveaux: donnees.niveaux,
-            annee_scolaire: donnees.anneeScolaire,
-            directeur_id: currentUser.id,
-            identifiant: `GS-${Math.floor(100000 + Math.random() * 900000)}`
-          })
-          .select()
-          .single()
-
-        if (error) return { success: false, error: error.message }
+        const res = await ajouterEcoleAction(donnees)
+        if (!res.success || !res.data) {
+          return { success: false, error: res.error || 'Erreur lors de la création de l\'école' }
+        }
         
-        // Créer l'année scolaire par défaut pour cette école
-        const anneeScolaireDebut = donnees.anneeScolaire.split('-')[0] + '-09-01'
-        const anneeScolaireFin = donnees.anneeScolaire.split('-')[1] + '-07-31'
-        await supabase.from('annees_scolaires').insert({
-          ecole_id: data.id,
-          nom: donnees.anneeScolaire,
-          date_debut: anneeScolaireDebut,
-          date_fin: anneeScolaireFin,
-          statut: 'active'
-        })
-
-        // Activer un plan gratuit par défaut
-        await supabase.from('abonnements').insert({
-          ecole_id: data.id,
-          plan: 'gratuit',
-          statut: 'actif',
-          montant_paye: 0,
-          max_eleves: 50
-        })
-
+        const data = res.data
         const ecoleCreee = {
           id: data.id,
           nom: data.nom,
@@ -1490,35 +1458,10 @@ export const useSchoolStore = create<SchoolState>()(
           return { success: false, error: 'Accès refusé : rôle directeur requis' }
         }
 
-        const supabase = createClient()
-        const { data: ecole } = await supabase
-          .from('ecoles')
-          .select('id, directeur_id, nom')
-          .eq('id', ecoleId)
-          .eq('directeur_id', currentUser.id)
-          .single()
-
-        if (!ecole) return { success: false, error: 'Établissement introuvable ou non autorisé.' }
-
-        // Récupérer le nombre d'élèves et d'enseignants pour l'audit avant de supprimer
-        const { count: countEleves } = await supabase.from('eleves').select('*', { count: 'exact', head: true }).eq('ecole_id', ecoleId)
-        const { count: countEnseignants } = await supabase.from('utilisateurs').select('*', { count: 'exact', head: true }).eq('ecole_id', ecoleId).eq('role', 'enseignant')
-        
-        await supabase.from('audit_suppressions').insert({
-          directeur_id: currentUser.id,
-          ecole_id: ecoleId,
-          ecole_nom: ecole.nom,
-          nb_eleves_supprimes: countEleves ?? 0,
-          nb_enseignants_supprimes: countEnseignants ?? 0,
-          nb_paiements_supprimes: 0
-        })
-
-        const { error } = await supabase
-          .from('ecoles')
-          .delete()
-          .eq('id', ecoleId)
-
-        if (error) return { success: false, error: error.message }
+        const res = await supprimerEcoleAction(ecoleId)
+        if (!res.success) {
+          return { success: false, error: res.error || 'Erreur lors de la suppression de l\'école' }
+        }
         
         // Si l'école supprimée est l'école active, réinitialiser
         const state = get()

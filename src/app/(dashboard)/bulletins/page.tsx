@@ -123,6 +123,41 @@ export default function BulletinsPage() {
     setAppreciationInputs(inputs)
   }, [selectedClasseId, selectedTrimestre, selectedAnneeId])
 
+  // Synchronisation automatique des bulletins validés en base de données s'ils sont obsolètes par rapport aux notes réelles
+  useEffect(() => {
+    if (bulletinsCalcules.length === 0) return
+
+    const syncBulletins = async () => {
+      for (const b of bulletinsCalcules) {
+        const bulletinExistant = bulletins.find(
+          x => x.eleveId === b.eleveId && x.trimestre === b.trimestre && x.anneeScolaire === b.anneeScolaire
+        )
+        if (bulletinExistant && bulletinExistant.estValide) {
+          const needsUpdate = 
+            bulletinExistant.moyenneGenerale !== b.moyenneGenerale ||
+            bulletinExistant.rangClasse !== b.rangClasse ||
+            bulletinExistant.effectifClasse !== b.effectifClasse ||
+            bulletinExistant.moyenneClasse !== b.moyenneClasse ||
+            JSON.stringify(bulletinExistant.notes) !== JSON.stringify(b.notes)
+
+          if (needsUpdate) {
+            console.log(`Auto-syncing validated bulletin on bulletins page for student ${b.eleveId}`)
+            await updateBulletin(bulletinExistant.id, {
+              moyenneGenerale: b.moyenneGenerale,
+              rangClasse: b.rangClasse,
+              effectifClasse: b.effectifClasse,
+              moyenneClasse: b.moyenneClasse,
+              notes: b.notes,
+              appreciation: b.appreciation
+            })
+          }
+        }
+      }
+    }
+
+    syncBulletins()
+  }, [bulletinsCalcules, bulletins, updateBulletin])
+
   if (!isMounted) {
     return (
       <div className="flex h-96 items-center justify-center">

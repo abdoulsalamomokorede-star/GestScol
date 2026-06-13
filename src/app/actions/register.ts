@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { type EmailOtpType } from '@supabase/supabase-js'
+import { sanitizeString } from '@/lib/security'
 
 const PasswordSchema = z.string()
   .min(12, "Le mot de passe doit contenir au moins 12 caractères (NIST 800-63B)")
@@ -12,11 +13,6 @@ const PasswordSchema = z.string()
   .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
   .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
   .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial")
-
-function sanitizeString(str: string): string {
-  if (typeof str !== 'string') return str
-  return str.replace(/<[^>]*>/g, '').trim()
-}
 
 const RegisterPayloadSchema = z.object({
   plan: z.enum(['gratuit', 'standard', 'premium']),

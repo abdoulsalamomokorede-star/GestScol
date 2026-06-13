@@ -50,10 +50,12 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
     ecole,
     activeAnneeScolaire,
     anneesScolaires,
-    inscriptions
+    inscriptions,
+    bulletins
   } = useSchoolStore()
 
   const eleve = getEleveById(id)
+  const isParent = currentUser?.role === 'parent'
 
   const [selectedTrimestre, setSelectedTrimestre] = useState<'1' | '2' | '3'>('1')
   const [activeTab, setActiveTab] = useState('infos')
@@ -83,12 +85,19 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
   
   // Calculer les bulletins de la classe pour ce trimestre
   const currentAnneeScolaireId = activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
+  const bulletinExistantTrim = bulletins.find(
+    x => x.eleveId === eleve?.id && x.trimestre === trimestreNum && x.anneeScolaire === currentAnneeScolaireId
+  )
   const bulletinsClasse = eleve?.classeId
-    ? calculerBulletinsClasse(eleve.classeId, trimestreNum, currentAnneeScolaireId)
+    ? (isParent && bulletinExistantTrim && bulletinExistantTrim.estValide)
+      ? [bulletinExistantTrim]
+      : calculerBulletinsClasse(eleve.classeId, trimestreNum, currentAnneeScolaireId)
     : []
   
   // Trouver le bulletin spécifique de cet élève
-  const bulletinEleve = bulletinsClasse.find(b => b.eleveId === eleve?.id)
+  const bulletinEleve = isParent && bulletinExistantTrim && bulletinExistantTrim.estValide
+    ? bulletinExistantTrim
+    : bulletinsClasse.find(b => b.eleveId === eleve?.id)
 
   if (!eleve) {
     return (
@@ -135,8 +144,7 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
   const totalAbsencesNJ = absences.filter(a => !a.justifiee).length
 
   const getDernierTrimestreValide = () => {
-    const bulletinsStore = useSchoolStore.getState().bulletins
-    const bulletinsEleve = bulletinsStore.filter(
+    const bulletinsEleve = bulletins.filter(
       b => b.eleveId === eleve.id && 
            b.anneeScolaire === selectedAnneeId && 
            b.estValide === true
@@ -147,7 +155,50 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
 
   const dernierBulletinValide = getDernierTrimestreValide()
 
-  const isParent = currentUser?.role === 'parent'
+
+
+  // Synchronisation automatique des bulletins validés en base de données si les notes/effectifs de la classe ont changé
+  useEffect(() => {
+    if (isParent || !eleve) return
+
+    const checkAndSyncBulletins = async () => {
+      const currentAnneeId = selectedAnneeId || activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
+      const targetClasseId = studentInscription?.classeId || eleve.classeId
+      if (!targetClasseId) return
+
+      for (const tVal of [1, 2, 3]) {
+        const bulletinExistant = bulletins.find(
+          x => x.eleveId === eleve.id && x.trimestre === tVal && x.anneeScolaire === currentAnneeId
+        )
+        if (bulletinExistant && bulletinExistant.estValide) {
+          const bulletinsCalculesT = calculerBulletinsClasse(targetClasseId, tVal as 1|2|3, currentAnneeId)
+          const bEleveCalculé = bulletinsCalculesT.find(b => b.eleveId === eleve.id)
+          if (bEleveCalculé) {
+            const needsUpdate = 
+              bulletinExistant.moyenneGenerale !== bEleveCalculé.moyenneGenerale ||
+              bulletinExistant.rangClasse !== bEleveCalculé.rangClasse ||
+              bulletinExistant.effectifClasse !== bEleveCalculé.effectifClasse ||
+              bulletinExistant.moyenneClasse !== bEleveCalculé.moyenneClasse ||
+              JSON.stringify(bulletinExistant.notes) !== JSON.stringify(bEleveCalculé.notes)
+
+            if (needsUpdate) {
+              console.log(`Auto-syncing validated bulletin T${tVal} for student ${eleve.nom}`)
+              await useSchoolStore.getState().updateBulletin(bulletinExistant.id, {
+                moyenneGenerale: bEleveCalculé.moyenneGenerale,
+                rangClasse: bEleveCalculé.rangClasse,
+                effectifClasse: bEleveCalculé.effectifClasse,
+                moyenneClasse: bEleveCalculé.moyenneClasse,
+                notes: bEleveCalculé.notes,
+                appreciation: bEleveCalculé.appreciation
+              })
+            }
+          }
+        }
+      }
+    }
+
+    checkAndSyncBulletins()
+  }, [isParent, eleve, selectedAnneeId, activeAnneeScolaire, ecole, studentInscription, bulletins, calculerBulletinsClasse])
 
   const aAccesPremium = (trimestre: number) => {
     if (!isParent) return true
@@ -696,11 +747,11 @@ function EleveDetailsPageContent({ params }: { params: Promise<{ id: string }> }
                     {[1, 2, 3].map((tVal) => {
                       const currentAnneeId = selectedAnneeId || activeAnneeScolaire?.id || ecole?.anneeScolaire || ecoleMock.anneeScolaire
                       
-                      const bulletinExistant = useSchoolStore.getState().bulletins.find(
+                      const bulletinExistant = bulletins.find(
                         x => x.eleveId === eleve.id && x.trimestre === tVal && x.anneeScolaire === currentAnneeId
                       )
 
-                      const studentInscription = useSchoolStore.getState().inscriptions.find(
+                      const studentInscription = inscriptions.find(
                         ins => ins.eleveId === eleve.id && ins.anneeScolaire === currentAnneeId && ins.statut === 'validee'
                       )
                       const targetClasseId = studentInscription?.classeId || eleve.classeId

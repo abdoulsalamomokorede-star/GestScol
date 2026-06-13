@@ -288,7 +288,7 @@ export default function EcolesPage() {
                 <DropdownMenuLabel>{t('header.my_account', 'Mon Compte')}</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-slate-100 dark:bg-border/60" />
                 <DropdownMenuItem asChild>
-                  <Link href="/profil" className="w-full cursor-pointer">{t('nav.profil', 'Profil')}</Link>
+                  <Link href="/profil?from=ecoles" className="w-full cursor-pointer">{t('nav.profil', 'Profil')}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-slate-100 dark:bg-border/60" />
                 <DropdownMenuItem onClick={handleSignOut} className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer flex items-center gap-2">

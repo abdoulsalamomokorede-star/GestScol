@@ -63,6 +63,9 @@ export async function updateSchoolAbonnement(ecoleId: string, data: Partial<Abon
 
     // Sécurisation AppSec : Validation des paiements simulés en mode démo/prototype
     if (validatedData.plan && validatedData.plan !== 'gratuit') {
+      if (process.env.NODE_ENV === 'production') {
+        return { success: false, error: "Les mises à niveau d'abonnement doivent être effectuées via le portail de paiement sécurisé." }
+      }
       if (!validatedData.transactionRef || !validatedData.transactionRef.startsWith('CP-')) {
         return { success: false, error: "Signature de paiement CinetPay manquante ou invalide (CP- attendu)." }
       }

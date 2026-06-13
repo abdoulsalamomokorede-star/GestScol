@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { Ecole } from '@/types'
 import { revalidatePath } from 'next/cache'
+import { sanitizeString, validateBase64Image } from '@/lib/security'
 
 /**
  * Server Action pour mettre à jour les détails d'une école (y compris son logo Base64 volumineux)
@@ -44,40 +45,9 @@ export async function updateSchoolDetails(ecoleId: string, data: Partial<Ecole>)
 
     // Validation de sécurité du logo Base64 côté serveur (magic bytes + taille)
     if (data.logo) {
-      // 1. Validation de la taille (max 1 Mo)
-      // En Base64, 1 Mo de fichier = environ 1.33 Mo de texte (1 370 000 caractères)
-      if (data.logo.length > 1370000) {
-        return { success: false, error: "Fichier trop volumineux. La taille maximale autorisée est de 1 Mo." }
-      }
-
-      // 2. Validation du type MIME et des magic bytes
-      const parts = data.logo.split(';base64,')
-      if (parts.length !== 2) {
-        return { success: false, error: "Format d'image non supporté ou corrompu." }
-      }
-
-      const mimeType = parts[0].replace('data:', '')
-      const allowedMimes = ['image/jpeg', 'image/png', 'image/webp']
-      if (!allowedMimes.includes(mimeType)) {
-        return { success: false, error: "Type d'image non autorisé. Seuls JPEG, PNG et WebP sont acceptés." }
-      }
-
-      // Extraction des magic bytes réels pour empêcher les fausses extensions/MIME-types
-      const base64Data = parts[1]
-      const buffer = Buffer.from(base64Data, 'base64')
-      const hex = buffer.subarray(0, 4).toString('hex')
-
-      const MAGIC_BYTES: Record<string, string> = {
-        'ffd8ff': 'image/jpeg',
-        '89504e47': 'image/png',
-        '52494646': 'image/webp',
-      }
-
-      const detectedType = Object.entries(MAGIC_BYTES)
-        .find(([magic]) => hex.startsWith(magic))?.[1]
-
-      if (!detectedType) {
-        return { success: false, error: "Signature de fichier non valide (tentative d'injection bloquée)." }
+      const validation = validateBase64Image(data.logo)
+      if (!validation.success) {
+        return { success: false, error: validation.error }
       }
     }
 
@@ -85,11 +55,11 @@ export async function updateSchoolDetails(ecoleId: string, data: Partial<Ecole>)
 
     // Préparation des données en snake_case pour Supabase
     const updateData: any = {}
-    if (data.nom !== undefined) updateData.nom = data.nom
-    if (data.identifiant !== undefined) updateData.identifiant = data.identifiant
-    if (data.ville !== undefined) updateData.ville = data.ville
-    if (data.adresse !== undefined) updateData.adresse = data.adresse
-    if (data.telephone !== undefined) updateData.telephone = data.telephone
+    if (data.nom !== undefined) updateData.nom = sanitizeString(data.nom)
+    if (data.identifiant !== undefined) updateData.identifiant = sanitizeString(data.identifiant)
+    if (data.ville !== undefined) updateData.ville = sanitizeString(data.ville)
+    if (data.adresse !== undefined) updateData.adresse = sanitizeString(data.adresse)
+    if (data.telephone !== undefined) updateData.telephone = sanitizeString(data.telephone)
     if (data.logo !== undefined) updateData.logo = data.logo
     if (data.anneeScolaire !== undefined) updateData.annee_scolaire = data.anneeScolaire
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,6 +34,13 @@ export default function ProfilPage() {
   const { currentUser, setCurrentUser, ecoleId } = useSchoolStore()
   const { toast } = useToast()
   const { t, dir } = useTranslation()
+
+  const [fromEcoles, setFromEcoles] = useState(false)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setFromEcoles(window.location.search.includes('from=ecoles'))
+    }
+  }, [])
 
   const [loading, setLoading] = useState(false)
   const [phone, setPhone] = useState(currentUser?.telephone || '')
@@ -291,7 +298,7 @@ export default function ProfilPage() {
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back()
     } else {
-      router.push(backUrl)
+      router.push(fromEcoles ? '/ecoles' : backUrl)
     }
   }
 

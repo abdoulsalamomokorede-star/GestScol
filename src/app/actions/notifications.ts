@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { NotificationItem, NotificationType } from '@/types'
 import { revalidatePath } from 'next/cache'
+import { sanitizeString } from '@/lib/security'
 
 /**
  * Insère une nouvelle notification dans la base de données (système ou communiqué rédigé).
@@ -60,8 +61,8 @@ export async function createNotification(data: {
     // Préparation des données en snake_case
     const insertData: any = {
       ecole_id: data.ecoleId,
-      titre: data.titre,
-      description: data.description,
+      titre: sanitizeString(data.titre),
+      description: sanitizeString(data.description),
       type: data.type,
       destinataire_role: data.destinataireRole || null,
       classe_id: data.classeId || null,
