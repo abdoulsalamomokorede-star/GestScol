@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { confirmUserAccount } from '@/app/actions/register'
+import { useSchoolStore } from '@/store/useSchoolStore'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, XCircle, Loader2, KeyRound } from 'lucide-react'
@@ -11,14 +12,14 @@ import Link from 'next/link'
 
 function ConfirmPageContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
+  const { setCurrentUser } = useSchoolStore()
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type')
-  const next = searchParams.get('next') ?? '/ecoles'
+  const next = searchParams.get('next')
 
   const handleConfirm = () => {
     if (!tokenHash || !type) {
@@ -29,11 +30,32 @@ function ConfirmPageContent() {
     setError(null)
     startTransition(async () => {
       const result = await confirmUserAccount(tokenHash, type as any)
-      if (result.success) {
+      if (result.success && result.user) {
         setSuccess(true)
+        
+        // Connecte l'utilisateur en mettant à jour le store Zustand et le cookie currentUser
+        setCurrentUser(result.user)
+
+        // Détermine la redirection appropriée selon le rôle de l'utilisateur
+        let redirectUrl = '/ecoles'
+        if (result.user.role === 'parent') {
+          redirectUrl = '/parent/dashboard'
+        } else if (result.user.role === 'enseignant') {
+          redirectUrl = '/enseignant/dashboard'
+        } else if (result.user.role === 'directeur') {
+          if (result.user.ecoleId || result.user.ecoleCouranteId) {
+            redirectUrl = '/dashboard'
+          } else {
+            redirectUrl = '/ecoles'
+          }
+        }
+
+        // Si une redirection spécifique était passée dans l'URL (Next), l'utiliser en priorité
+        const finalRedirect = next || redirectUrl
+
         // Redirection après 3 secondes de célébration visuelle
         setTimeout(() => {
-          window.location.href = next
+          window.location.href = finalRedirect
         }, 3000)
       } else {
         setError(result.error || "Une erreur est survenue lors de la confirmation du compte.")
@@ -61,10 +83,18 @@ function ConfirmPageContent() {
             Veuillez utiliser le lien complet envoyé dans votre e-mail d'inscription, ou connectez-vous si votre compte est déjà actif.
           </p>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2">
+        <CardFooter className="flex flex-col gap-2 w-full">
           <Button asChild className="w-full bg-primary hover:bg-emerald-700 text-white font-bold">
-            <Link href="/login">Retourner à la connexion</Link>
+            <Link href="/login">Connexion Directeur</Link>
           </Button>
+          <div className="flex gap-2 w-full justify-between mt-1">
+            <Button asChild variant="outline" className="flex-1 text-xs py-4">
+              <Link href="/login/enseignant">Espace Enseignant</Link>
+            </Button>
+            <Button asChild variant="outline" className="flex-1 text-xs py-4">
+              <Link href="/login/parent">Espace Parent</Link>
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     )
@@ -95,7 +125,7 @@ function ConfirmPageContent() {
             ? "Félicitations, votre accès est maintenant actif." 
             : error 
               ? "Impossible de valider votre inscription."
-              : "Finalisez la création de votre profil de directeur."
+              : "Finalisez la création de votre profil GestScol."
           }
         </CardDescription>
       </CardHeader>
@@ -103,7 +133,7 @@ function ConfirmPageContent() {
       <CardContent className="pb-6">
         {success ? (
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            Votre compte GestScol a été activé avec succès. Vous allez être redirigé vers l'espace de sélection des écoles dans quelques secondes.
+            Votre compte GestScol a été activé avec succès. Vous allez être redirigé vers votre espace personnel dans quelques secondes.
           </p>
         ) : error ? (
           <div className="space-y-3">
@@ -140,13 +170,23 @@ function ConfirmPageContent() {
         )}
 
         {error && (
-          <Button asChild className="w-full bg-primary hover:bg-emerald-700 text-white font-bold py-5">
-            <Link href="/login">Retourner à la connexion</Link>
-          </Button>
+          <div className="flex flex-col gap-2 w-full">
+            <Button asChild className="w-full bg-primary hover:bg-emerald-700 text-white font-bold py-5">
+              <Link href="/login">Retourner à la connexion Directeur</Link>
+            </Button>
+            <div className="flex gap-2 w-full justify-between mt-1">
+              <Button asChild variant="outline" className="flex-1 text-xs py-4">
+                <Link href="/login/enseignant">Espace Enseignant</Link>
+              </Button>
+              <Button asChild variant="outline" className="flex-1 text-xs py-4">
+                <Link href="/login/parent">Espace Parent</Link>
+              </Button>
+            </div>
+          </div>
         )}
 
         {success && (
-          <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium py-2">
+          <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 dark:text-emerald-405 font-medium py-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             Redirection automatique...
           </div>

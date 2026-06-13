@@ -1315,7 +1315,7 @@ export async function confirmUserAccount(tokenHash: string, type: EmailOtpType) 
     }
     
     const supabase = await createClient()
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type: type
     })
@@ -1325,7 +1325,37 @@ export async function confirmUserAccount(tokenHash: string, type: EmailOtpType) 
       return { success: false, error: error.message }
     }
 
-    return { success: true }
+    const authUser = data.user
+    if (!authUser) {
+      return { success: false, error: "Utilisateur introuvable après confirmation." }
+    }
+
+    const adminSupabase = createAdminClient()
+    const { data: profile, error: profileError } = await adminSupabase
+      .from('utilisateurs')
+      .select('id, nom, prenom, civilite, email, telephone, role, ecole_id, ecole_courante_id')
+      .eq('id', authUser.id)
+      .maybeSingle()
+
+    if (profileError || !profile) {
+      console.error("[Confirm Profile Error]:", profileError)
+      return { success: false, error: "Profil utilisateur introuvable dans la base de données." }
+    }
+
+    return { 
+      success: true, 
+      user: {
+        id: authUser.id,
+        nom: profile.nom,
+        prenom: profile.prenom,
+        civilite: profile.civilite,
+        email: profile.email,
+        telephone: profile.telephone,
+        role: profile.role,
+        ecoleId: profile.ecole_id,
+        ecoleCouranteId: profile.ecole_courante_id
+      }
+    }
   } catch (error: any) {
     console.error("Unexpected error in confirmUserAccount Server Action:", error)
     return { success: false, error: "Une erreur inattendue est survenue." }
