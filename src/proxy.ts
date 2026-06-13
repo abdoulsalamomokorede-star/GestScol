@@ -66,7 +66,7 @@ export async function proxy(request: NextRequest) {
   const isAuthenticated = !!user && hasUserSession
 
   const pathname = request.nextUrl.pathname
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/auth')
   const isPublicPage = pathname === '/' || isAuthPage
   const isEcolesPage = pathname === '/ecoles'
 

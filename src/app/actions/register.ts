@@ -656,6 +656,27 @@ export async function createDirecteurAccount(rawPayload: any) {
       return { success: false, error: "Cette adresse email est déjà associée à un compte." }
     }
 
+    // 2.5. Nettoyer tout compte orphelin dans auth.users si possible
+    try {
+      const { data: usersData, error: listError } = await adminSupabase.auth.admin.listUsers()
+      if (!listError && usersData && usersData.users) {
+        const authUser = usersData.users.find(
+          (u) => u.email?.toLowerCase() === data.email.toLowerCase()
+        )
+        if (authUser) {
+          console.log(`[Autoguérison] Suppression du compte auth orphelin détecté dans createDirecteurAccount : ${authUser.id} (${authUser.email})`)
+          const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(authUser.id)
+          if (deleteError) {
+            console.error("[Autoguérison] Erreur lors de la suppression de l'utilisateur orphelin :", deleteError)
+          } else {
+            console.log(`[Autoguérison] Compte auth orphelin ${authUser.id} supprimé avec succès.`)
+          }
+        }
+      }
+    } catch (adminError) {
+      console.warn("[Autoguérison] Impossible de nettoyer les comptes orphelins :", adminError)
+    }
+
     // 3. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
     const supabase = await createClient()
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -776,6 +797,27 @@ export async function createEnseignantAccount(rawPayload: any) {
 
     if (existing) {
       return { success: false, error: "Cette adresse email est déjà associée à un compte." }
+    }
+
+    // 2.5. Nettoyer tout compte orphelin dans auth.users si possible
+    try {
+      const { data: usersData, error: listError } = await adminSupabase.auth.admin.listUsers()
+      if (!listError && usersData && usersData.users) {
+        const authUser = usersData.users.find(
+          (u) => u.email?.toLowerCase() === data.email.toLowerCase()
+        )
+        if (authUser) {
+          console.log(`[Autoguérison] Suppression du compte auth orphelin détecté dans createEnseignantAccount : ${authUser.id} (${authUser.email})`)
+          const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(authUser.id)
+          if (deleteError) {
+            console.error("[Autoguérison] Erreur lors de la suppression de l'utilisateur orphelin :", deleteError)
+          } else {
+            console.log(`[Autoguérison] Compte auth orphelin ${authUser.id} supprimé avec succès.`)
+          }
+        }
+      }
+    } catch (adminError) {
+      console.warn("[Autoguérison] Impossible de nettoyer les comptes orphelins :", adminError)
     }
 
     // 3. Rechercher une invitation valide (par code ou par email)
@@ -901,6 +943,27 @@ export async function createParentAccount(rawPayload: any) {
 
     if (existing) {
       return { success: false, error: "Cette adresse email est déjà associée à un compte." }
+    }
+
+    // 2.5. Nettoyer tout compte orphelin dans auth.users si possible
+    try {
+      const { data: usersData, error: listError } = await adminSupabase.auth.admin.listUsers()
+      if (!listError && usersData && usersData.users) {
+        const authUser = usersData.users.find(
+          (u) => u.email?.toLowerCase() === data.email.toLowerCase()
+        )
+        if (authUser) {
+          console.log(`[Autoguérison] Suppression du compte auth orphelin détecté dans createParentAccount : ${authUser.id} (${authUser.email})`)
+          const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(authUser.id)
+          if (deleteError) {
+            console.error("[Autoguérison] Erreur lors de la suppression de l'utilisateur orphelin :", deleteError)
+          } else {
+            console.log(`[Autoguérison] Compte auth orphelin ${authUser.id} supprimé avec succès.`)
+          }
+        }
+      }
+    } catch (adminError) {
+      console.warn("[Autoguérison] Impossible de nettoyer les comptes orphelins :", adminError)
     }
 
     // 3. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
