@@ -1362,5 +1362,46 @@ export async function confirmUserAccount(tokenHash: string, type: EmailOtpType) 
   }
 }
 
+/**
+ * Récupère le profil d'un utilisateur par son ID (utilisé lors de la confirmation du compte)
+ */
+export async function fetchUserProfile(userId: string) {
+  try {
+    if (!userId) {
+      return { success: false, error: "Identifiant utilisateur manquant." }
+    }
+    const adminSupabase = createAdminClient()
+    const { data: profile, error } = await adminSupabase
+      .from('utilisateurs')
+      .select('id, nom, prenom, civilite, email, telephone, role, ecole_id, ecole_courante_id')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (error || !profile) {
+      console.error("[fetchUserProfile Error]:", error)
+      return { success: false, error: "Profil utilisateur introuvable dans la base de données." }
+    }
+
+    return {
+      success: true,
+      user: {
+        id: profile.id,
+        nom: profile.nom,
+        prenom: profile.prenom,
+        civilite: profile.civilite,
+        email: profile.email,
+        telephone: profile.telephone,
+        role: profile.role,
+        ecoleId: profile.ecole_id,
+        ecoleCouranteId: profile.ecole_courante_id
+      }
+    }
+  } catch (err: any) {
+    console.error("Unexpected error in fetchUserProfile Server Action:", err)
+    return { success: false, error: "Une erreur inattendue est survenue." }
+  }
+}
+
+
 
 

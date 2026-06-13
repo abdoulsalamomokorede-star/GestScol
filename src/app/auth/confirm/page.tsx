@@ -2,8 +2,9 @@
 
 import { useState, useTransition, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { confirmUserAccount } from '@/app/actions/register'
+import { fetchUserProfile } from '@/app/actions/register'
 import { useSchoolStore } from '@/store/useSchoolStore'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, XCircle, Loader2, KeyRound } from 'lucide-react'
@@ -29,36 +30,57 @@ function ConfirmPageContent() {
 
     setError(null)
     startTransition(async () => {
-      const result = await confirmUserAccount(tokenHash, type as any)
-      if (result.success && result.user) {
-        setSuccess(true)
-        
-        // Connecte l'utilisateur en mettant à jour le store Zustand et le cookie currentUser
-        setCurrentUser(result.user)
+      try {
+        const supabase = createClient()
+        const { data, error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type as any
+        })
 
-        // Détermine la redirection appropriée selon le rôle de l'utilisateur
-        let redirectUrl = '/ecoles'
-        if (result.user.role === 'parent') {
-          redirectUrl = '/parent/dashboard'
-        } else if (result.user.role === 'enseignant') {
-          redirectUrl = '/enseignant/dashboard'
-        } else if (result.user.role === 'directeur') {
-          if (result.user.ecoleId || result.user.ecoleCouranteId) {
-            redirectUrl = '/dashboard'
-          } else {
-            redirectUrl = '/ecoles'
-          }
+        if (otpError) {
+          setError(otpError.message || "Une erreur est survenue lors de la confirmation du compte.")
+          return
         }
 
-        // Si une redirection spécifique était passée dans l'URL (Next), l'utiliser en priorité
-        const finalRedirect = next || redirectUrl
+        const authUser = data.user
+        if (!authUser) {
+          setError("Utilisateur introuvable après confirmation.")
+          return
+        }
 
-        // Redirection après 3 secondes de célébration visuelle
-        setTimeout(() => {
-          window.location.href = finalRedirect
-        }, 3000)
-      } else {
-        setError(result.error || "Une erreur est survenue lors de la confirmation du compte.")
+        const result = await fetchUserProfile(authUser.id)
+        if (result.success && result.user) {
+          setSuccess(true)
+          
+          // Connecte l'utilisateur en mettant à jour le store Zustand et le cookie currentUser
+          setCurrentUser(result.user)
+
+          // Détermine la redirection appropriée selon le rôle de l'utilisateur
+          let redirectUrl = '/ecoles'
+          if (result.user.role === 'parent') {
+            redirectUrl = '/parent/dashboard'
+          } else if (result.user.role === 'enseignant') {
+            redirectUrl = '/enseignant/dashboard'
+          } else if (result.user.role === 'directeur') {
+            if (result.user.ecoleId || result.user.ecoleCouranteId) {
+              redirectUrl = '/dashboard'
+            } else {
+              redirectUrl = '/ecoles'
+            }
+          }
+
+          // Si une redirection spécifique était passée dans l'URL (Next), l'utiliser en priorité
+          const finalRedirect = next || redirectUrl
+
+          // Redirection après 3 secondes de célébration visuelle
+          setTimeout(() => {
+            window.location.href = finalRedirect
+          }, 3000)
+        } else {
+          setError(result.error || "Une erreur est survenue lors de la récupération de votre profil.")
+        }
+      } catch (err: any) {
+        setError(err.message || "Une erreur inattendue est survenue.")
       }
     })
   }

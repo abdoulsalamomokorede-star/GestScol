@@ -72,7 +72,13 @@ export async function proxy(request: NextRequest) {
 
   if (!isAuthenticated && !isPublicPage && !isEcolesPage) {
     // Rediriger vers login si non connecté et page privée
-    return NextResponse.redirect(new URL('/login', request.url))
+    let redirectLoginUrl = '/login'
+    if (pathname.startsWith('/parent')) {
+      redirectLoginUrl = '/login/parent'
+    } else if (pathname.startsWith('/enseignant')) {
+      redirectLoginUrl = '/login/enseignant'
+    }
+    return NextResponse.redirect(new URL(redirectLoginUrl, request.url))
   }
 
   if (isAuthenticated) {
@@ -113,8 +119,7 @@ export async function proxy(request: NextRequest) {
           pathname.startsWith('/support') ||
           pathname.startsWith('/aide') ||
           pathname.startsWith('/parametres') ||
-          pathname.startsWith('/notifications') ||
-          pathname.startsWith('/profil')
+          pathname.startsWith('/notifications')
 
         if (isSchoolRequiredPage && !ecoleId) {
           return NextResponse.redirect(new URL('/ecoles', request.url))

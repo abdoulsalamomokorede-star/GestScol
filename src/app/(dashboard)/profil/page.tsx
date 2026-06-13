@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSchoolStore } from '@/store/useSchoolStore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -21,13 +22,16 @@ import {
   Save,
   Camera,
   School,
-  Lock
+  Lock,
+  ArrowLeft
 } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { uploadProfilePhoto } from '@/app/actions/upload'
 
 export default function ProfilPage() {
-  const { currentUser, setCurrentUser } = useSchoolStore()
+  const router = useRouter()
+  const { currentUser, setCurrentUser, ecoleId } = useSchoolStore()
   const { toast } = useToast()
   const { t, dir } = useTranslation()
 
@@ -271,8 +275,37 @@ export default function ProfilPage() {
     }
   }
 
+  // Déterminer l'URL de retour
+  let backUrl = '/ecoles'
+  if (ecoleId) {
+    if (currentUser.role === 'parent') {
+      backUrl = '/parent/dashboard'
+    } else if (currentUser.role === 'enseignant') {
+      backUrl = '/enseignant/dashboard'
+    } else if (currentUser.role === 'directeur') {
+      backUrl = '/dashboard'
+    }
+  }
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push(backUrl)
+    }
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300" dir={dir}>
+      <Button 
+        variant="ghost" 
+        onClick={handleBack}
+        className="mb-2 text-slate-500 hover:text-slate-850 flex items-center gap-2 self-start rounded-xl px-4 py-2 border border-slate-200 dark:border-border/60 bg-white dark:bg-card"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>{t('action.back', 'Retour')}</span>
+      </Button>
+
       {/* HEADER */}
       <div className="border-b border-border/40 pb-5">
         <h1 className="text-3xl font-display font-bold text-text flex items-center gap-3">

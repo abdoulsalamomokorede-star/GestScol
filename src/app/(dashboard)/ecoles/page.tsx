@@ -19,6 +19,9 @@ import ThemeToggle from '@/components/layout/ThemeToggle'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { rejoindreEcoleViaCode } from '@/app/actions/register'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { getInitiales } from '@/lib/utils'
 
 export default function EcolesPage() {
   const router = useRouter()
@@ -261,22 +264,40 @@ export default function EcolesPage() {
           <LanguageToggle />
           <ThemeToggle />
           
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-600 dark:text-slate-300 font-medium hidden sm:inline-block">
-              {currentUser?.prenom} {currentUser?.nom}
-            </span>
-            <span className={`text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${roleBadges[currentUser?.role || 'directeur']}`}>
-              {roleNames[currentUser?.role || 'directeur']}
-            </span>
-          </div>
-
-          <Button
-            variant="ghost"
-            onClick={handleSignOut}
-            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 rounded-xl px-3 flex items-center gap-1 text-xs"
-          >
-            <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">{t('nav.logout', 'Se déconnecter')}</span>
-          </Button>
+          {currentUser && (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1.5 xs:gap-3 outline-none group shrink-0">
+                <div className="hidden md:flex flex-col text-end">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-350 group-hover:text-primary transition-colors">
+                    {currentUser.prenom} {currentUser.nom}
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {roleNames[currentUser.role || 'directeur']}
+                  </span>
+                </div>
+                <Avatar className="h-8 w-8 border border-primary/20 shrink-0">
+                  {currentUser.photoUrl ? (
+                    <AvatarImage src={currentUser.photoUrl} className="object-cover" />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                    {getInitiales(currentUser.nom, currentUser.prenom)}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-slate-100">
+                <DropdownMenuLabel>{t('header.my_account', 'Mon Compte')}</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-100 dark:bg-border/60" />
+                <DropdownMenuItem asChild>
+                  <Link href="/profil" className="w-full cursor-pointer">{t('nav.profil', 'Profil')}</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-slate-100 dark:bg-border/60" />
+                <DropdownMenuItem onClick={handleSignOut} className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer flex items-center gap-2">
+                  <LogOut className="h-4 w-4 animate-pulse-subtle" />
+                  <span>{t('nav.logout', 'Se déconnecter')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </header>
 

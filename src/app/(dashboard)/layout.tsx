@@ -67,21 +67,27 @@ export default function DashboardLayout({
       supabase.auth.signOut().then(() => {
         if (pathname.startsWith('/login')) return // Already redirecting
         
-        const lastRole = typeof window !== 'undefined' ? sessionStorage.getItem('lastRole') : null
-        
-        if (lastRole === 'enseignant') {
-          router.push('/login/enseignant')
-        } else if (lastRole === 'parent') {
-          router.push('/login/parent')
+        let redirectLoginUrl = '/login'
+        if (pathname.startsWith('/parent')) {
+          redirectLoginUrl = '/login/parent'
+        } else if (pathname.startsWith('/enseignant')) {
+          redirectLoginUrl = '/login/enseignant'
         } else {
-          router.push('/login')
+          const lastRole = typeof window !== 'undefined' ? sessionStorage.getItem('lastRole') : null
+          if (lastRole === 'enseignant') {
+            redirectLoginUrl = '/login/enseignant'
+          } else if (lastRole === 'parent') {
+            redirectLoginUrl = '/login/parent'
+          }
         }
+        
+        router.push(redirectLoginUrl)
       })
     }
   }, [currentUser, hasHydrated, router, supabase, setCurrentUser, pathname])
 
   useEffect(() => {
-    if (hasHydrated && currentUser && isInitialFetchDone && !ecoleId && !pathname.startsWith('/ecoles')) {
+    if (hasHydrated && currentUser && isInitialFetchDone && !ecoleId && !pathname.startsWith('/ecoles') && !pathname.startsWith('/profil')) {
       router.push('/ecoles')
     }
   }, [hasHydrated, currentUser, isInitialFetchDone, ecoleId, router, pathname])
@@ -162,9 +168,11 @@ export default function DashboardLayout({
     return <>{children}</>
   }
 
+  const showSidebar = !!ecoleId && !pathname.startsWith('/profil')
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar className="hidden md:flex w-64" />
+      {showSidebar && <Sidebar className="hidden md:flex w-64" />}
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
         
