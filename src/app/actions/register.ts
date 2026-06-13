@@ -691,8 +691,9 @@ export async function createDirecteurAccount(rawPayload: any) {
       }
     })
 
+    console.log("[signUp] Directeur result:", { user: authData?.user, session: authData?.session, error: authError })
     if (authError || !authData.user) {
-      return { success: false, error: authError?.message || "Erreur d'inscription dans Supabase Auth." }
+      return { success: false, error: authError?.message || `Erreur d'inscription dans Supabase Auth (user is ${authData?.user ? 'defined' : 'null'})` }
     }
 
     const userId = authData.user.id
@@ -860,8 +861,9 @@ export async function createEnseignantAccount(rawPayload: any) {
       }
     })
 
+    console.log("[signUp] Enseignant result:", { user: authData?.user, session: authData?.session, error: authError })
     if (authError || !authData.user) {
-      return { success: false, error: authError?.message || "Erreur d'inscription Auth." }
+      return { success: false, error: authError?.message || `Erreur d'inscription Auth (user is ${authData?.user ? 'defined' : 'null'})` }
     }
 
     const userId = authData.user.id
@@ -980,8 +982,9 @@ export async function createParentAccount(rawPayload: any) {
       }
     })
 
+    console.log("[signUp] Parent result:", { user: authData?.user, session: authData?.session, error: authError })
     if (authError || !authData.user) {
-      return { success: false, error: authError?.message || "Erreur d'inscription Auth." }
+      return { success: false, error: authError?.message || `Erreur d'inscription Auth (user is ${authData?.user ? 'defined' : 'null'})` }
     }
 
     const userId = authData.user.id
