@@ -719,18 +719,18 @@ export default function RegisterDirecteurPage() {
                 )}
               </CardContent>
 
-              <CardFooter className="flex items-center justify-between border-t border-slate-100 dark:border-border/60 pt-6">
+              <CardFooter className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 dark:border-border/60 pt-6">
                 {step === 1 ? (
                   <>
                     <Link
                       href="/register"
-                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors"
+                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors w-full sm:w-auto justify-center sm:justify-start"
                     >
                       <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> {t('register.dir.back', "Retour")}
                     </Link>
                     <Button
                       type="submit"
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200 w-full sm:w-auto justify-center"
                     >
                       {t('register.dir.continue', "Continuer")} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                     </Button>
@@ -740,24 +740,24 @@ export default function RegisterDirecteurPage() {
                     <button
                       type="button"
                       onClick={prevStep}
-                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors"
+                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 flex items-center gap-1 font-semibold transition-colors w-full sm:w-auto justify-center sm:justify-start"
                     >
                       <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> {t('register.dir.your_info', "Vos informations")}
                     </button>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto">
                       <Button
                         type="button"
                         variant="ghost"
                         onClick={(e) => handleSubmit(e, true)}
                         disabled={isSubmitting}
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="text-slate-500 dark:text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 w-full sm:w-auto justify-center"
                       >
                         {t('register.dir.skip_step', "Passer cette étape")}
                       </Button>
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200 disabled:opacity-50"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all duration-200 disabled:opacity-50 w-full sm:w-auto justify-center"
                       >
                         {isSubmitting ? (
                           <>
