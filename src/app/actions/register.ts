@@ -677,26 +677,37 @@ export async function createDirecteurAccount(rawPayload: any) {
       console.warn("[Autoguérison] Impossible de nettoyer les comptes orphelins :", adminError)
     }
 
-    // 3. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
-    const supabase = await createClient()
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 3. Créer l'utilisateur dans Supabase Auth administrativement pour garantir la récupération de son ID
+    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
       email: data.email,
       password: data.motDePasse,
-      options: {
-        data: {
-          nom: data.nom,
-          prenom: data.prenom,
-          role: 'directeur'
-        }
+      email_confirm: false,
+      user_metadata: {
+        nom: data.nom,
+        prenom: data.prenom,
+        role: 'directeur'
       }
     })
 
-    console.log("[signUp] Directeur result:", { user: authData?.user, session: authData?.session, error: authError })
     if (authError || !authData.user) {
-      return { success: false, error: authError?.message || `Erreur d'inscription dans Supabase Auth (user is ${authData?.user ? 'defined' : 'null'})` }
+      return { success: false, error: authError?.message || "Erreur d'inscription dans Supabase Auth." }
     }
 
     const userId = authData.user.id
+
+    // 3.5 Déclencher l'envoi de l'e-mail de confirmation via le client standard (SMTP)
+    try {
+      const supabase = await createClient()
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: data.email
+      })
+      if (resendError) {
+        console.warn("[Resend Warning] Erreur lors de l'envoi de l'e-mail de confirmation :", resendError.message)
+      }
+    } catch (err) {
+      console.error("[Resend Error] Impossible de déclencher l'e-mail de confirmation :", err)
+    }
 
     // 4. Créer le profil dans public.utilisateurs
     const { error: userError } = await adminSupabase
@@ -847,26 +858,37 @@ export async function createEnseignantAccount(rawPayload: any) {
       invitation = inviteByEmail
     }
 
-    // 4. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
-    const supabase = await createClient()
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 4. Créer l'utilisateur dans Supabase Auth administrativement pour garantir la récupération de son ID
+    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
       email: data.email,
       password: data.motDePasse,
-      options: {
-        data: {
-          nom: data.nom,
-          prenom: data.prenom,
-          role: 'enseignant'
-        }
+      email_confirm: false,
+      user_metadata: {
+        nom: data.nom,
+        prenom: data.prenom,
+        role: 'enseignant'
       }
     })
 
-    console.log("[signUp] Enseignant result:", { user: authData?.user, session: authData?.session, error: authError })
     if (authError || !authData.user) {
-      return { success: false, error: authError?.message || `Erreur d'inscription Auth (user is ${authData?.user ? 'defined' : 'null'})` }
+      return { success: false, error: authError?.message || "Erreur d'inscription dans Supabase Auth." }
     }
 
     const userId = authData.user.id
+
+    // 4.5 Déclencher l'envoi de l'e-mail de confirmation via le client standard (SMTP)
+    try {
+      const supabase = await createClient()
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: data.email
+      })
+      if (resendError) {
+        console.warn("[Resend Warning] Erreur lors de l'envoi de l'e-mail de confirmation :", resendError.message)
+      }
+    } catch (err) {
+      console.error("[Resend Error] Impossible de déclencher l'e-mail de confirmation :", err)
+    }
 
     // 5. Créer le profil dans utilisateurs
     const { error: userError } = await adminSupabase
@@ -968,26 +990,37 @@ export async function createParentAccount(rawPayload: any) {
       console.warn("[Autoguérison] Impossible de nettoyer les comptes orphelins :", adminError)
     }
 
-    // 3. Créer l'utilisateur dans Supabase Auth via signUp pour envoyer l'email de confirmation
-    const supabase = await createClient()
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 3. Créer l'utilisateur dans Supabase Auth administrativement pour garantir la récupération de son ID
+    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
       email: data.email,
       password: data.motDePasse,
-      options: {
-        data: {
-          nom: data.nom,
-          prenom: data.prenom,
-          role: 'parent'
-        }
+      email_confirm: false,
+      user_metadata: {
+        nom: data.nom,
+        prenom: data.prenom,
+        role: 'parent'
       }
     })
 
-    console.log("[signUp] Parent result:", { user: authData?.user, session: authData?.session, error: authError })
     if (authError || !authData.user) {
-      return { success: false, error: authError?.message || `Erreur d'inscription Auth (user is ${authData?.user ? 'defined' : 'null'})` }
+      return { success: false, error: authError?.message || "Erreur d'inscription dans Supabase Auth." }
     }
 
     const userId = authData.user.id
+
+    // 3.5 Déclencher l'envoi de l'e-mail de confirmation via le client standard (SMTP)
+    try {
+      const supabase = await createClient()
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: data.email
+      })
+      if (resendError) {
+        console.warn("[Resend Warning] Erreur lors de l'envoi de l'e-mail de confirmation :", resendError.message)
+      }
+    } catch (err) {
+      console.error("[Resend Error] Impossible de déclencher l'e-mail de confirmation :", err)
+    }
 
     // 4. Créer le profil dans utilisateurs
     const { error: userError } = await adminSupabase
